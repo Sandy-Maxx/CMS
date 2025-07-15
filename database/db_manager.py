@@ -1,0 +1,238 @@
+import sqlite3
+from config import DATABASE_PATH
+
+def create_tables():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS works (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            description TEXT
+        )
+    """)
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS schedule_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            work_id INTEGER,
+            parent_item_id INTEGER,
+            item_name TEXT NOT NULL,
+            quantity REAL NOT NULL,
+            unit TEXT NOT NULL,
+            FOREIGN KEY (work_id) REFERENCES works(id),
+            FOREIGN KEY (parent_item_id) REFERENCES schedule_items(id)
+        )
+    """)
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS firm_rates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            schedule_item_id INTEGER,
+            firm_name TEXT NOT NULL,
+            unit_rate REAL NOT NULL,
+            date_recorded TEXT NOT NULL,
+            FOREIGN KEY (schedule_item_id) REFERENCES schedule_items(id),
+            UNIQUE(schedule_item_id, firm_name)
+        )
+    """)
+    
+    conn.commit()
+    conn.close()
+
+def add_work(name, description):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO works (name, description) VALUES (?, ?)", (name, description))
+        work_id = cursor.lastrowid
+        conn.commit()
+        return work_id
+    except sqlite3.IntegrityError:
+        return None
+    finally:
+        conn.close()
+
+def update_work(work_id, name, description):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE works SET name = ?, description = ? WHERE id = ?", (name, description, work_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def get_work_by_id(work_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, description FROM works WHERE id = ?", (work_id,))
+    work = cursor.fetchone()
+    conn.close()
+    return {'work_id': work[0], 'work_name': work[1], 'description': work[2]} if work else None
+
+def get_works():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, description FROM works")
+    works = cursor.fetchall()
+    conn.close()
+    return [(w[0], w[1], w[2]) for w in works]
+
+def get_works_by_name(search_term):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, description FROM works WHERE name LIKE ?", ('%' + search_term + '%',))
+    works = cursor.fetchall()
+    conn.close()
+    return [(w[0], w[1], w[2]) for w in works]
+
+def get_works_by_name(search_term):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, description FROM works WHERE name LIKE ?", ('%' + search_term + '%',))
+    works = cursor.fetchall()
+    conn.close()
+    return [(w[0], w[1], w[2]) for w in works]
+
+def delete_work(work_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM firm_rates WHERE schedule_item_id IN (SELECT id FROM schedule_items WHERE work_id = ?)", (work_id,))
+    cursor.execute("DELETE FROM schedule_items WHERE work_id = ?", (work_id,))
+    cursor.execute("DELETE FROM works WHERE id = ?", (work_id,))
+    conn.commit()
+    conn.close()
+
+def add_schedule_item(work_id, item_name, unit, quantity, parent_item_id=None):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO schedule_items (work_id, parent_item_id, item_name, quantity, unit) VALUES (?, ?, ?, ?, ?)",
+        (work_id, parent_item_id, item_name, quantity, unit)
+    )
+    item_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return item_id
+
+def update_schedule_item(item_id, item_name, unit, quantity, parent_item_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE schedule_items SET item_name = ?, unit = ?, quantity = ?, parent_item_id = ? WHERE id = ?",
+        (item_name, unit, quantity, parent_item_id, item_id)
+    )
+    conn.commit()
+    conn.close()
+    return cursor.rowcount > 0
+
+def get_schedule_items(work_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, parent_item_id, item_name, quantity, unit FROM schedule_items WHERE work_id = ?", (work_id,))
+    items = cursor.fetchall()
+    conn.close()
+    return [{'item_id': i[0], 'parent_item_id': i[1], 'item_name': i[2], 'quantity': i[3], 'unit': i[4]} for i in items]
+
+def get_schedule_item_by_id(item_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, parent_item_id, item_name, quantity, unit FROM schedule_items WHERE id = ?", (item_id,))
+    item = cursor.fetchone()
+    conn.close()
+    return {'item_id': item[0], 'parent_item_id': item[1], 'item_name': item[2], 'quantity': item[3], 'unit': item[4]} if item else None
+
+def delete_schedule_item(item_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM firm_rates WHERE schedule_item_id = ?", (item_id,))
+    cursor.execute("DELETE FROM schedule_items WHERE parent_item_id = ?", (item_id,))
+    cursor.execute("DELETE FROM schedule_items WHERE id = ?", (item_id,))
+    conn.commit()
+    conn.close()
+    return cursor.rowcount > 0
+
+def upsert_firm_rate(schedule_item_id, firm_name, unit_rate):
+    from datetime import datetime
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    date_recorded = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        cursor.execute(
+            "INSERT INTO firm_rates (schedule_item_id, firm_name, unit_rate, date_recorded) VALUES (?, ?, ?, ?)",
+            (schedule_item_id, firm_name, unit_rate, date_recorded)
+        )
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        cursor.execute(
+            "UPDATE firm_rates SET unit_rate = ?, date_recorded = ? WHERE schedule_item_id = ? AND firm_name = ?",
+            (unit_rate, date_recorded, schedule_item_id, firm_name)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+def get_firm_rates(schedule_item_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, firm_name, unit_rate, date_recorded FROM firm_rates WHERE schedule_item_id = ?",
+        (schedule_item_id,)
+    )
+    rates = cursor.fetchall()
+    conn.close()
+    return [{'rate_id': r[0], 'firm_name': r[1], 'unit_rate': r[2], 'date_recorded': r[3]} for r in rates]
+
+def get_firm_rate_by_id(rate_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, schedule_item_id, firm_name, unit_rate, date_recorded FROM firm_rates WHERE id = ?",
+        (rate_id,)
+    )
+    rate = cursor.fetchone()
+    conn.close()
+    return {'rate_id': rate[0], 'schedule_item_id': rate[1], 'firm_name': rate[2], 'unit_rate': rate[3], 'date_recorded': rate[4]} if rate else None
+
+def update_firm_rate(rate_id, firm_name, unit_rate):
+    from datetime import datetime
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    date_recorded = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cursor.execute(
+        "UPDATE firm_rates SET unit_rate = ?, date_recorded = ? WHERE id = ?",
+        (unit_rate, date_recorded, rate_id)
+    )
+    conn.commit()
+    conn.close()
+    return cursor.rowcount > 0
+
+def delete_firm_rate(rate_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM firm_rates WHERE id = ?", (rate_id,))
+    conn.commit()
+    conn.close()
+    return cursor.rowcount > 0
+
+def get_all_unique_firm_names():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT firm_name FROM firm_rates")
+    firms = cursor.fetchall()
+    conn.close()
+    return [f[0] for f in firms]
+
+def get_all_unique_units():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT unit FROM schedule_items")
+    units = cursor.fetchall()
+    conn.close()
+    return [u[0] for u in units]

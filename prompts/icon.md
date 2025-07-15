@@ -1,0 +1,2 @@
+allow top level schedules to without qty, unit rate etc. because top level items are grouping identifiers and do not require qty, unti rate etc.
+its working fine. but when opening form for schedule item entry alongwith the schedule item entry form its loading an additional blank form.
