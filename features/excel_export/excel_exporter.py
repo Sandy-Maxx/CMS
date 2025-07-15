@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
 
-def export_vitiation_report(work_details, schedule_items, firm_rates_by_item, updated_quantities, output_path):
+def export_variation_report(work_details, schedule_items, firm_rates_by_item, updated_quantities, output_path):
     try:
         data = []
         for item in schedule_items:

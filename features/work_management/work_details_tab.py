@@ -26,7 +26,11 @@ class WorkDetailsTab(ttk.Frame):
         self.description_text.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
         self.grid_columnconfigure(1, weight=1)
         self.save_icon = load_icon("save")
-        ttk.Button(self, text="Save Work Details", image=self.save_icon, compound=tk.LEFT, command=self._save_work_details, style='Primary.TButton').grid(row=2, column=0, columnspan=2, pady=10)
+        self.save_button = ttk.Button(self, image=self.save_icon, compound=tk.LEFT, command=self._save_work_details, style='Primary.TButton')
+        self.save_button.grid(row=2, column=0, columnspan=2, pady=10)
+        self.save_button_text = "Save Work Details"
+        self.save_button.bind("<Enter>", lambda e: self.save_button.config(text=self.save_button_text))
+        self.save_button.bind("<Leave>", lambda e: self.save_button.config(text=""))
 
     def _save_work_details(self):
         work_name = self.work_name_entry.get().strip()

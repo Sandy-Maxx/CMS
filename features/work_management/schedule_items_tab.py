@@ -3,7 +3,7 @@ from tkinter import ttk
 from database import db_manager
 from utils import helpers as utils_helpers
 from utils.helpers import load_icon
-from .dialogs.QuantityVariationDialog import QuantityVariationDialog
+from features.vitiation.QuantityVariationDialog import QuantityVariationDialog
 
 class ScheduleItemsTab(ttk.Frame):
     def __init__(self, notebook, parent_app, work_id_var, reference_firm_var, vcmd_numeric, load_firm_rates_callback, update_schedule_item_display_costs_callback, populate_reference_firm_combobox_callback):
@@ -53,8 +53,17 @@ class ScheduleItemsTab(ttk.Frame):
         self.edit_icon = load_icon("edit")
         self.delete_icon = load_icon("delete")
 
-        ttk.Button(button_frame, text="Add New Item", image=self.add_icon, compound=tk.LEFT, command=self._add_new_item, style='Primary.TButton').pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Edit Firm Rates", image=self.edit_icon, compound=tk.LEFT, command=self._edit_firm_rates, style='Info.TButton').pack(side=tk.LEFT, padx=5)
+        self.add_item_button = ttk.Button(button_frame, image=self.add_icon, compound=tk.LEFT, command=self._add_new_item, style='Primary.TButton')
+        self.add_item_button.pack(side=tk.LEFT, padx=5)
+        self.add_item_button_text = "Add New Item"
+        self.add_item_button.bind("<Enter>", lambda e: self.add_item_button.config(text=self.add_item_button_text))
+        self.add_item_button.bind("<Leave>", lambda e: self.add_item_button.config(text=""))
+
+        self.edit_firm_rates_button = ttk.Button(button_frame, image=self.edit_icon, compound=tk.LEFT, command=self._edit_firm_rates, style='Info.TButton')
+        self.edit_firm_rates_button.pack(side=tk.LEFT, padx=5)
+        self.edit_firm_rates_button_text = "Edit Firm Rates"
+        self.edit_firm_rates_button.bind("<Enter>", lambda e: self.edit_firm_rates_button.config(text=self.edit_firm_rates_button_text))
+        self.edit_firm_rates_button.bind("<Leave>", lambda e: self.edit_firm_rates_button.config(text=""))
         self.context_menu = tk.Menu(self, tearoff=0)
         self.context_menu.add_command(label="Add Sub-Item", image=self.add_icon, compound=tk.LEFT, command=self._add_sub_item)
         self.context_menu.add_command(label="Edit Item", image=self.edit_icon, compound=tk.LEFT, command=self._edit_item)

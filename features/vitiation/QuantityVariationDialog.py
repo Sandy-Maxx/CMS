@@ -15,7 +15,6 @@ class QuantityVariationDialog(tk.Toplevel):
         self.existing_item_data = None
         self.existing_firm_rate = None
         self.last_item_name = last_item_name # Store the last item name
-        super().__init__(parent)
         self.work_id = work_id
         self.item_id = item_id
         self.parent_item_id = parent_item_id

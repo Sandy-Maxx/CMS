@@ -24,7 +24,11 @@ class IndividualFirmRatesTab(ttk.Frame):
         self.rates_frame = ttk.Frame(self)
         self.rates_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
         self.save_icon = load_icon("save")
-        ttk.Button(self, text="Save Rates", image=self.save_icon, compound=tk.LEFT, command=self._save_firm_rates, style='Primary.TButton').grid(row=3, column=0, columnspan=2, pady=10)
+        self.save_button = ttk.Button(self, image=self.save_icon, compound=tk.LEFT, command=self._save_firm_rates, style='Primary.TButton')
+        self.save_button.grid(row=3, column=0, columnspan=2, pady=10)
+        self.save_button_text = "Save Rates"
+        self.save_button.bind("<Enter>", lambda e: self.save_button.config(text=self.save_button_text))
+        self.save_button.bind("<Leave>", lambda e: self.save_button.config(text=""))
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=1)
@@ -68,7 +72,7 @@ class IndividualFirmRatesTab(ttk.Frame):
                     utils_helpers.show_toast(self.parent_app.window, f"Invalid rate for {firm}. Please enter a number.", "error")
                     success = False
             else:
-                db_manager.delete_firm_rate(self.current_item_id, firm)
+                db_manager.delete_firm_rate_by_item_and_firm(self.current_item_id, firm)
         if success:
             utils_helpers.show_toast(self.parent_app.window, f"Rates for {self.current_item_name} saved successfully.", "success")
             self.update_schedule_item_display_costs_callback()

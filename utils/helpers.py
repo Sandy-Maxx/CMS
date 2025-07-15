@@ -7,7 +7,7 @@ ICON_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "i
 
 _icon_cache = {}
 
-def load_icon(icon_name, size=(16, 16)):
+def load_icon(icon_name, size=(36, 36)):
     if icon_name in _icon_cache:
         return _icon_cache[icon_name]
     
@@ -19,6 +19,8 @@ def load_icon(icon_name, size=(16, 16)):
     try:
         # Open the image using Pillow
         img = Image.open(icon_path)
+        # Resize the image
+        img.thumbnail(size, Image.LANCZOS)
         # Convert to ImageTk.PhotoImage
         icon = ImageTk.PhotoImage(img)
         _icon_cache[icon_name] = icon
@@ -61,16 +63,15 @@ def validate_numeric_input(new_value):
         return False
 
 def format_currency_inr(amount):
-    # Formats a number as Indian Rupees (INR)
+    # Formats a number as Indian Rupees (INR) with exactly two decimal places
     # Example: 1234567.89 -> ₹ 12,34,567.89
-    s = str(float(amount))
-    if '.' in s:
-        parts = s.split('.')
-        integer_part = parts[0]
-        decimal_part = parts[1]
-    else:
-        integer_part = s
-        decimal_part = None
+    # Ensure amount is a float and round to 2 decimal places
+    amount = float(amount)
+    s = f"{amount:.2f}" # Format to exactly two decimal places
+
+    parts = s.split('.')
+    integer_part = parts[0]
+    decimal_part = parts[1]
 
     # Format integer part with Indian numbering system
     if len(integer_part) > 3:
@@ -84,7 +85,19 @@ def format_currency_inr(amount):
     else:
         formatted_integer = integer_part
 
-    if decimal_part:
-        return f"₹ {formatted_integer}.{decimal_part}"
-    else:
-        return f"₹ {formatted_integer}"
+    return f"₹ {formatted_integer}.{decimal_part}/-"
+
+def number_to_indian_words(num):
+    from num2words import num2words
+    # Handle integers and floats separately
+    if isinstance(num, int):
+        return num2words(num, lang='en_IN')
+    elif isinstance(num, float):
+        integer_part = int(num)
+        # Round the decimal part to two places before converting to words
+        decimal_part = round((num - integer_part) * 100)
+        if decimal_part > 0:
+            return f"{num2words(integer_part, lang='en_IN')} rupees and {num2words(decimal_part, lang='en_IN')} paise only"
+        else:
+            return f"{num2words(integer_part, lang='en_IN')} rupees only"
+    return str(num)

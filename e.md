@@ -1,13 +1,9 @@
-PS D:\CMS\CMS> python main.py
-Exception in Tkinter callback
+C:\Users\MY PC\AppData\Roaming\Python\Python313\site-packages\xlsxwriter\worksheet.py:2243: UserWarning: Can't merge single cell
+  warn("Can't merge single cell")
+Error in export_vitiation_data_to_excel: 'Workbook' object has no attribute 'xl_col_to_name'  
 Traceback (most recent call last):
-  File "C:\Program Files\Python313\Lib\tkinter\__init__.py", line 2068, in __call__
-    return self.func(*args)
-           ~~~~~~~~~^^^^^^^
-  File "D:\CMS\CMS\features\work_management\schedule_items_tab.py", line 92, in _add_sub_item
-    if dialog.item_name_entry.get(): # Check if an item was actually added/saved
-       ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Program Files\Python313\Lib\tkinter\__init__.py", line 3258, in get
-    return self.tk.call(self._w, 'get')
-           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^
-_tkinter.TclError: invalid command name ".!toplevel.!notebook.!scheduleitemstab.!quantityvariationdialog4.!frame.!entry"
+  File "D:\CMS\CMS\features\vitiation\vitiation_data_exporter.py", line 84, in export_vitiation_data_to_excel
+    unit_rate_col_letter = workbook.xl_col_to_name(col_idx - 1) # Unit Rate is one column to the left
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Workbook' object has no attribute 'xl_col_to_name'
+PS D:\CMS\CMS>

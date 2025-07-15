@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox, filedialog
 from database import db_manager
 from utils import helpers as utils_helpers
 from datetime import datetime
-from features.excel_export.excel_exporter import export_vitiation_report 
+from features.vitiation.vitiation_data_exporter import export_vitiation_data_to_excel
 
 class VitiationReportDialog(tk.Toplevel):
     def __init__(self, parent, work_id):
@@ -20,6 +20,8 @@ class VitiationReportDialog(tk.Toplevel):
         self.processed_schedule_items = []
         self.selected_firms = []
         self.vcmd_numeric = self.register(utils_helpers.validate_numeric_input)
+        self.edit_entry = None
+        self.edit_item_id = None
         self._create_widgets()
         self._load_data()
 
@@ -29,24 +31,32 @@ class VitiationReportDialog(tk.Toplevel):
         ttk.Label(main_frame, text=f"Work: {self.work_name}", font=('Segoe UI', 11, 'bold')).pack(fill=tk.X, pady=(0, 10))
         schedule_frame = ttk.LabelFrame(main_frame, text="Schedule Items & New Quantities", padding=10)
         schedule_frame.pack(fill=tk.BOTH, expand=True, pady=(5, 10))
-        self.schedule_tree = ttk.Treeview(schedule_frame, columns=("description", "unit", "original_qty", "new_qty"), show="headings")
+        self.schedule_tree = ttk.Treeview(schedule_frame, columns=("sn", "description", "original_qty", "new_qty", "unit", "unit_rate", "total_cost_before", "total_cost_after"), show="headings")
         self.schedule_tree.pack(fill=tk.BOTH, expand=True)
-        self.schedule_tree.heading("description", text="Description")
+
+        self.schedule_tree.heading("sn", text="SN")
+        self.schedule_tree.heading("description", text="Schedule Items")
+        self.schedule_tree.heading("original_qty", text="Quantity (Before Variation)")
+        self.schedule_tree.heading("new_qty", text="Quantity (After Variation)")
         self.schedule_tree.heading("unit", text="Unit")
-        self.schedule_tree.heading("original_qty", text="Original Qty")
-        self.schedule_tree.heading("new_qty", text="New Qty")
-        self.schedule_tree.column("description", width=350, stretch=tk.YES, anchor=tk.W)
+        self.schedule_tree.heading("unit_rate", text="Unit Rate")
+        self.schedule_tree.heading("total_cost_before", text="Total Cost (Before Variation)")
+        self.schedule_tree.heading("total_cost_after", text="Total Cost (After Variation)")
+
+        self.schedule_tree.column("sn", width=50, stretch=tk.NO, anchor=tk.CENTER)
+        self.schedule_tree.column("description", width=300, stretch=tk.YES, anchor=tk.W)
+        self.schedule_tree.column("original_qty", width=120, stretch=tk.NO, anchor=tk.CENTER)
+        self.schedule_tree.column("new_qty", width=120, stretch=tk.NO, anchor=tk.CENTER)
         self.schedule_tree.column("unit", width=80, stretch=tk.NO, anchor=tk.CENTER)
-        self.schedule_tree.column("original_qty", width=100, stretch=tk.NO, anchor=tk.CENTER)
-        self.schedule_tree.column("new_qty", width=100, stretch=tk.NO, anchor=tk.CENTER)
+        self.schedule_tree.column("unit_rate", width=100, stretch=tk.NO, anchor=tk.CENTER)
+        self.schedule_tree.column("total_cost_before", width=120, stretch=tk.NO, anchor=tk.CENTER)
+        self.schedule_tree.column("total_cost_after", width=120, stretch=tk.NO, anchor=tk.CENTER)
         vsb = ttk.Scrollbar(self.schedule_tree, orient="vertical", command=self.schedule_tree.yview)
         hsb = ttk.Scrollbar(self.schedule_tree, orient="horizontal", command=self.schedule_tree.xview)
         self.schedule_tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
         vsb.pack(side="right", fill="y")
         hsb.pack(side="bottom", fill="x")
         self.schedule_tree.bind("<Double-1>", self._on_tree_double_click)
-        self.edit_entry = None
-        self.edit_item_id = None
         firm_selection_frame = ttk.LabelFrame(main_frame, text="Select Firms for Report", padding=10)
         firm_selection_frame.pack(fill=tk.X, pady=(5, 10))
         self.firm_listbox = tk.Listbox(firm_selection_frame, selectmode=tk.MULTIPLE, exportselection=False, height=5)
@@ -71,7 +81,7 @@ class VitiationReportDialog(tk.Toplevel):
         item_map = {item['item_id']: dict(item) for item in all_items_from_db}
         for item_id, item_data in item_map.items():
             item_data['children'] = []
-            item_data['new_quantity'] = item_data['quantity']
+            item_data['new_quantity'] = item_data['quantity'] # Initialize new_quantity with original
             item_data['firm_rates'] = db_manager.get_firm_rates(item_id)
             item_data['level'] = 0
         for item_id, item_data in item_map.items():
@@ -198,15 +208,26 @@ class VitiationReportDialog(tk.Toplevel):
         if not self.processed_schedule_items:
             utils_helpers.show_toast(self, "No schedule items to report.", "warning")
             return
-        updated_quantities_dict = {str(item['item_id']): item['new_quantity'] for item in self.processed_schedule_items}
-        all_original_schedule_items = db_manager.get_schedule_items(self.work_id)
-        if not all_original_schedule_items:
-            utils_helpers.show_toast(self, "Failed to retrieve original schedule items from database.", "error")
-            return
-        all_firm_rates_by_item = {}
-        for item in all_original_schedule_items:
-            item_id = item['item_id']
-            all_firm_rates_by_item[item_id] = db_manager.get_firm_rates(item_id)
+
+        # Prepare data for export, including calculated total costs based on the selected firm
+        export_schedule_items = []
+        selected_firm_name = self.selected_firms[0] if self.selected_firms else None
+
+        for item in self.processed_schedule_items:
+            item_copy = item.copy()
+            # Find the unit rate for the selected firm for this item
+            unit_rate_for_selected_firm = 0.0
+            if selected_firm_name:
+                for firm_rate in item['firm_rates']:
+                    if firm_rate['firm_name'] == selected_firm_name:
+                        unit_rate_for_selected_firm = firm_rate['unit_rate']
+                        break
+            
+            item_copy['unit_rate'] = unit_rate_for_selected_firm
+            item_copy['total_cost_before'] = item['quantity'] * unit_rate_for_selected_firm
+            item_copy['total_cost_after'] = item['new_quantity'] * unit_rate_for_selected_firm
+            export_schedule_items.append(item_copy)
+
         file_path = filedialog.asksaveasfilename(
             defaultextension=".xlsx",
             filetypes=[("Excel files", "*.xlsx")],
@@ -215,12 +236,11 @@ class VitiationReportDialog(tk.Toplevel):
         if not file_path:
             utils_helpers.show_toast(self, "Report generation cancelled.", "info")
             return
-        success, message = export_vitiation_report(
+        success, message = export_vitiation_data_to_excel(
             self.work_details,
-            all_original_schedule_items,
-            all_firm_rates_by_item,
-            updated_quantities_dict,
-            file_path
+            export_schedule_items,
+            file_path,
+            self.selected_firms
         )
         if success:
             utils_helpers.show_toast(self.parent, f"Vitiation report generated successfully: {file_path}", "success")

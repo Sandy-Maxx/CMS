@@ -6,7 +6,10 @@ from utils.helpers import load_icon
 from .work_editor import WorkDetailsEditor
 from .work_search_bar import WorkSearchBar
 from features.excel_export.excel_exporter import export_work_to_excel
+from features.variation.Variation_report import VariationReportDialog
+from features.vitiation.Vitiation_report import VitiationReportDialog
 from datetime import datetime
+from features.template_engine.template_engine_tab import TemplateEngineTab
 
 class MainWindow:
     def __init__(self, root):
@@ -21,6 +24,9 @@ class MainWindow:
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         self.works_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.works_frame, text="Works")
+
+        self.template_engine_tab = TemplateEngineTab(self.notebook, self)
+        self.notebook.add(self.template_engine_tab, text="Template Engine")
         
         # Search Bar
         self.search_bar = WorkSearchBar(self.works_frame, self.load_works)
@@ -37,15 +43,54 @@ class MainWindow:
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
         self.works_tree.configure(yscrollcommand=vsb.set)
         self.works_tree.bind("<Double-1>", self.edit_work)
+        self.works_tree.bind("<Button-3>", self._show_work_context_menu)
         button_frame = ttk.Frame(self.works_frame)
         button_frame.pack(fill=tk.X, pady=10)
         
         self.add_work_icon = load_icon("add")
         self.export_work_icon = load_icon("export")
-        ttk.Button(button_frame, text="Add New Work", image=self.add_work_icon, compound=tk.LEFT, command=self.add_work, style='Primary.TButton').pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="Export Work", image=self.export_work_icon, compound=tk.LEFT, command=self.export_work, style='Info.TButton').pack(side=tk.LEFT, padx=5)
+
+        self.add_work_button = ttk.Button(button_frame, image=self.add_work_icon, compound=tk.LEFT, command=self.add_work, style='Primary.TButton')
+        self.add_work_button.pack(side=tk.LEFT, padx=5)
+        self.add_work_button_text = "Add New Work"
+        self.add_work_button.bind("<Enter>", lambda e: self.add_work_button.config(text=self.add_work_button_text))
+        self.add_work_button.bind("<Leave>", lambda e: self.add_work_button.config(text=""))
+
+        self.export_work_button = ttk.Button(button_frame, image=self.export_work_icon, compound=tk.LEFT, command=self.export_work, style='Info.TButton')
+        self.export_work_button.pack(side=tk.LEFT, padx=5)
+        self.export_work_button_text = "Export Work"
+        self.export_work_button.bind("<Enter>", lambda e: self.export_work_button.config(text=self.export_work_button_text))
+        self.export_work_button.bind("<Leave>", lambda e: self.export_work_button.config(text=""))
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
+
+    def _show_work_context_menu(self, event):
+        # Select item on right-click
+        item_id = self.works_tree.identify_row(event.y)
+        if item_id:
+            self.works_tree.selection_set(item_id)
+            self.works_tree.focus(item_id)
+            
+            context_menu = tk.Menu(self.root, tearoff=0)
+            context_menu.add_command(label="Export Variation Report", command=self._export_variation_report)
+            context_menu.add_command(label="Export Vitiation Report", command=self._export_vitiation_report)
+            context_menu.post(event.x_root, event.y_root)
+
+    def _export_variation_report(self):
+        selected_item = self.works_tree.selection()
+        if not selected_item:
+            utils_helpers.show_toast(self.root, "Please select a work to generate Variation Report.", "warning")
+            return
+        work_id = int(selected_item[0])
+        VariationReportDialog(self.root, work_id)
+
+    def _export_vitiation_report(self):
+        selected_item = self.works_tree.selection()
+        if not selected_item:
+            utils_helpers.show_toast(self.root, "Please select a work to generate Vitiation Report.", "warning")
+            return
+        work_id = int(selected_item[0])
+        VitiationReportDialog(self.root, work_id)
 
     def load_works(self, search_query=None):
         for item in self.works_tree.get_children():
