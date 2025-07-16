@@ -45,6 +45,7 @@ class ComparisonExporter:
         })
         currency_format = workbook.add_format({'num_format': '₹#,##,##0.00'})
         percentage_format = workbook.add_format({'num_format': '0.00%'})
+        percentage_format = workbook.add_format({'num_format': '0.00%'})
 
         # Manually write multi-level headers
         header_rows = self.excel_structure.get_excel_header_structure()
@@ -197,6 +198,31 @@ class ComparisonExporter:
             # The row for Rebate in ₹ is rebate_amount_row_idx + 1 (Excel 1-indexed)
             formula = f'={total_cost_gst_cell_letter}{total_cost_gst_row_idx + 1}-{total_cost_gst_cell_letter}{rebate_amount_row_idx + 1}'
             worksheet.write_formula(total_after_rebate_row_idx, total_cost_col_idx, formula, currency_format) # Apply currency format
+        current_summary_row += 1
+
+        # --- Inter se position row ---
+        inter_se_row_idx = current_summary_row
+        worksheet.write(inter_se_row_idx, 1, 'Inter se position', header_format) # Description column
+
+        # Build the range string for RANK.EQ formula
+        total_after_rebate_cells = []
+        for firm_name in firm_names:
+            col_idx = firm_total_cost_col_indices[firm_name]
+            cell_ref = f'${get_column_letter(col_idx)}${total_after_rebate_row_idx + 1}'
+            total_after_rebate_cells.append(cell_ref)
+        rank_range_str = ','.join(total_after_rebate_cells)
+
+        for firm_name in firm_names:
+            total_cost_col_idx = firm_total_cost_col_indices[firm_name]
+            current_firm_total_after_rebate_cell = f'${get_column_letter(total_cost_col_idx)}${total_after_rebate_row_idx + 1}'
+            
+            # RANK.EQ(number, ref, [order]) - order 0 for descending (lowest value is L-1)
+            # We want lowest value to be L-1, so we sort ascending and then map to L-1, L-2 etc.
+            # Excel's RANK.EQ with order 0 (descending) means largest value is rank 1.
+            # To get L-1 for the lowest value, we need to rank in ascending order (order 1).
+            # However, the user wants L-1 for the lowest cost, so we use order 1.
+            formula = f'="L-"&RANK.EQ({current_firm_total_after_rebate_cell},({rank_range_str}),1)'
+            worksheet.write_formula(inter_se_row_idx, total_cost_col_idx, formula, header_format)
         current_summary_row += 1
 
         # Store the last row of data for formatting

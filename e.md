@@ -1,10 +1,11 @@
-no label is ther. fix this. and also add one       │      
-│   row at the bottom after  "Total Cost               │      
-│   (including GST)" named "Rebate" in this row        │      
-│   user will put a numerical value for each           │      
-│   firm different value say(for 3 firm report)        │      
-│   5, 6, 7(just below the sum total cell of           │      
-│   each firm)  then below that cell that              │      
-│   percentage of the final value is printed for       │      
-│   each firm and below that total after rebate        │      
-│   is calculated for each firm.   
+PS D:\CMS\CMS> python main.py
+Traceback (most recent call last):
+  File "D:\CMS\CMS\main.py", line 3, in <module>
+    from features.work_management.main_window import MainWindow
+  File "D:\CMS\CMS\features\work_management\main_window.py", line 11, in <module>
+    from features.comparison.comparison_exporter import ComparisonExporter
+  File "D:\CMS\CMS\features\comparison\comparison_exporter.py", line 47
+    percentage_format = workbook.add_format({'num_format': '0.00%'}
+                                           ^      
+SyntaxError: '(' was never closed
+PS D:\CMS\CMS> 
