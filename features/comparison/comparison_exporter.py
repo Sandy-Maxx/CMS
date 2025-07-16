@@ -18,14 +18,14 @@ class ComparisonExporter:
         rows = []
         for i, item in enumerate(data['schedule_items']):
             row = {
-                ('SN', ''): i + 1,
-                ('Description', ''): item['item_name'],
-                ('Qty', 'No./ Lot / Set'): item['quantity']
+                'SN': i + 1,
+                'Description': item['item_name'],
+                'Qty': item['quantity']
             }
             for firm_name in firm_names:
                 if firm_name in item['firm_rates']:
-                    row[(firm_name, 'Unit Rate')] = item['firm_rates'][firm_name]
-                    row[(firm_name, 'Total Cost in Rs.')] = item['quantity'] * item['firm_rates'][firm_name]
+                    row[f'{firm_name} - Unit Rate'] = item['firm_rates'][firm_name]
+                    row[f'{firm_name} - Total Cost in Rs.'] = item['quantity'] * item['firm_rates'][firm_name]
             rows.append(row)
 
         df = pd.DataFrame(rows, columns=excel_structure.get_dataframe_columns())
@@ -44,6 +44,7 @@ class ComparisonExporter:
         data_start_row = len(header_rows) # Data starts after the header rows
         df.to_excel(writer, sheet_name='Comparison', index=False, header=False, startrow=data_start_row)
 
+        # Apply formatting
         self._apply_formatting(workbook, worksheet, df, firm_names)
 
         try:
@@ -56,13 +57,13 @@ class ComparisonExporter:
 
     def _add_summary_rows(self, df, firm_names):
         # Total row
-        total_row = {('Description', ''): 'Total'}
+        total_row = {'Description': 'Total'}
         for firm_name in firm_names:
             total_row[f'{firm_name} - Total Cost in Rs.'] = df[f'{firm_name} - Total Cost in Rs.'].sum()
         df = pd.concat([df, pd.DataFrame([total_row], columns=df.columns)], ignore_index=True)
 
         # GST row
-        gst_row = {('Description', ''): 'GST @18%  (Rs)'}
+        gst_row = {'Description': 'GST @18%  (Rs)'}
         for firm_name in firm_names:
             gst_row[f'{firm_name} - Total Cost in Rs.'] = df[f'{firm_name} - Total Cost in Rs.'].iloc[-1] * 0.18
         df = pd.concat([df, pd.DataFrame([gst_row], columns=df.columns)], ignore_index=True)

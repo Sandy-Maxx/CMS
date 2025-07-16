@@ -8,7 +8,7 @@ class ComparisonDataManager:
     def get_comparison_data(self):
         work_details = db_manager.get_work_by_id(self.work_id)
         schedule_items = db_manager.get_schedule_items(self.work_id)
-        firm_names = db_manager.get_all_unique_firm_names()
+        firm_names = db_manager.get_unique_firm_names_by_work_id(self.work_id)
 
         data = {
             'work_name': work_details['work_name'],
