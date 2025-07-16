@@ -1,9 +1,73 @@
-C:\Users\MY PC\AppData\Roaming\Python\Python313\site-packages\xlsxwriter\worksheet.py:2243: UserWarning: Can't merge single cell
-  warn("Can't merge single cell")
-Error in export_vitiation_data_to_excel: 'Workbook' object has no attribute 'xl_col_to_name'  
-Traceback (most recent call last):
-  File "D:\CMS\CMS\features\vitiation\vitiation_data_exporter.py", line 84, in export_vitiation_data_to_excel
-    unit_rate_col_letter = workbook.xl_col_to_name(col_idx - 1) # Unit Rate is one column to the left
-                           ^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'Workbook' object has no attribute 'xl_col_to_name'
-PS D:\CMS\CMS>
+(venv) PS D:\CMS\CMS> PYTHON MAIN.PY
+format_as_words is False. Result before currency formatting: 125564
+format_as_words is False. Result before currency formatting: 22601.52
+format_as_words is False. Result before currency formatting: 22600
+format_as_words is False. Result before currency formatting: 22600
+format_as_words is False. Result before currency formatting: 148170
+format_as_words is True. Result before words conversion: 148170
+format_as_words is False. Result before currency formatting: 6278.20
+format_as_words is False. Result before currency formatting: 6300
+format_as_words is False. Result before currency formatting: 6278.20
+format_as_words is True. Result before words conversion: 6300  
+format_as_words is False. Result before currency formatting: 125564
+format_as_words is False. Result before currency formatting: 25112.8
+format_as_words is True. Result before words conversion: 25112.8
+format_as_words is False. Result before currency formatting: 25110
+format_as_words is False. Result before currency formatting: 25100
+format_as_words is False. Result before currency formatting: 62782.0
+format_as_words is True. Result before words conversion: 62782.0
+format_as_words is False. Result before currency formatting: 62780
+format_as_words is False. Result before currency formatting: 62800
+format_as_words is False. Result before currency formatting: 125564
+format_as_words is True. Result before words conversion: 125564
+format_as_words is False. Result before currency formatting: 125564
+format_as_words is False. Result before currency formatting: 25112.8
+format_as_words is False. Result before currency formatting: 25110
+format_as_words is False. Result before currency formatting: 25100
+format_as_words is True. Result before words conversion: 25112.8
+format_as_words is False. Result before currency formatting: 62780
+format_as_words is True. Result before words conversion: 62780 
+format_as_words is False. Result before currency formatting: 125564
+format_as_words is False. Result before currency formatting: 523658
+format_as_words is False. Result before currency formatting: 789456
+format_as_words is False. Result before currency formatting: 148165.52
+format_as_words is False. Result before currency formatting: 62782.0
+format_as_words is False. Result before currency formatting: 1047316
+format_as_words is False. Result before currency formatting: 592092.00
+format_as_words is True. Result before words conversion: 125564
+format_as_words is True. Result before words conversion: 523658
+format_as_words is True. Result before words conversion: 148165.52
+format_as_words is True. Result before words conversion: 62782.0
+format_as_words is True. Result before words conversion: 1184184.0
+format_as_words is False. Result before currency formatting: 148170
+format_as_words is False. Result before currency formatting: 148200
+format_as_words is False. Result before currency formatting: 696470
+format_as_words is False. Result before currency formatting: 1578900
+format_as_words is True. Result before words conversion: 148170
+format_as_words is True. Result before words conversion: 148200
+format_as_words is True. Result before words conversion: 1309150
+format_as_words is True. Result before words conversion: 844700
+format_as_words is False. Result before currency formatting: 125564
+format_as_words is False. Result before currency formatting: 523658
+format_as_words is False. Result before currency formatting: 789456
+format_as_words is False. Result before currency formatting: 125564
+format_as_words is False. Result before currency formatting: 22601.52
+format_as_words is False. Result before currency formatting: 226015.20
+format_as_words is False. Result before currency formatting: 2260152.00
+format_as_words is False. Result before currency formatting: 14816552.00
+format_as_words is True. Result before words conversion: 14816552.00
+format_as_words is False. Result before currency formatting: 6278.20
+format_as_words is True. Result before words conversion: 627820.00
+format_as_words is False. Result before currency formatting: 789456
+format_as_words is False. Result before currency formatting: 1184184.0
+format_as_words is False. Result before currency formatting: 118418400.0
+format_as_words is True. Result before words conversion: 118418400.0
+format_as_words is False. Result before currency formatting: 148165.52
+format_as_words is False. Result before currency formatting: 62782.0
+format_as_words is False. Result before currency formatting: 1047316
+format_as_words is False. Result before currency formatting: 1481655.20
+format_as_words is False. Result before currency formatting: 6278200.0
+format_as_words is True. Result before words conversion: 125564
+format_as_words is True. Result before words conversion: 148165.52
+format_as_words is True. Result before words conversion: 14816552.00
+(venv) PS D:\CMS\CMS> 
