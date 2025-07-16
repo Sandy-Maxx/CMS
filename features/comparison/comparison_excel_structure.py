@@ -20,24 +20,6 @@ class ComparisonExcelStructure:
             second_row.extend(['Unit Rate', 'Total Cost in Rs.'])
         header_rows.append(second_row)
 
-        # Add Rebate in % row
-        rebate_percentage_row = ['Rebate in %', '', '']
-        for firm_name in self.firm_names:
-            rebate_percentage_row.extend(['', '']) # Placeholder for two columns per firm
-        header_rows.append(rebate_percentage_row)
-
-        # Add Rebate in ₹ row
-        rebate_amount_row = ['Rebate in ₹', '', '']
-        for firm_name in self.firm_names:
-            rebate_amount_row.extend(['', '']) # Placeholder for two columns per firm
-        header_rows.append(rebate_amount_row)
-
-        # Add Total after Rebate row
-        total_after_rebate_row = ['Total after Rebate', '', '']
-        for firm_name in self.firm_names:
-            total_after_rebate_row.extend(['', '']) # Placeholder for two columns per firm
-        header_rows.append(total_after_rebate_row)
-
         return header_rows
 
     def get_dataframe_columns(self):
