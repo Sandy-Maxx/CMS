@@ -19,6 +19,24 @@ class ComparisonExcelStructure:
         for _ in self.firm_names:
             second_row.extend(['Unit Rate', 'Total Cost in Rs.'])
         header_rows.append(second_row)
+
+        # Add Rebate and Total after Rebate rows to header structure
+        rebate_row_1 = ['Rebate', '', '']
+        rebate_row_2 = ['', '', '']
+        for firm_name in self.firm_names:
+            rebate_row_1.extend(['', '']) # Placeholder for merged cells
+            rebate_row_2.extend([f'{firm_name} - Rebate', f'{firm_name} - Rebate (%)'])
+        header_rows.append(rebate_row_1)
+        header_rows.append(rebate_row_2)
+
+        total_after_rebate_row_1 = ['Total after Rebate', '', '']
+        total_after_rebate_row_2 = ['', '', '']
+        for firm_name in self.firm_names:
+            total_after_rebate_row_1.extend(['', '']) # Placeholder for merged cells
+            total_after_rebate_row_2.extend([f'{firm_name} - Total after Rebate', ''])
+        header_rows.append(total_after_rebate_row_1)
+        header_rows.append(total_after_rebate_row_2)
+
         return header_rows
 
     def get_dataframe_columns(self):
@@ -27,4 +45,11 @@ class ComparisonExcelStructure:
         for firm_name in self.firm_names:
             columns.append(f'{firm_name} - Unit Rate')
             columns.append(f'{firm_name} - Total Cost in Rs.')
+        
+        # Add columns for Rebate and Total after Rebate
+        for firm_name in self.firm_names:
+            columns.append(f'{firm_name} - Rebate')
+            columns.append(f'{firm_name} - Rebate (%)')
+        for firm_name in self.firm_names:
+            columns.append(f'{firm_name} - Total after Rebate')
         return columns
