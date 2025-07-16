@@ -15,21 +15,19 @@ class WorkDetailsEditor:
         self.window.title(f"{'New' if not work_id else 'Edit'} Work Details (ID: {work_id or 'New'})")
         configure_styles()
         
-        # Variables
         self.work_id_var = tk.StringVar(value=str(work_id) if work_id else "")
         self.is_new_work_var = tk.BooleanVar(value=not work_id)
         self.reference_firm_var = tk.StringVar()
         self.vcmd_numeric = self.window.register(validate_numeric_input)
         
-        # Status label
         self.status_label = ttk.Label(self.window, text="Ready", style="Status.TLabel")
         self.status_label.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
         
-        # Notebook for tabs
         self.notebook = ttk.Notebook(self.window)
         self.notebook.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
         
-        # Tabs
+        self._initialization_complete = False
+
         self.schedule_items_tab = ScheduleItemsTab(
             self.notebook, self, self.work_id_var, self.reference_firm_var,
             self.vcmd_numeric, self.load_firm_rates, self.update_schedule_item_display_costs,
@@ -48,17 +46,16 @@ class WorkDetailsEditor:
         self.notebook.add(self.schedule_items_tab, text="Schedule Items")
         self.notebook.add(self.firm_rates_tab, text="Individual Firm Rates")
         
-        # Configure grid weights
         self.window.grid_rowconfigure(0, weight=1)
         self.window.grid_columnconfigure(0, weight=1)
         
-        # Populate reference firm combobox after schedule_items_tab is initialized
         self.populate_reference_firm_combobox()
         
-        # Load existing work data if editing
         if work_id:
             self.load_work_data()
         
+        self._initialization_complete = True
+
         self.window.transient(parent)
         self.window.grab_set()
     
@@ -75,7 +72,8 @@ class WorkDetailsEditor:
         self.firm_rates_tab.load_firm_rates(item_id, item_name)
     
     def update_schedule_item_display_costs(self):
-        # Called by IndividualFirmRatesTab when rates are updated
+        if not self._initialization_complete:
+            return
         self.schedule_items_tab._load_schedule_items()
     
     def populate_reference_firm_combobox(self):
@@ -84,4 +82,4 @@ class WorkDetailsEditor:
         if firms and not self.reference_firm_var.get():
             self.reference_firm_var.set(firms[0])
         elif not firms:
-            self.reference_firm_var.set("")  # Clear if no firms available
+            self.reference_firm_var.set("")

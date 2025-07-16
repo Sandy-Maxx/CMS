@@ -1,73 +1,20 @@
-(venv) PS D:\CMS\CMS> PYTHON MAIN.PY
-format_as_words is False. Result before currency formatting: 125564
-format_as_words is False. Result before currency formatting: 22601.52
-format_as_words is False. Result before currency formatting: 22600
-format_as_words is False. Result before currency formatting: 22600
-format_as_words is False. Result before currency formatting: 148170
-format_as_words is True. Result before words conversion: 148170
-format_as_words is False. Result before currency formatting: 6278.20
-format_as_words is False. Result before currency formatting: 6300
-format_as_words is False. Result before currency formatting: 6278.20
-format_as_words is True. Result before words conversion: 6300  
-format_as_words is False. Result before currency formatting: 125564
-format_as_words is False. Result before currency formatting: 25112.8
-format_as_words is True. Result before words conversion: 25112.8
-format_as_words is False. Result before currency formatting: 25110
-format_as_words is False. Result before currency formatting: 25100
-format_as_words is False. Result before currency formatting: 62782.0
-format_as_words is True. Result before words conversion: 62782.0
-format_as_words is False. Result before currency formatting: 62780
-format_as_words is False. Result before currency formatting: 62800
-format_as_words is False. Result before currency formatting: 125564
-format_as_words is True. Result before words conversion: 125564
-format_as_words is False. Result before currency formatting: 125564
-format_as_words is False. Result before currency formatting: 25112.8
-format_as_words is False. Result before currency formatting: 25110
-format_as_words is False. Result before currency formatting: 25100
-format_as_words is True. Result before words conversion: 25112.8
-format_as_words is False. Result before currency formatting: 62780
-format_as_words is True. Result before words conversion: 62780 
-format_as_words is False. Result before currency formatting: 125564
-format_as_words is False. Result before currency formatting: 523658
-format_as_words is False. Result before currency formatting: 789456
-format_as_words is False. Result before currency formatting: 148165.52
-format_as_words is False. Result before currency formatting: 62782.0
-format_as_words is False. Result before currency formatting: 1047316
-format_as_words is False. Result before currency formatting: 592092.00
-format_as_words is True. Result before words conversion: 125564
-format_as_words is True. Result before words conversion: 523658
-format_as_words is True. Result before words conversion: 148165.52
-format_as_words is True. Result before words conversion: 62782.0
-format_as_words is True. Result before words conversion: 1184184.0
-format_as_words is False. Result before currency formatting: 148170
-format_as_words is False. Result before currency formatting: 148200
-format_as_words is False. Result before currency formatting: 696470
-format_as_words is False. Result before currency formatting: 1578900
-format_as_words is True. Result before words conversion: 148170
-format_as_words is True. Result before words conversion: 148200
-format_as_words is True. Result before words conversion: 1309150
-format_as_words is True. Result before words conversion: 844700
-format_as_words is False. Result before currency formatting: 125564
-format_as_words is False. Result before currency formatting: 523658
-format_as_words is False. Result before currency formatting: 789456
-format_as_words is False. Result before currency formatting: 125564
-format_as_words is False. Result before currency formatting: 22601.52
-format_as_words is False. Result before currency formatting: 226015.20
-format_as_words is False. Result before currency formatting: 2260152.00
-format_as_words is False. Result before currency formatting: 14816552.00
-format_as_words is True. Result before words conversion: 14816552.00
-format_as_words is False. Result before currency formatting: 6278.20
-format_as_words is True. Result before words conversion: 627820.00
-format_as_words is False. Result before currency formatting: 789456
-format_as_words is False. Result before currency formatting: 1184184.0
-format_as_words is False. Result before currency formatting: 118418400.0
-format_as_words is True. Result before words conversion: 118418400.0
-format_as_words is False. Result before currency formatting: 148165.52
-format_as_words is False. Result before currency formatting: 62782.0
-format_as_words is False. Result before currency formatting: 1047316
-format_as_words is False. Result before currency formatting: 1481655.20
-format_as_words is False. Result before currency formatting: 6278200.0
-format_as_words is True. Result before words conversion: 125564
-format_as_words is True. Result before words conversion: 148165.52
-format_as_words is True. Result before words conversion: 14816552.00
-(venv) PS D:\CMS\CMS> 
+now template engine is working fine. lets │ 
+│     move on to ad some extra work level user │ 
+│     variables. in the works details screen   │ 
+│    there are schedule items, qty unit etc.   │ 
+│    at last there is a column named           │ 
+│    "variation". it gives a way to user to    │ 
+│    vary the qty of each schedule on later    │ 
+│    stages after work has been created. under │ 
+│     this column user will put the updated    │ 
+│    qty of each schedule (note that this will │ 
+│     not update the original qty of the work  │ 
+│    but add additional info that at later     │ 
+│    stage the qty is varied to that number).  │ 
+│    this variation in qty is a property of    │ 
+│    individual work and must be saved in the  │ 
+│    work model for later use. there may be    │ 
+│    multiple variations in the same work viz  │ 
+│    variation 1, variation 2 etc. later we    │ 
+│    will use this data in variation,          │ 
+│    comparision, vitiation reports for calculations. i need this variation column in a separate file in appropriate folder for modularity. so in ui there is no need to show the variation column by default. give user a way to add variation instead. 

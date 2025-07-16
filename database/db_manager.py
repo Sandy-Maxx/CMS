@@ -48,6 +48,17 @@ def create_tables():
             UNIQUE(template_name, placeholder_name)
         )
     """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS schedule_item_variations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            schedule_item_id INTEGER,
+            variation_name TEXT NOT NULL,
+            quantity REAL NOT NULL,
+            FOREIGN KEY (schedule_item_id) REFERENCES schedule_items(id),
+            UNIQUE(schedule_item_id, variation_name)
+        )
+    """)
     
     conn.commit()
     conn.close()
@@ -101,17 +112,10 @@ def get_works_by_name(search_term):
     conn.close()
     return [(w[0], w[1], w[2]) for w in works]
 
-def get_works_by_name(search_term):
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name, description FROM works WHERE name LIKE ?", ('%' + search_term + '%',))
-    works = cursor.fetchall()
-    conn.close()
-    return [(w[0], w[1], w[2]) for w in works]
-
 def delete_work(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
+    cursor.execute("DELETE FROM schedule_item_variations WHERE schedule_item_id IN (SELECT id FROM schedule_items WHERE work_id = ?)", (work_id,))
     cursor.execute("DELETE FROM firm_rates WHERE schedule_item_id IN (SELECT id FROM schedule_items WHERE work_id = ?)", (work_id,))
     cursor.execute("DELETE FROM schedule_items WHERE work_id = ?", (work_id,))
     cursor.execute("DELETE FROM works WHERE id = ?", (work_id,))
@@ -160,6 +164,7 @@ def get_schedule_item_by_id(item_id):
 def delete_schedule_item(item_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
+    cursor.execute("DELETE FROM schedule_item_variations WHERE schedule_item_id = ?", (item_id,))
     cursor.execute("DELETE FROM firm_rates WHERE schedule_item_id = ?", (item_id,))
     cursor.execute("DELETE FROM schedule_items WHERE parent_item_id = ?", (item_id,))
     cursor.execute("DELETE FROM schedule_items WHERE id = ?", (item_id,))
@@ -285,3 +290,53 @@ def get_template_data(template_name):
     data = cursor.fetchall()
     conn.close()
     return {d[0]: d[1] for d in data}
+
+def add_schedule_item_variation(schedule_item_id, variation_name, quantity):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO schedule_item_variations (schedule_item_id, variation_name, quantity) VALUES (?, ?, ?)",
+            (schedule_item_id, variation_name, quantity)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    except sqlite3.IntegrityError:
+        return None
+    finally:
+        conn.close()
+
+def update_schedule_item_variation(schedule_item_id, variation_name, quantity):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE schedule_item_variations SET quantity = ? WHERE schedule_item_id = ? AND variation_name = ?",
+        (quantity, schedule_item_id, variation_name)
+    )
+    conn.commit()
+    conn.close()
+    return cursor.rowcount > 0
+
+def get_schedule_item_variations(schedule_item_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT variation_name, quantity FROM schedule_item_variations WHERE schedule_item_id = ?",
+        (schedule_item_id,)
+    )
+    variations = cursor.fetchall()
+    conn.close()
+    return {v[0]: v[1] for v in variations}
+
+def get_variation_names_for_work(work_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT DISTINCT siv.variation_name
+        FROM schedule_item_variations siv
+        JOIN schedule_items si ON siv.schedule_item_id = si.id
+        WHERE si.work_id = ?
+    """, (work_id,))
+    variation_names = cursor.fetchall()
+    conn.close()
+    return [v[0] for v in variation_names]
