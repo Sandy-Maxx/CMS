@@ -20,22 +20,23 @@ class ComparisonExcelStructure:
             second_row.extend(['Unit Rate', 'Total Cost in Rs.'])
         header_rows.append(second_row)
 
-        # Add Rebate and Total after Rebate rows to header structure
-        rebate_row_1 = ['Rebate', '', '']
-        rebate_row_2 = ['', '', '']
+        # Add Rebate in % row
+        rebate_percentage_row = ['Rebate in %', '', '']
         for firm_name in self.firm_names:
-            rebate_row_1.extend(['', '']) # Placeholder for merged cells
-            rebate_row_2.extend([f'{firm_name} - Rebate', f'{firm_name} - Rebate (%)'])
-        header_rows.append(rebate_row_1)
-        header_rows.append(rebate_row_2)
+            rebate_percentage_row.extend(['', '']) # Placeholder for two columns per firm
+        header_rows.append(rebate_percentage_row)
 
-        total_after_rebate_row_1 = ['Total after Rebate', '', '']
-        total_after_rebate_row_2 = ['', '', '']
+        # Add Rebate in ₹ row
+        rebate_amount_row = ['Rebate in ₹', '', '']
         for firm_name in self.firm_names:
-            total_after_rebate_row_1.extend(['', '']) # Placeholder for merged cells
-            total_after_rebate_row_2.extend([f'{firm_name} - Total after Rebate', ''])
-        header_rows.append(total_after_rebate_row_1)
-        header_rows.append(total_after_rebate_row_2)
+            rebate_amount_row.extend(['', '']) # Placeholder for two columns per firm
+        header_rows.append(rebate_amount_row)
+
+        # Add Total after Rebate row
+        total_after_rebate_row = ['Total after Rebate', '', '']
+        for firm_name in self.firm_names:
+            total_after_rebate_row.extend(['', '']) # Placeholder for two columns per firm
+        header_rows.append(total_after_rebate_row)
 
         return header_rows
 

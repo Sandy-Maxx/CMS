@@ -142,36 +142,38 @@ class ComparisonExporter:
             worksheet.write_formula(total_cost_gst_row_idx, total_cost_col_idx, formula)
         current_summary_row += 1
 
-        # --- Rebate row ---
-        rebate_row_idx = current_summary_row
-        worksheet.write(rebate_row_idx, 1, 'Rebate') # Description column
-        # For rebate, we need to find the column for 'Firm Name - Rebate'
-        firm_rebate_col_indices = {}
-        col_idx_counter = 3 # Start after SN, Description, Qty
+        # --- Rebate in % row ---
+        rebate_percentage_row_idx = current_summary_row
+        worksheet.write(rebate_percentage_row_idx, 1, 'Rebate in %') # Description column
         for firm_name in firm_names:
-            col_idx_counter += 1 # Unit Rate
-            col_idx_counter += 1 # Total Cost
-            firm_rebate_col_indices[firm_name] = col_idx_counter
-            col_idx_counter += 1 # Rebate
-            col_idx_counter += 1 # Rebate (%)
+            total_cost_col_idx = firm_total_cost_col_indices[firm_name]
+            worksheet.write(rebate_percentage_row_idx, total_cost_col_idx, 0) # Initial value 0 for user input
+        current_summary_row += 1
 
+        # --- Rebate in ₹ row ---
+        rebate_amount_row_idx = current_summary_row
+        worksheet.write(rebate_amount_row_idx, 1, 'Rebate in ₹') # Description column
         for firm_name in firm_names:
-            rebate_col_idx = firm_rebate_col_indices[firm_name]
-            worksheet.write(rebate_row_idx, rebate_col_idx, 0) # Initial value 0
+            total_cost_col_idx = firm_total_cost_col_indices[firm_name]
+            total_cost_gst_cell_letter = get_column_letter(total_cost_col_idx)
+            
+            # The row for Total Cost (including GST) is total_cost_gst_row_idx + 1 (Excel 1-indexed)
+            # The row for Rebate in % is rebate_percentage_row_idx + 1 (Excel 1-indexed)
+            formula = f'={total_cost_gst_cell_letter}{total_cost_gst_row_idx + 1}*{total_cost_gst_cell_letter}{rebate_percentage_row_idx + 1}'
+            worksheet.write_formula(rebate_amount_row_idx, total_cost_col_idx, formula)
         current_summary_row += 1
 
         # --- Total after Rebate row ---
         total_after_rebate_row_idx = current_summary_row
         worksheet.write(total_after_rebate_row_idx, 1, 'Total after Rebate') # Description column
         for firm_name in firm_names:
-            total_cost_gst_col_idx = firm_total_cost_col_indices[firm_name]
-            rebate_col_idx = firm_rebate_col_indices[firm_name]
-
-            total_cost_gst_cell_letter = get_column_letter(total_cost_gst_col_idx)
-            rebate_cell_letter = get_column_letter(rebate_col_idx)
-
-            formula = f'={total_cost_gst_cell_letter}{total_cost_gst_row_idx + 1}-{rebate_cell_letter}{rebate_row_idx + 1}'
-            worksheet.write_formula(total_after_rebate_row_idx, total_cost_gst_col_idx, formula)
+            total_cost_col_idx = firm_total_cost_col_indices[firm_name]
+            total_cost_gst_cell_letter = get_column_letter(total_cost_col_idx)
+            
+            # The row for Total Cost (including GST) is total_cost_gst_row_idx + 1 (Excel 1-indexed)
+            # The row for Rebate in ₹ is rebate_amount_row_idx + 1 (Excel 1-indexed)
+            formula = f'={total_cost_gst_cell_letter}{total_cost_gst_row_idx + 1}-{total_cost_gst_cell_letter}{rebate_amount_row_idx + 1}'
+            worksheet.write_formula(total_after_rebate_row_idx, total_cost_col_idx, formula)
         current_summary_row += 1
 
         # --- Inter se position row ---
@@ -217,8 +219,10 @@ class ComparisonExporter:
                 while merge_end_col + 1 < len(header_rows[0]) and header_rows[0][merge_end_col + 1] == '':
                     merge_end_col += 1
                 worksheet.merge_range(0, col_idx, 0, merge_end_col, cell_value)
-            elif cell_value == 'Rebate':
-                worksheet.merge_range(0, col_idx, 0, col_idx + len(firm_names) * 2 - 1, cell_value) # Merge across all firm columns
+            elif cell_value == 'Rebate in %':
+                worksheet.merge_range(0, col_idx, 0, col_idx + len(firm_names) * 2 - 1, cell_value) # Merge across all firm columns (2 per firm)
+            elif cell_value == 'Rebate in ₹':
+                worksheet.merge_range(0, col_idx, 0, col_idx + len(firm_names) * 2 - 1, cell_value) # Merge across all firm columns (2 per firm)
             elif cell_value == 'Total after Rebate':
                 worksheet.merge_range(0, col_idx, 0, col_idx + len(firm_names) * 2 - 1, cell_value) # Merge across all firm columns
 
@@ -247,33 +251,26 @@ class ComparisonExporter:
             worksheet.set_column(current_col, current_col, 15, currency_format)
             current_col += 1
 
-        # Apply formatting for Rebate and Total after Rebate rows
-        # These rows are at the bottom of the summary section
-        # The row indices are relative to the start of the summary section
-        # Total row is at last_data_row - 4
-        # GST row is at last_data_row - 3
-        # Total Cost (including GST) is at last_data_row - 2
-        # Rebate row is at last_data_row - 1
-        # Total after Rebate row is at last_data_row
-
-        rebate_row_idx = last_data_row - 1
+        # Apply formatting for Rebate in % and Rebate in ₹ rows
+        rebate_percentage_row_idx = last_data_row - 2
+        rebate_amount_row_idx = last_data_row - 1
         total_after_rebate_row_idx = last_data_row
 
-        # Apply currency format to Rebate and Total after Rebate columns
         current_col = 3 # Start after SN, Description, Qty
         for firm_name in firm_names:
             # Skip Unit Rate and Total Cost columns for the main data rows
             current_col += 2
 
-            # Rebate (user input) - currency format
-            worksheet.write(rebate_row_idx, current_col, 0, currency_format) # Write 0 and apply format
+            # Rebate in % - percentage format
+            worksheet.write(rebate_percentage_row_idx, current_col, '', percentage_format) # Apply format to user input cell
             current_col += 1
-            # Rebate (%) - percentage format
-            worksheet.write(rebate_row_idx, current_col, 0, percentage_format) # Write 0 and apply format
+
+            # Rebate in ₹ - currency format
+            worksheet.write(rebate_amount_row_idx, current_col, '', currency_format) # Apply format to formula cell
             current_col += 1
 
         current_col = 3 # Reset for Total after Rebate
         for firm_name in firm_names:
             current_col += 2 # Skip Unit Rate and Total Cost columns for the main data rows
             worksheet.write(total_after_rebate_row_idx, current_col, '', currency_format) # Apply format to formula cell
-            current_col += 2 # Skip the percentage column
+            current_col += 2 # Skip the percentage and rebate amount columns
