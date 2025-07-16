@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from database.db_manager import get_work_by_id, get_all_unique_firm_names
+from database.db_manager import get_work_by_id, get_all_unique_firm_names, get_unique_firm_names_by_work_id
 from utils.helpers import show_toast, validate_numeric_input
 from utils.styles import configure_styles
 from .work_details_tab import WorkDetailsTab
@@ -49,8 +49,6 @@ class WorkDetailsEditor:
         self.window.grid_rowconfigure(0, weight=1)
         self.window.grid_columnconfigure(0, weight=1)
         
-        self.populate_reference_firm_combobox()
-        
         if work_id:
             self.load_work_data()
         
@@ -64,6 +62,7 @@ class WorkDetailsEditor:
         if work_data:
             self.work_details_tab.load_work_data(work_data)
             self.schedule_items_tab._load_schedule_items()
+            self.populate_reference_firm_combobox() # Call after work_id is set
     
     def load_firm_rates(self, item_id, item_name):
         self.firm_rates_tab.load_firm_rates(item_id, item_name)
@@ -77,7 +76,12 @@ class WorkDetailsEditor:
         self.schedule_items_tab._load_schedule_items()
     
     def populate_reference_firm_combobox(self):
-        firms = get_all_unique_firm_names()
+        work_id = self.work_id_var.get()
+        if work_id:
+            firms = get_unique_firm_names_by_work_id(work_id)
+        else:
+            firms = [] # No work selected, no firms to show
+
         self.schedule_items_tab.reference_firm_combobox['values'] = firms
         if firms and not self.reference_firm_var.get():
             self.reference_firm_var.set(firms[0])

@@ -1,0 +1,142 @@
+[
+  {
+    "SN": "",
+    "                                                            Description": "",
+    "Qty": "No./ Lot / Set",
+    "{{FIRM_1}}": "1/4",
+    "": "",
+    "{{FIRM_2}}": "2/4",
+    "{{FIRM_3}}": "3/4",
+    "{{FIRM_4}}": "4/4"
+  },
+  {
+    "SN": "",
+    "                                                            Description": "",
+    "Qty": "",
+    "{{FIRM_1}}": "Unit Rate",
+    "": "Total Cost in Rs.",
+    "{{FIRM_2}}": "Rate in Rs.",
+    "{{FIRM_3}}": "Rate in Rs.",
+    "{{FIRM_4}}": "Rate in Rs."
+  },
+  {
+    "SN": "A",
+    "                                                            Description": " Repairing and re-commissioning with replacement of faulty parts of battery cell electrolyte neutralization plant  ",
+    "Qty": "",
+    "{{FIRM_1}}": "",
+    "": "",
+    "{{FIRM_2}}": "",
+    "{{FIRM_3}}": "",
+    "{{FIRM_4}}": ""
+  },
+  {
+    "SN": "1",
+    "                                                            Description": " Replacement of Feed Pump ",
+    "Qty": "1",
+    "{{FIRM_1}}": "₹42,500",
+    "": "",
+    "{{FIRM_2}}": "₹45,800",
+    "{{FIRM_3}}": "₹48,500",
+    "{{FIRM_4}}": ""
+  },
+  {
+    "SN": "2",
+    "                                                            Description": " Replacement of pH Sensor ",
+    "Qty": "1",
+    "{{FIRM_1}}": "₹41,700",
+    "": "",
+    "{{FIRM_2}}": "₹44,900",
+    "{{FIRM_3}}": "₹45,200",
+    "{{FIRM_4}}": ""
+  },
+  {
+    "SN": "3",
+    "                                                            Description": " Replacement of Pipe & Fittings ",
+    "Qty": "1",
+    "{{FIRM_1}}": "₹19,200",
+    "": "",
+    "{{FIRM_2}}": "₹22,750",
+    "{{FIRM_3}}": "₹22,800",
+    "{{FIRM_4}}": ""
+  },
+  {
+    "SN": "4",
+    "                                                            Description": " Servicing and Repairing of Agitator  ",
+    "Qty": "1",
+    "{{FIRM_1}}": "₹19,300",
+    "": "",
+    "{{FIRM_2}}": "₹20,900",
+    "{{FIRM_3}}": "₹20,200",
+    "{{FIRM_4}}": ""
+  },
+  {
+    "SN": "5",
+    "                                                            Description": " Servicing and Repairing Electrical Panel ",
+    "Qty": "1",
+    "{{FIRM_1}}": "₹24,100",
+    "": "",
+    "{{FIRM_2}}": "₹25,200",
+    "{{FIRM_3}}": "₹26,500",
+    "{{FIRM_4}}": ""
+  },
+  {
+    "SN": "6",
+    "                                                            Description": " Painting of Plant along with supply of paint ",
+    "Qty": "1",
+    "{{FIRM_1}}": "₹18,800",
+    "": "",
+    "{{FIRM_2}}": "₹20,000",
+    "{{FIRM_3}}": "₹19,500",
+    "{{FIRM_4}}": ""
+  },
+  {
+    "SN": "7",
+    "                                                            Description": " Re-commissioning Charges ",
+    "Qty": "1",
+    "{{FIRM_1}}": "₹45,200",
+    "": "",
+    "{{FIRM_2}}": "₹48,000",
+    "{{FIRM_3}}": "₹49,500",
+    "{{FIRM_4}}": ""
+  },
+  {
+    "SN": "Total",
+    "                                                            Description": "",
+    "Qty": "",
+    "{{FIRM_1}}": "₹210,800",
+    "": "",
+    "{{FIRM_2}}": "₹227,550",
+    "{{FIRM_3}}": "₹232,200",
+    "{{FIRM_4}}": "   Rs.  4,06,400 /- "
+  },
+  {
+    "SN": "GST @18%  (Rs)",
+    "                                                            Description": "",
+    "Qty": "",
+    "{{FIRM_1}}": "₹37,944",
+    "": "",
+    "{{FIRM_2}}": "₹40,959",
+    "{{FIRM_3}}": "₹41,796",
+    "{{FIRM_4}}": " Rs. 73,152 /- "
+  },
+  {
+    "SN": "Total Cost (All Inclusive)   (Rs)",
+    "                                                            Description": "",
+    "Qty": "",
+    "{{FIRM_1}}": "₹248,744",
+    "": "",
+    "{{FIRM_2}}": "₹268,509",
+    "{{FIRM_3}}": "₹273,996",
+    "{{FIRM_4}}": "    Rs. 4,79,552 /- "
+  },
+  {
+    "SN": "Inter se position",
+    "                                                            Description": "",
+    "Qty": "",
+    "{{FIRM_1}}": "1",
+    "": "",
+    "{{FIRM_2}}": "2",
+    "{{FIRM_3}}": "3",
+    "{{FIRM_4}}": "4"
+  }
+]

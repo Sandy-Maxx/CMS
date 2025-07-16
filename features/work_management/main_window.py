@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 from database import db_manager
 from utils import helpers as utils_helpers
 from utils.helpers import load_icon
@@ -8,6 +8,7 @@ from .work_search_bar import WorkSearchBar
 from features.excel_export.excel_exporter import export_work_to_excel
 from features.variation.Variation_report import VariationReportDialog
 from features.vitiation.Vitiation_report import VitiationReportDialog
+from features.comparison.comparison_exporter import ComparisonExporter
 from datetime import datetime
 from features.template_engine.template_engine_tab import TemplateEngineTab
 
@@ -74,7 +75,25 @@ class MainWindow:
             context_menu = tk.Menu(self.root, tearoff=0)
             context_menu.add_command(label="Export Variation Report", command=self._export_variation_report)
             context_menu.add_command(label="Export Vitiation Report", command=self._export_vitiation_report)
+            context_menu.add_command(label="Export Comparison Report", command=self._export_comparison_report)
+            context_menu.add_separator()
+            context_menu.add_command(label="Delete Work", command=self._delete_work)
             context_menu.post(event.x_root, event.y_root)
+
+    def _delete_work(self):
+        selected_item = self.works_tree.selection()
+        if not selected_item:
+            utils_helpers.show_toast(self.root, "Please select a work to delete.", "warning")
+            return
+        work_id = int(selected_item[0])
+        work_name = self.works_tree.item(selected_item[0], "values")[0]
+
+        if messagebox.askyesno("Delete Work", f"Are you sure you want to delete work '{work_name}' and all its associated data?"):
+            if db_manager.delete_work(work_id):
+                utils_helpers.show_toast(self.root, f"Work '{work_name}' deleted successfully.", "success")
+                self.load_works()
+            else:
+                utils_helpers.show_toast(self.root, f"Failed to delete work '{work_name}'.", "error")
 
     def _export_variation_report(self):
         selected_item = self.works_tree.selection()
@@ -91,6 +110,33 @@ class MainWindow:
             return
         work_id = int(selected_item[0])
         VitiationReportDialog(self.root, work_id)
+
+    def _export_comparison_report(self):
+        selected_item = self.works_tree.selection()
+        if not selected_item:
+            utils_helpers.show_toast(self.root, "Please select a work to generate Comparison Report.", "warning")
+            return
+        work_id = int(selected_item[0])
+        work_details = db_manager.get_work_by_id(work_id)
+        if not work_details:
+            utils_helpers.show_toast(self.root, "Failed to retrieve work details.", "error")
+            return
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            filetypes=[("Excel files", "*.xlsx")],
+            initialfile=f"{work_details['work_name'].replace(' ', '_')}_Comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        )
+        if not file_path:
+            utils_helpers.show_toast(self.root, "Export cancelled.", "info")
+            return
+        try:
+            exporter = ComparisonExporter(work_id)
+            exporter.export_to_excel(file_path)
+            utils_helpers.show_toast(self.root, f"Comparison report exported successfully: {file_path}", "success")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            utils_helpers.show_toast(self.root, f"Error exporting comparison report: {e}", "error")
 
     def load_works(self, search_query=None):
         for item in self.works_tree.get_children():

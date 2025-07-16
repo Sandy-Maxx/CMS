@@ -115,12 +115,19 @@ def get_works_by_name(search_term):
 def delete_work(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM schedule_item_variations WHERE schedule_item_id IN (SELECT id FROM schedule_items WHERE work_id = ?)", (work_id,))
-    cursor.execute("DELETE FROM firm_rates WHERE schedule_item_id IN (SELECT id FROM schedule_items WHERE work_id = ?)", (work_id,))
-    cursor.execute("DELETE FROM schedule_items WHERE work_id = ?", (work_id,))
-    cursor.execute("DELETE FROM works WHERE id = ?", (work_id,))
-    conn.commit()
-    conn.close()
+    try:
+        cursor.execute("DELETE FROM schedule_item_variations WHERE schedule_item_id IN (SELECT id FROM schedule_items WHERE work_id = ?)", (work_id,))
+        cursor.execute("DELETE FROM firm_rates WHERE schedule_item_id IN (SELECT id FROM schedule_items WHERE work_id = ?)", (work_id,))
+        cursor.execute("DELETE FROM schedule_items WHERE work_id = ?", (work_id,))
+        cursor.execute("DELETE FROM works WHERE id = ?", (work_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error as e:
+        print(f"Database error during delete_work: {e}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
 
 def add_schedule_item(work_id, item_name, unit, quantity, parent_item_id=None):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -249,6 +256,19 @@ def get_all_unique_firm_names():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT DISTINCT firm_name FROM firm_rates")
+    firms = cursor.fetchall()
+    conn.close()
+    return [f[0] for f in firms]
+
+def get_unique_firm_names_by_work_id(work_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT DISTINCT fr.firm_name
+        FROM firm_rates fr
+        JOIN schedule_items si ON fr.schedule_item_id = si.id
+        WHERE si.work_id = ?
+    """, (work_id,))
     firms = cursor.fetchall()
     conn.close()
     return [f[0] for f in firms]
