@@ -13,76 +13,82 @@ class VitiationReportDialog(tk.Toplevel):
         self.work_details = db_manager.get_work_by_id(work_id)
         self.work_name = self.work_details['work_name'] if self.work_details else "N/A"
         self.title(f"Generate Vitiation Report for: {self.work_name}")
-        self.geometry("1000x700")
-        self.minsize(800, 600)
+        self.geometry("500x400") # Increased size for better visibility
+        self.minsize(450, 350)
         self.transient(parent)
         self.grab_set()
-        self.processed_schedule_items = []
         self.selected_firms = []
-        self.vcmd_numeric = self.register(utils_helpers.validate_numeric_input)
-        self.edit_entry = None
-        self.edit_item_id = None
         self._create_widgets()
         self._load_data()
 
     def _create_widgets(self):
         main_frame = ttk.Frame(self, padding=10)
-        main_frame.pack(fill=tk.BOTH, expand=True)
-        ttk.Label(main_frame, text=f"Work: {self.work_name}", font=('Segoe UI', 11, 'bold')).pack(fill=tk.X, pady=(0, 10))
-        schedule_frame = ttk.LabelFrame(main_frame, text="Schedule Items & New Quantities", padding=10)
-        schedule_frame.pack(fill=tk.BOTH, expand=True, pady=(5, 10))
-        self.schedule_tree = ttk.Treeview(schedule_frame, columns=("sn", "description", "original_qty", "new_qty", "unit", "unit_rate", "total_cost_before", "total_cost_after"), show="headings")
-        self.schedule_tree.pack(fill=tk.BOTH, expand=True)
+        main_frame.grid(row=0, column=0, sticky="nsew")
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
-        self.schedule_tree.heading("sn", text="SN")
-        self.schedule_tree.heading("description", text="Schedule Items")
-        self.schedule_tree.heading("original_qty", text="Quantity (Before Variation)")
-        self.schedule_tree.heading("new_qty", text="Quantity (After Variation)")
-        self.schedule_tree.heading("unit", text="Unit")
-        self.schedule_tree.heading("unit_rate", text="Unit Rate")
-        self.schedule_tree.heading("total_cost_before", text="Total Cost (Before Variation)")
-        self.schedule_tree.heading("total_cost_after", text="Total Cost (After Variation)")
+        ttk.Label(main_frame, text=f"Work: {self.work_name}", font=('Segoe UI', 11, 'bold')).grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 10))
 
-        self.schedule_tree.column("sn", width=50, stretch=tk.NO, anchor=tk.CENTER)
-        self.schedule_tree.column("description", width=300, stretch=tk.YES, anchor=tk.W)
-        self.schedule_tree.column("original_qty", width=120, stretch=tk.NO, anchor=tk.CENTER)
-        self.schedule_tree.column("new_qty", width=120, stretch=tk.NO, anchor=tk.CENTER)
-        self.schedule_tree.column("unit", width=80, stretch=tk.NO, anchor=tk.CENTER)
-        self.schedule_tree.column("unit_rate", width=100, stretch=tk.NO, anchor=tk.CENTER)
-        self.schedule_tree.column("total_cost_before", width=120, stretch=tk.NO, anchor=tk.CENTER)
-        self.schedule_tree.column("total_cost_after", width=120, stretch=tk.NO, anchor=tk.CENTER)
-        vsb = ttk.Scrollbar(self.schedule_tree, orient="vertical", command=self.schedule_tree.yview)
-        hsb = ttk.Scrollbar(self.schedule_tree, orient="horizontal", command=self.schedule_tree.xview)
-        self.schedule_tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
-        vsb.pack(side="right", fill="y")
-        hsb.pack(side="bottom", fill="x")
-        self.schedule_tree.bind("<Double-1>", self._on_tree_double_click)
+        # Variation Selection
+        variation_frame = ttk.LabelFrame(main_frame, text="Select Variation Column", padding=10)
+        variation_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(5, 10))
+        self.variation_names = db_manager.get_variation_names_for_work(self.work_id)
+        self.selected_variation_var = tk.StringVar()
+        if self.variation_names:
+            self.selected_variation_var.set(self.variation_names[0])
+        self.variation_combobox = ttk.Combobox(variation_frame, textvariable=self.selected_variation_var, values=self.variation_names, state="readonly")
+        self.variation_combobox.pack(fill=tk.X, padx=5, pady=5)
+        if not self.variation_names:
+            self.variation_combobox.set("No variations found")
+            self.variation_combobox.config(state="disabled")
+
         firm_selection_frame = ttk.LabelFrame(main_frame, text="Select Firms for Report", padding=10)
-        firm_selection_frame.pack(fill=tk.X, pady=(5, 10))
+        firm_selection_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(5, 10))
         self.firm_listbox = tk.Listbox(firm_selection_frame, selectmode=tk.MULTIPLE, exportselection=False, height=5)
         self.firm_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         firm_scrollbar = ttk.Scrollbar(firm_selection_frame, orient=tk.VERTICAL, command=self.firm_listbox.yview)
         self.firm_listbox.config(yscrollcommand=firm_scrollbar.set)
         firm_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Configure firm_selection_frame to expand
+        main_frame.grid_rowconfigure(2, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(1, weight=1)
+
         button_frame = ttk.Frame(main_frame, padding=5)
-        button_frame.pack(fill=tk.X, pady=(10, 0))
+        button_frame.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(10, 0))
         ttk.Button(button_frame, text="Generate Report", command=self._generate_report, style='Primary.TButton').pack(side=tk.RIGHT, padx=5)
         ttk.Button(button_frame, text="Cancel", command=self.destroy, style='Secondary.TButton').pack(side=tk.RIGHT, padx=5)
 
     def _load_data(self):
-        self._load_schedule_items_with_hierarchy()
         self._load_firms()
 
-    def _load_schedule_items_with_hierarchy(self):
-        for iid in self.schedule_tree.get_children():
-            self.schedule_tree.delete(iid)
-        self.processed_schedule_items = []
+    def _load_firms(self):
+        # Load only firms that have quoted in the current work
+        firms_for_work = db_manager.get_unique_firm_names_by_work_id(self.work_id)
+        self.firm_listbox.delete(0, tk.END)
+        for firm in firms_for_work:
+            self.firm_listbox.insert(tk.END, firm)
+
+    def _generate_report(self):
+        selected_variation_name = self.selected_variation_var.get()
+        if not selected_variation_name or selected_variation_name == "No variations found":
+            utils_helpers.show_toast(self, "Please select a variation column.", "warning")
+            return
+
+        self.selected_firms = [self.firm_listbox.get(idx) for idx in self.firm_listbox.curselection()]
+        if not self.selected_firms:
+            utils_helpers.show_toast(self, "Please select at least one firm.", "warning")
+            return
+        
+        # Load schedule items directly here, as the treeview is removed
         all_items_from_db = db_manager.get_schedule_items(self.work_id)
+        processed_schedule_items = []
         item_map = {item['item_id']: dict(item) for item in all_items_from_db}
         for item_id, item_data in item_map.items():
             item_data['children'] = []
-            item_data['new_quantity'] = item_data['quantity'] # Initialize new_quantity with original
             item_data['firm_rates'] = db_manager.get_firm_rates(item_id)
+            item_data['variations'] = db_manager.get_schedule_item_variations(item_id) # Load variations
             item_data['level'] = 0
         for item_id, item_data in item_map.items():
             parent_id = item_data.get('parent_item_id')
@@ -90,143 +96,25 @@ class VitiationReportDialog(tk.Toplevel):
                 item_map[parent_id]['children'].append(item_data)
         root_items = [item for item in item_map.values() if item.get('parent_item_id') is None]
         root_items.sort(key=lambda x: x['item_name'])
-        def insert_and_process_recursive(items_list, parent_iid="", parent_sr_prefix="", level=0):
+
+        # Recursive function to flatten the hierarchy and add sr_no
+        def flatten_and_process_recursive(items_list, parent_sr_prefix=""):
             sr_counter = 1
             for item in items_list:
                 current_sr_no = f"{parent_sr_prefix}.{sr_counter}" if parent_sr_prefix else str(sr_counter)
                 sr_counter += 1
                 processed_item = item.copy()
-                processed_item['level'] = level
                 processed_item['sr_no'] = current_sr_no
-                self.processed_schedule_items.append(processed_item)
-                indent = "    " * level
-                display_description = f"{indent}{item['item_name']}"
-                self.schedule_tree.insert(parent_iid, tk.END, iid=item['item_id'], values=(display_description, item['unit'], item['quantity'], item['new_quantity']))
-                self.schedule_tree.item(item['item_id'], open=True)
+                processed_schedule_items.append(processed_item)
                 if item['children']:
                     item['children'].sort(key=lambda x: x['item_name'])
-                    insert_and_process_recursive(item['children'], item['item_id'], current_sr_no, level + 1)
-        insert_and_process_recursive(root_items)
+                    flatten_and_process_recursive(item['children'], current_sr_no)
+        
+        flatten_and_process_recursive(root_items)
 
-    def _load_firms(self):
-        all_firms = db_manager.get_all_unique_firm_names()
-        self.firm_listbox.delete(0, tk.END)
-        for firm in all_firms:
-            self.firm_listbox.insert(tk.END, firm)
-
-    def _on_tree_double_click(self, event):
-        if self.edit_entry:
-            self._save_inline_edit()
-            return
-        region = self.schedule_tree.identify_region(event.x, event.y)
-        if region != "cell":
-            return
-        column = self.schedule_tree.identify_column(event.x)
-        if column != '#4':  # '#4' corresponds to the 'new_qty' column
-            return
-        item_iid = self.schedule_tree.identify_row(event.y)
-        item_data = next((item for item in self.processed_schedule_items if item['item_id'] == int(item_iid)), None)
-        if item_data and item_data['quantity'] == 0:
-            utils_helpers.show_toast(self, "Cannot edit quantity for category/sub-category rows.", "info")
-            return
-        bbox = self.schedule_tree.bbox(item_iid, column)
-        if not bbox:
-            return
-        x, y, width, height = bbox
-        current_values = self.schedule_tree.item(item_iid, 'values')
-        col_index = list(self.schedule_tree["columns"]).index("new_qty")
-        current_value_str = str(current_values[col_index])
-        self.edit_entry = ttk.Entry(self.schedule_tree, validate="key", validatecommand=(self.vcmd_numeric, '%P'))
-        self.edit_entry.place(x=x, y=y, width=width, height=height)
-        self.edit_entry.insert(0, current_value_str)
-        self.edit_entry.focus_set()
-        self.edit_item_id = int(item_iid)
-        self.edit_entry.bind("<Return>", self._save_inline_edit)
-        self.edit_entry.bind("<FocusOut>", self._save_inline_edit)
-        self.edit_entry.bind("<Escape>", self._cancel_inline_edit)
-
-    def _save_inline_edit(self, event=None):
-        if not self.edit_entry:
-            return
-        new_qty_str = self.edit_entry.get().strip()
-        item_id = self.edit_item_id
-        self.edit_entry.destroy()
-        self.edit_entry = None
-        self.edit_item_id = None
-        if event and hasattr(event, 'keysym') and event.keysym == 'Escape':
-            utils_helpers.show_toast(self, "Inline edit cancelled.", "info")
-            return
-        if not new_qty_str:
-            found_item = False
-            for item in self.processed_schedule_items:
-                if item['item_id'] == item_id:
-                    item['new_quantity'] = item['quantity']
-                    current_values = list(self.schedule_tree.item(item_id, 'values'))
-                    current_values[3] = item['new_quantity']
-                    self.schedule_tree.item(item_id, values=current_values)
-                    utils_helpers.show_toast(self, f"New quantity for '{item['item_name']}' reverted to original.", "info")
-                    found_item = True
-                    break
-            if not found_item:
-                utils_helpers.show_toast(self, "Error: Item not found in data cache for empty quantity.", "error")
-            return
-        try:
-            new_quantity = float(new_qty_str)
-            if new_quantity < 0:
-                utils_helpers.show_toast(self, "New Quantity cannot be negative. Reverting.", "warning")
-                self._load_schedule_items_with_hierarchy()
-                return
-        except ValueError:
-            utils_helpers.show_toast(self, "Invalid Quantity. Please enter a number. Reverting.", "error")
-            self._load_schedule_items_with_hierarchy()
-            return
-        for item in self.processed_schedule_items:
-            if item['item_id'] == item_id:
-                item['new_quantity'] = new_quantity
-                current_values = list(self.schedule_tree.item(item_id, 'values'))
-                current_values[3] = new_quantity
-                self.schedule_tree.item(item_id, values=current_values)
-                utils_helpers.show_toast(self, f"New quantity for '{item['item_name']}' updated.", "success")
-                break
-        else:
-            utils_helpers.show_toast(self, "Error: Item not found in data cache.", "error")
-        self.schedule_tree.focus_set()
-
-    def _cancel_inline_edit(self, event=None):
-        if self.edit_entry:
-            self.edit_entry.destroy()
-            self.edit_entry = None
-            self.edit_item_id = None
-            utils_helpers.show_toast(self, "Inline edit cancelled.", "info")
-        self.schedule_tree.focus_set()
-
-    def _generate_report(self):
-        self.selected_firms = [self.firm_listbox.get(idx) for idx in self.firm_listbox.curselection()]
-        if not self.selected_firms:
-            utils_helpers.show_toast(self, "Please select at least one firm.", "warning")
-            return
-        if not self.processed_schedule_items:
+        if not processed_schedule_items:
             utils_helpers.show_toast(self, "No schedule items to report.", "warning")
             return
-
-        # Prepare data for export, including calculated total costs based on the selected firm
-        export_schedule_items = []
-        selected_firm_name = self.selected_firms[0] if self.selected_firms else None
-
-        for item in self.processed_schedule_items:
-            item_copy = item.copy()
-            # Find the unit rate for the selected firm for this item
-            unit_rate_for_selected_firm = 0.0
-            if selected_firm_name:
-                for firm_rate in item['firm_rates']:
-                    if firm_rate['firm_name'] == selected_firm_name:
-                        unit_rate_for_selected_firm = firm_rate['unit_rate']
-                        break
-            
-            item_copy['unit_rate'] = unit_rate_for_selected_firm
-            item_copy['total_cost_before'] = item['quantity'] * unit_rate_for_selected_firm
-            item_copy['total_cost_after'] = item['new_quantity'] * unit_rate_for_selected_firm
-            export_schedule_items.append(item_copy)
 
         file_path = filedialog.asksaveasfilename(
             defaultextension=".xlsx",
@@ -236,11 +124,13 @@ class VitiationReportDialog(tk.Toplevel):
         if not file_path:
             utils_helpers.show_toast(self, "Report generation cancelled.", "info")
             return
+        
         success, message = export_vitiation_data_to_excel(
             self.work_details,
-            export_schedule_items,
+            processed_schedule_items, # Use the locally processed items
             file_path,
-            self.selected_firms
+            self.selected_firms,
+            selected_variation_name # Pass the selected variation name
         )
         if success:
             utils_helpers.show_toast(self.parent, f"Vitiation report generated successfully: {file_path}", "success")

@@ -1,58 +1,48 @@
 from xlsxwriter.utility import xl_col_to_name
 
-def get_vitiation_table_columns(selected_firms):
-    columns = [
-        ("Sr. No.", "", ""),
-        ("Description", "", ""),
-        ("Quantity", "Before", ""),
-        ("Quantity", "After", ""),
-        ("Unit", "", ""),
-    ]
-    for firm in selected_firms:
-        columns.extend([
-            (firm, "Unit Rate", ""),
-            (firm, "Total Cost", "Before"),
-            (firm, "Total Cost", "After"),
-        ])
-    return columns
-
-def write_vitiation_excel_headers(worksheet, workbook, columns, selected_firms):
+def write_vitiation_excel_headers(worksheet, workbook, selected_firms):
     header_format = workbook.add_format({'bold': True, 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True})
+    
+    current_col = 0
 
-    # Create a dictionary to store merged cells for the top-level headers
-    merged_cells = {}
+    # SN (merged 3x1)
+    worksheet.merge_range(0, current_col, 2, current_col, "Sr. No.", header_format)
+    current_col += 1
 
-    col_idx = 0
-    for col_data in columns:
-        top_header, sub_header, _ = col_data # We'll handle sub_sub_header in the third row
+    # Description (merged 3x1)
+    worksheet.merge_range(0, current_col, 2, current_col, "Description", header_format)
+    current_col += 1
 
-        # Determine span for top-level headers
-        if top_header not in merged_cells:
-            merged_cells[top_header] = {'start': col_idx, 'end': col_idx}
-        else:
-            merged_cells[top_header]['end'] = col_idx
+    # Quantity (merged 2x2)
+    qty_start_col = current_col
+    worksheet.merge_range(0, qty_start_col, 1, qty_start_col + 1, "Quantity", header_format)
+    worksheet.write(2, qty_start_col, "Before Variation", header_format)
+    worksheet.write(2, qty_start_col + 1, "After Variation", header_format)
+    current_col += 2
 
-        # Write sub-headers (row 2, 0-indexed is row 1)
-        worksheet.write(1, col_idx, sub_header, header_format)
+    # Unit (merged 3x1)
+    worksheet.merge_range(0, current_col, 2, current_col, "Unit", header_format)
+    current_col += 1
 
-        # Write sub-sub-headers (row 3, 0-indexed is row 2) - currently empty based on your request
-        # If there were specific sub-sub-headers, they would be written here.
-        # For now, we'll just write an empty string with the format to maintain borders.
-        worksheet.write(2, col_idx, "", header_format)
+    # Firms and their sub-headers
+    for firm_name in selected_firms:
+        firm_start_col = current_col
+        # Firm Name (merged 1x3)
+        worksheet.merge_range(0, firm_start_col, 0, firm_start_col + 2, firm_name, header_format)
 
-        # Set column width (adjust as needed)
-        worksheet.set_column(col_idx, col_idx, 15)
-
-        col_idx += 1
-
-    # Merge top-level headers (row 1, 0-indexed is row 0)
-    for header, span in merged_cells.items():
-        start_col = span['start']
-        end_col = span['end']
-        if start_col != end_col:
-            worksheet.merge_range(0, start_col, 0, end_col, header, header_format)
-        else:
-            worksheet.write(0, start_col, header, header_format)
+        # Unit Rate (merged 2x1 vertically)
+        worksheet.merge_range(1, firm_start_col, 2, firm_start_col, "Unit Rate", header_format)
+        
+        # Total Cost (merged 1x2 horizontally)
+        total_cost_start_col = firm_start_col + 1
+        worksheet.merge_range(1, total_cost_start_col, 1, total_cost_start_col + 1, "Total Cost", header_format)
+        worksheet.write(2, total_cost_start_col, "Before Variation", header_format)
+        worksheet.write(2, total_cost_start_col + 1, "After Variation", header_format)
+        
+        current_col += 3 # Move to the start of the next firm's columns
 
     # Freeze the header rows
     worksheet.freeze_panes(3, 0) # Freeze rows 0, 1, 2 (3 rows) and no columns
+
+    # Return the total number of columns for data alignment later
+    return current_col
