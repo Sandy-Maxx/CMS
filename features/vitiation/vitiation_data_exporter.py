@@ -113,8 +113,8 @@ def export_vitiation_data_to_excel(work_details, schedule_items, output_path, se
                 col_after = firm_col_start_idx + 2 + (i * 3)
 
                 # Build the range string for RANK.EQ formula for 'Before Variation'
-                rank_range_str_before = ",".join([f"${get_col_letter(firm_col_start_idx + 1 + (j * 3))}${summary_row_start + 5 + 1}" for j in range(len(selected_firms))])
-                formula_rank_before = f"=\"L-\"&RANK.EQ({get_col_letter(col_before)}{summary_row_start + 5 + 1},({rank_range_str_before}),1)"
+                rank_range_str_before = ",".join([f"${get_col_letter(firm_col_start_idx + 1 + (j * 3))}${summary_row_start + 4 + 1}" for j in range(len(selected_firms))])
+                formula_rank_before = f"=\"L-\"&RANK.EQ({get_col_letter(col_before)}{summary_row_start + 4 + 1},({rank_range_str_before}),1)"
                 worksheet.write_formula(summary_row_start + 6, col_before, formula_rank_before, summary_format)
 
                 # Build the range string for RANK.EQ formula for 'After Variation'
