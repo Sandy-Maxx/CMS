@@ -29,6 +29,8 @@ def load_icon(icon_name, size=(36, 36)):
         print(f"Error loading icon {icon_name}: {e}")
         return None
 
+from tkinter import messagebox
+
 def show_toast(parent, message, toast_type="info"):
     toast = tk.Toplevel(parent)
     toast.overrideredirect(True)
@@ -52,6 +54,9 @@ def show_toast(parent, message, toast_type="info"):
     ttk.Label(frame, text=message, style=f"{toast_type.capitalize()}.Toast.TLabel", wraplength=280).pack(pady=10, padx=10)
     
     parent.after(3000, toast.destroy)
+
+def show_confirm_dialog(parent, message):
+    return messagebox.askyesno("Confirm", message, parent=parent)
 
 def validate_numeric_input(new_value):
     if new_value == "":

@@ -47,6 +47,7 @@ class ScheduleItemsTab(ttk.Frame):
         self.schedule_tree.configure(yscrollcommand=vsb.set)
         self.schedule_tree.bind("<Double-1>", self._on_double_click)
         self.schedule_tree.bind("<Button-3>", self._show_context_menu)
+        self.schedule_tree.bind("<Button-3>", self._show_header_context_menu, add='+')
         button_frame = ttk.Frame(self)
         button_frame.grid(row=3, column=0, columnspan=2, pady=10, sticky="ew")
         self.add_icon = load_icon("add")
@@ -73,9 +74,25 @@ class ScheduleItemsTab(ttk.Frame):
         self.context_menu.add_command(label="Edit Item", image=self.edit_icon, compound=tk.LEFT, command=self._edit_item)
         self.context_menu.add_command(label="Delete Item", image=self.delete_icon, compound=tk.LEFT, command=self._delete_item)
         self.context_menu.add_command(label="Edit Firm Rates", image=self.edit_icon, compound=tk.LEFT, command=self._edit_firm_rates)
+
+        self.header_context_menu = tk.Menu(self, tearoff=0)
+        self.header_context_menu.add_command(label="Delete Variation", image=self.delete_icon, compound=tk.LEFT, command=self._delete_variation)
+
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=1)
+
+    def _show_header_context_menu(self, event):
+        region = self.schedule_tree.identify("region", event.x, event.y)
+        if region == "heading":
+            column_id = self.schedule_tree.identify_column(event.x)
+            column_name = self.schedule_tree.heading(column_id)["text"]
+            if column_name in self.variation_manager.get_variation_names():
+                self.header_context_menu.post(event.x_root, event.y_root)
+                self.header_context_menu.entryconfigure(0, command=lambda: self._delete_variation(column_name))
+
+    def _delete_variation(self, variation_name):
+        self.variation_manager.delete_variation(variation_name)
 
     def _show_context_menu(self, event):
         item = self.schedule_tree.identify_row(event.y)

@@ -374,6 +374,25 @@ def get_schedule_item_variations(schedule_item_id):
     conn.close()
     return {v[0]: v[1] for v in variations}
 
+def delete_variation_by_name(work_id, variation_name):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            DELETE FROM schedule_item_variations
+            WHERE variation_name = ? AND schedule_item_id IN (
+                SELECT id FROM schedule_items WHERE work_id = ?
+            )
+        """, (variation_name, work_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error as e:
+        print(f"Database error during delete_variation_by_name: {e}")
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
+
 def get_variation_names_for_work(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()

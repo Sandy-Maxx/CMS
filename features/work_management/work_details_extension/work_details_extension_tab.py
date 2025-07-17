@@ -67,7 +67,7 @@ class WorkDetailsExtensionTab(ttk.Frame):
     def _bind_data(self):
         # Load data from work_data_var to UI
         self.justification_text.delete("1.0", tk.END)
-        self.justification_text.insert("1.0", self.work_data_var.get('justification', ''))
+        self.justification_text.insert("1.0", str(self.work_data_var.get('justification', '')))
         self.section_var.set(self.work_data_var.get('section', ''))
         self.work_type_var.set(self.work_data_var.get('work_type', ''))
         self.file_no_var.set(self.work_data_var.get('file_no', ''))
