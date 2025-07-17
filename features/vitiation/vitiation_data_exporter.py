@@ -40,12 +40,19 @@ def export_vitiation_data_to_excel(work_details, schedule_items, output_path, se
                             unit_rate = rate_entry['unit_rate']
                             break
 
-                    total_cost_before = item_data['quantity'] * unit_rate
-                    total_cost_after = qty_after_variation * unit_rate
-
+                    # Write Unit Rate
                     worksheet.write(excel_row, col_offset, unit_rate, numeric_format)
-                    worksheet.write(excel_row, col_offset + 1, total_cost_before, numeric_format)
-                    worksheet.write(excel_row, col_offset + 2, total_cost_after, numeric_format)
+
+                    # Total Cost Before Variation (formula: original_qty * unit_rate)
+                    # original_qty is in column 2 (C), unit_rate is in current col_offset
+                    formula_total_cost_before_item = f"={get_col_letter(2)}{excel_row + 1}*{get_col_letter(col_offset)}{excel_row + 1}"
+                    worksheet.write_formula(excel_row, col_offset + 1, formula_total_cost_before_item, numeric_format)
+
+                    # Total Cost After Variation (formula: qty_after_variation * unit_rate)
+                    # qty_after_variation is in column 3 (D), unit_rate is in current col_offset
+                    formula_total_cost_after_item = f"={get_col_letter(3)}{excel_row + 1}*{get_col_letter(col_offset)}{excel_row + 1}"
+                    worksheet.write_formula(excel_row, col_offset + 2, formula_total_cost_after_item, numeric_format)
+                    
                     col_offset += 3
 
             # Calculate and write summary rows
@@ -53,57 +60,35 @@ def export_vitiation_data_to_excel(work_details, schedule_items, output_path, se
             summary_format = workbook.add_format({'bold': True, 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True})
             summary_numeric_format = workbook.add_format({'bold': True, 'border': 1, 'num_format': '#,##0.00', 'align': 'center', 'valign': 'vcenter', 'text_wrap': True})
 
-            # Pre-calculate totals for summary rows
-            firm_summary_data = {}
-            for firm_name in selected_firms:
-                firm_summary_data[firm_name] = {
-                    'subtotal_before': 0.0,
-                    'subtotal_after': 0.0,
-                    'total_cost_before_gst': 0.0,
-                    'total_cost_after_gst': 0.0
-                }
-
-            for item_data in schedule_items:
-                qty_before = item_data['quantity']
-                qty_after = item_data['variations'].get(selected_variation_name, 0)
-
-                for firm_name in selected_firms:
-                    unit_rate = 0.0
-                    for rate_entry in item_data['firm_rates']:
-                        if rate_entry['firm_name'] == firm_name:
-                            unit_rate = rate_entry['unit_rate']
-                            break
-                    firm_summary_data[firm_name]['subtotal_before'] += qty_before * unit_rate
-                    firm_summary_data[firm_name]['subtotal_after'] += qty_after * unit_rate
-
-            # Write Subtotal Before/After Variation
+            # Subtotal Before/After Variation
             worksheet.merge_range(summary_row_start, 0, summary_row_start, 4, "Subtotal Before Variation", summary_format)
             worksheet.merge_range(summary_row_start + 1, 0, summary_row_start + 1, 4, "Subtotal After Variation", summary_format)
 
             firm_col_start_idx = 5 # Column index where firm data starts
             for i, firm_name in enumerate(selected_firms):
                 subtotal_before_col = firm_col_start_idx + 1 + (i * 3) # Total Cost (Before) column for this firm
-                worksheet.write(summary_row_start, subtotal_before_col, firm_summary_data[firm_name]['subtotal_before'], summary_numeric_format)
+                start_data_excel_row = 4 # Excel row for the first data item
+                end_data_excel_row = 3 + len(schedule_items) # Excel row for the last data item
+
+                formula_subtotal_before = f"=SUM({get_col_letter(subtotal_before_col)}{start_data_excel_row}:{get_col_letter(subtotal_before_col)}{end_data_excel_row})"
+                worksheet.write_formula(summary_row_start, subtotal_before_col, formula_subtotal_before, summary_numeric_format)
 
                 subtotal_after_col = firm_col_start_idx + 2 + (i * 3) # Total Cost (After) column for this firm
-                worksheet.write(summary_row_start + 1, subtotal_after_col, firm_summary_data[firm_name]['subtotal_after'], summary_numeric_format)
+                formula_subtotal_after = f"=SUM({get_col_letter(subtotal_after_col)}{start_data_excel_row}:{get_col_letter(subtotal_after_col)}{end_data_excel_row})"
+                worksheet.write_formula(summary_row_start + 1, subtotal_after_col, formula_subtotal_after, summary_numeric_format)
 
             # GST @ 18% Before/After Variation
             worksheet.merge_range(summary_row_start + 2, 0, summary_row_start + 2, 4, "GST @ 18% Before Variation", summary_format)
             worksheet.merge_range(summary_row_start + 3, 0, summary_row_start + 3, 4, "GST @ 18% After Variation", summary_format)
 
             for i, firm_name in enumerate(selected_firms):
-                gst_before = firm_summary_data[firm_name]['subtotal_before'] * 0.18
-                gst_after = firm_summary_data[firm_name]['subtotal_after'] * 0.18
-                
                 gst_before_col = firm_col_start_idx + 1 + (i * 3)
-                worksheet.write(summary_row_start + 2, gst_before_col, gst_before, summary_numeric_format)
+                formula_gst_before = f"={get_col_letter(gst_before_col)}{summary_row_start + 1}*0.18"
+                worksheet.write_formula(summary_row_start + 2, gst_before_col, formula_gst_before, summary_numeric_format)
 
                 gst_after_col = firm_col_start_idx + 2 + (i * 3)
-                worksheet.write(summary_row_start + 3, gst_after_col, gst_after, summary_numeric_format)
-
-                firm_summary_data[firm_name]['total_cost_before_gst'] = firm_summary_data[firm_name]['subtotal_before'] + gst_before
-                firm_summary_data[firm_name]['total_cost_after_gst'] = firm_summary_data[firm_name]['subtotal_after'] + gst_after
+                formula_gst_after = f"={get_col_letter(gst_after_col)}{summary_row_start + 2}*0.18"
+                worksheet.write_formula(summary_row_start + 3, gst_after_col, formula_gst_after, summary_numeric_format)
 
             # Total Cost Before/After Variation
             worksheet.merge_range(summary_row_start + 4, 0, summary_row_start + 4, 4, "Total Cost Before Variation", summary_format)
@@ -111,35 +96,31 @@ def export_vitiation_data_to_excel(work_details, schedule_items, output_path, se
 
             for i, firm_name in enumerate(selected_firms):
                 total_cost_before_col = firm_col_start_idx + 1 + (i * 3)
-                worksheet.write(summary_row_start + 4, total_cost_before_col, firm_summary_data[firm_name]['total_cost_before_gst'], summary_numeric_format)
+                formula_total_cost_before = f"={get_col_letter(total_cost_before_col)}{summary_row_start + 1}+{get_col_letter(total_cost_before_col)}{summary_row_start + 3}"
+                worksheet.write_formula(summary_row_start + 4, total_cost_before_col, formula_total_cost_before, summary_numeric_format)
 
                 total_cost_after_col = firm_col_start_idx + 2 + (i * 3)
-                worksheet.write(summary_row_start + 5, total_cost_after_col, firm_summary_data[firm_name]['total_cost_after_gst'], summary_numeric_format)
+                formula_total_cost_after = f"={get_col_letter(total_cost_after_col)}{summary_row_start + 2}+{get_col_letter(total_cost_after_col)}{summary_row_start + 4}"
+                worksheet.write_formula(summary_row_start + 5, total_cost_after_col, formula_total_cost_after, summary_numeric_format)
 
             # Inter Per Se Position Before/After Variation
             worksheet.merge_range(summary_row_start + 6, 0, summary_row_start + 6, 4, "Inter Per Se Position Before Variation", summary_format)
             worksheet.merge_range(summary_row_start + 7, 0, summary_row_start + 7, 4, "Inter Per Se Position After Variation", summary_format)
 
-            # Calculate ranks for Inter Per Se Position
-            # For Before Variation, rank based on Total Cost Before Variation
-            total_costs_before = []
-            for firm_name in selected_firms:
-                total_costs_before.append((firm_summary_data[firm_name]['total_cost_before_gst'], firm_name))
-            total_costs_before.sort(key=lambda x: x[0]) # Sort by total cost
-            ranks_before = {firm: rank + 1 for rank, (cost, firm) in enumerate(total_costs_before)}
-
-            # For After Variation, rank based on Total Cost After Variation
-            total_costs_after = []
-            for firm_name in selected_firms:
-                total_costs_after.append((firm_summary_data[firm_name]['total_cost_after_gst'], firm_name))
-            total_costs_after.sort(key=lambda x: x[0]) # Sort by total cost
-            ranks_after = {firm: rank + 1 for rank, (cost, firm) in enumerate(total_costs_after)}
-
+            # Calculate ranks using Excel's RANK.EQ function
             for i, firm_name in enumerate(selected_firms):
                 col_before = firm_col_start_idx + 1 + (i * 3)
                 col_after = firm_col_start_idx + 2 + (i * 3)
-                worksheet.write(summary_row_start + 6, col_before, f"L{ranks_before.get(firm_name, '')}", summary_format)
-                worksheet.write(summary_row_start + 7, col_after, f"L{ranks_after.get(firm_name, '')}", summary_format)
+
+                # Build the range string for RANK.EQ formula for 'Before Variation'
+                rank_range_str_before = ",".join([f"${get_col_letter(firm_col_start_idx + 1 + (j * 3))}${summary_row_start + 5 + 1}" for j in range(len(selected_firms))])
+                formula_rank_before = f"=\"L-\"&RANK.EQ({get_col_letter(col_before)}{summary_row_start + 5 + 1},({rank_range_str_before}),1)"
+                worksheet.write_formula(summary_row_start + 6, col_before, formula_rank_before, summary_format)
+
+                # Build the range string for RANK.EQ formula for 'After Variation'
+                rank_range_str_after = ",".join([f"${get_col_letter(firm_col_start_idx + 2 + (j * 3))}${summary_row_start + 5 + 1}" for j in range(len(selected_firms))])
+                formula_rank_after = f"=\"L-\"&RANK.EQ({get_col_letter(col_after)}{summary_row_start + 5 + 1},({rank_range_str_after}),1)"
+                worksheet.write_formula(summary_row_start + 7, col_after, formula_rank_after, summary_format)
 
         return True, "Report generated successfully"
     except Exception as e:
