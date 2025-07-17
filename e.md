@@ -1,8 +1,12 @@
-PS D:\CMS\CMS> python main.py
-Error in export_vitiation_data_to_excel: name 'firm_summary_data' is not defined
+PS D:\CMS\CMS>  python main.py
 Traceback (most recent call last):
-  File "D:\CMS\CMS\features\vitiation\vitiation_data_exporter.py", line 114, in export_vitiation_data_to_excel
-    total_costs_before.append((firm_summary_data[firm_name]['total_cost_before_gst'], firm_name))
-                               ^^^^^^^^^^^^^^^^^
-NameError: name 'firm_summary_data' is not defined
-PS D:\CMS\CMS> 
+  File "D:\CMS\CMS\main.py", line 3, in <module>
+    from features.work_management.main_window import MainWindow
+  File "D:\CMS\CMS\features\work_management\main_window.py", line 10, in <module>
+    from features.vitiation.Vitiation_report import VitiationReportDialog
+  File "D:\CMS\CMS\features\vitiation\Vitiation_report.py", line 6, in <module>
+    from features.vitiation.vitiation_data_exporter import export_vitiation_data_to_excel
+  File "D:\CMS\CMS\features\vitiation\vitiation_data_exporter.py", line 133
+    return False, f"Error generating report: {str(e)}
+                  ^
+SyntaxError: unterminated f-string literal (detected at line 133)

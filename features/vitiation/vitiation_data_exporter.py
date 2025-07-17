@@ -12,15 +12,18 @@ def export_vitiation_data_to_excel(work_details, schedule_items, output_path, se
             workbook = writer.book
             worksheet = workbook.add_worksheet('Vitiation Report')
 
+            # Define formats
+            currency_format_inr = workbook.add_format({'num_format': '₹ #,##,##0.00', 'border': 1})
+            cell_format = workbook.add_format({'border': 1})
+            numeric_format = workbook.add_format({'border': 1, 'num_format': '#,##0.00'})
+
             # Write multi-level headers
             vitiation_excel_structure.write_vitiation_excel_headers(worksheet, workbook, selected_firms)
 
             # Write data rows manually
             for row_idx, item_data in enumerate(schedule_items):
                 excel_row = 3 + row_idx # Data starts at Excel row 4 (0-indexed row 3)
-                cell_format = workbook.add_format({'border': 1})
-                numeric_format = workbook.add_format({'border': 1, 'num_format': '#,##0.00'})
-
+                
                 # Get quantity after variation from the selected variation column
                 qty_after_variation = item_data['variations'].get(selected_variation_name, 0)
 
@@ -41,17 +44,17 @@ def export_vitiation_data_to_excel(work_details, schedule_items, output_path, se
                             break
 
                     # Write Unit Rate
-                    worksheet.write(excel_row, col_offset, unit_rate, numeric_format)
+                    worksheet.write(excel_row, col_offset, unit_rate, currency_format_inr)
 
                     # Total Cost Before Variation (formula: original_qty * unit_rate)
                     # original_qty is in column 2 (C), unit_rate is in current col_offset
                     formula_total_cost_before_item = f"={get_col_letter(2)}{excel_row + 1}*{get_col_letter(col_offset)}{excel_row + 1}"
-                    worksheet.write_formula(excel_row, col_offset + 1, formula_total_cost_before_item, numeric_format)
+                    worksheet.write_formula(excel_row, col_offset + 1, formula_total_cost_before_item, currency_format_inr)
 
                     # Total Cost After Variation (formula: qty_after_variation * unit_rate)
                     # qty_after_variation is in column 3 (D), unit_rate is in current col_offset
                     formula_total_cost_after_item = f"={get_col_letter(3)}{excel_row + 1}*{get_col_letter(col_offset)}{excel_row + 1}"
-                    worksheet.write_formula(excel_row, col_offset + 2, formula_total_cost_after_item, numeric_format)
+                    worksheet.write_formula(excel_row, col_offset + 2, formula_total_cost_after_item, currency_format_inr)
                     
                     col_offset += 3
 
@@ -71,11 +74,11 @@ def export_vitiation_data_to_excel(work_details, schedule_items, output_path, se
                 end_data_excel_row = 3 + len(schedule_items) # Excel row for the last data item
 
                 formula_subtotal_before = f"=SUM({get_col_letter(subtotal_before_col)}{start_data_excel_row}:{get_col_letter(subtotal_before_col)}{end_data_excel_row})"
-                worksheet.write_formula(summary_row_start, subtotal_before_col, formula_subtotal_before, summary_numeric_format)
+                worksheet.write_formula(summary_row_start, subtotal_before_col, formula_subtotal_before, currency_format_inr)
 
                 subtotal_after_col = firm_col_start_idx + 2 + (i * 3) # Total Cost (After) column for this firm
                 formula_subtotal_after = f"=SUM({get_col_letter(subtotal_after_col)}{start_data_excel_row}:{get_col_letter(subtotal_after_col)}{end_data_excel_row})"
-                worksheet.write_formula(summary_row_start + 1, subtotal_after_col, formula_subtotal_after, summary_numeric_format)
+                worksheet.write_formula(summary_row_start + 1, subtotal_after_col, formula_subtotal_after, currency_format_inr)
 
             # GST @ 18% Before/After Variation
             worksheet.merge_range(summary_row_start + 2, 0, summary_row_start + 2, 4, "GST @ 18% Before Variation", summary_format)
@@ -84,11 +87,11 @@ def export_vitiation_data_to_excel(work_details, schedule_items, output_path, se
             for i, firm_name in enumerate(selected_firms):
                 gst_before_col = firm_col_start_idx + 1 + (i * 3)
                 formula_gst_before = f"={get_col_letter(gst_before_col)}{summary_row_start + 1}*0.18"
-                worksheet.write_formula(summary_row_start + 2, gst_before_col, formula_gst_before, summary_numeric_format)
+                worksheet.write_formula(summary_row_start + 2, gst_before_col, formula_gst_before, currency_format_inr)
 
                 gst_after_col = firm_col_start_idx + 2 + (i * 3)
                 formula_gst_after = f"={get_col_letter(gst_after_col)}{summary_row_start + 2}*0.18"
-                worksheet.write_formula(summary_row_start + 3, gst_after_col, formula_gst_after, summary_numeric_format)
+                worksheet.write_formula(summary_row_start + 3, gst_after_col, formula_gst_after, currency_format_inr)
 
             # Total Cost Before/After Variation
             worksheet.merge_range(summary_row_start + 4, 0, summary_row_start + 4, 4, "Total Cost Before Variation", summary_format)
@@ -97,11 +100,11 @@ def export_vitiation_data_to_excel(work_details, schedule_items, output_path, se
             for i, firm_name in enumerate(selected_firms):
                 total_cost_before_col = firm_col_start_idx + 1 + (i * 3)
                 formula_total_cost_before = f"={get_col_letter(total_cost_before_col)}{summary_row_start + 1}+{get_col_letter(total_cost_before_col)}{summary_row_start + 3}"
-                worksheet.write_formula(summary_row_start + 4, total_cost_before_col, formula_total_cost_before, summary_numeric_format)
+                worksheet.write_formula(summary_row_start + 4, total_cost_before_col, formula_total_cost_before, currency_format_inr)
 
                 total_cost_after_col = firm_col_start_idx + 2 + (i * 3)
                 formula_total_cost_after = f"={get_col_letter(total_cost_after_col)}{summary_row_start + 2}+{get_col_letter(total_cost_after_col)}{summary_row_start + 4}"
-                worksheet.write_formula(summary_row_start + 5, total_cost_after_col, formula_total_cost_after, summary_numeric_format)
+                worksheet.write_formula(summary_row_start + 5, total_cost_after_col, formula_total_cost_after, currency_format_inr)
 
             # Inter Per Se Position Before/After Variation
             worksheet.merge_range(summary_row_start + 6, 0, summary_row_start + 6, 4, "Inter Per Se Position Before Variation", summary_format)
