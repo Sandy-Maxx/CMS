@@ -6,6 +6,7 @@ from utils.styles import configure_styles
 from .work_details_tab import WorkDetailsTab
 from .schedule_items_tab import ScheduleItemsTab
 from .individual_firm_rates_tab import IndividualFirmRatesTab
+from .work_details_extension.work_details_extension_tab import WorkDetailsExtensionTab
 
 class WorkDetailsEditor:
     def __init__(self, parent, work_id, callback):
@@ -20,6 +21,19 @@ class WorkDetailsEditor:
         self.reference_firm_var = tk.StringVar()
         self.vcmd_numeric = self.window.register(validate_numeric_input)
         
+        # Centralized dictionary to hold all work data
+        self.work_data = {
+            'work_id': work_id,
+            'work_name': '',
+            'description': '',
+            'justification': '',
+            'section': '',
+            'work_type': '',
+            'file_no': '',
+            'estimate_no': '',
+            'tender_cost': None
+        }
+
         self.status_label = ttk.Label(self.window, text="Ready", style="Status.TLabel")
         self.status_label.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
         
@@ -38,11 +52,15 @@ class WorkDetailsEditor:
             self.update_schedule_item_display_costs
         )
         self.work_details_tab = WorkDetailsTab(
-            self.notebook, self, self.work_id_var, self.is_new_work_var, self.status_label,
+            self.notebook, self, self.work_data, self.is_new_work_var, self.status_label,
             self.notebook, self.schedule_items_tab, None, self.populate_reference_firm_combobox
+        )
+        self.work_details_extension_tab = WorkDetailsExtensionTab(
+            self.notebook, self, self.work_data, self.is_new_work_var
         )
         
         self.notebook.add(self.work_details_tab, text="Work Details")
+        self.notebook.add(self.work_details_extension_tab, text="Additional Details")
         self.notebook.add(self.schedule_items_tab, text="Schedule Items")
         self.notebook.add(self.firm_rates_tab, text="Individual Firm Rates")
         
@@ -60,7 +78,9 @@ class WorkDetailsEditor:
     def load_work_data(self):
         work_data = get_work_by_id(self.work_id)
         if work_data:
-            self.work_details_tab.load_work_data(work_data)
+            self.work_data.update(work_data) # Update the shared dictionary
+            self.work_details_tab.load_work_data(self.work_data)
+            self.work_details_extension_tab.load_work_data(self.work_data)
             self.schedule_items_tab._load_schedule_items()
             self.populate_reference_firm_combobox() # Call after work_id is set
     

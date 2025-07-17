@@ -12,6 +12,23 @@ def create_tables():
             description TEXT
         )
     """)
+
+    # Add new columns if they don't exist
+    columns_to_add = {
+        "justification": "TEXT",
+        "section": "TEXT",
+        "work_type": "TEXT",
+        "file_no": "TEXT",
+        "estimate_no": "TEXT",
+        "tender_cost": "REAL"
+    }
+
+    for column, col_type in columns_to_add.items():
+        try:
+            cursor.execute(f"ALTER TABLE works ADD COLUMN {column} {col_type}")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" not in str(e):
+                raise
     
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS schedule_items (
@@ -63,11 +80,11 @@ def create_tables():
     conn.commit()
     conn.close()
 
-def add_work(name, description):
+def add_work(name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO works (name, description) VALUES (?, ?)", (name, description))
+        cursor.execute("INSERT INTO works (name, description, justification, section, work_type, file_no, estimate_no, tender_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost))
         work_id = cursor.lastrowid
         conn.commit()
         return work_id
@@ -76,11 +93,11 @@ def add_work(name, description):
     finally:
         conn.close()
 
-def update_work(work_id, name, description):
+def update_work(work_id, name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE works SET name = ?, description = ? WHERE id = ?", (name, description, work_id))
+        cursor.execute("UPDATE works SET name = ?, description = ?, justification = ?, section = ?, work_type = ?, file_no = ?, estimate_no = ?, tender_cost = ? WHERE id = ?", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, work_id))
         conn.commit()
         return cursor.rowcount > 0
     except sqlite3.IntegrityError:
@@ -91,26 +108,26 @@ def update_work(work_id, name, description):
 def get_work_by_id(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, description FROM works WHERE id = ?", (work_id,))
+    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost FROM works WHERE id = ?", (work_id,))
     work = cursor.fetchone()
     conn.close()
-    return {'work_id': work[0], 'work_name': work[1], 'description': work[2]} if work else None
+    return {'work_id': work[0], 'work_name': work[1], 'description': work[2], 'justification': work[3], 'section': work[4], 'work_type': work[5], 'file_no': work[6], 'estimate_no': work[7], 'tender_cost': work[8]} if work else None
 
 def get_works():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, description FROM works")
+    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost FROM works")
     works = cursor.fetchall()
     conn.close()
-    return [(w[0], w[1], w[2]) for w in works]
+    return [(w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8]) for w in works]
 
 def get_works_by_name(search_term):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, description FROM works WHERE name LIKE ?", ('%' + search_term + '%',))
+    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost FROM works WHERE name LIKE ?", ('%' + search_term + '%',))
     works = cursor.fetchall()
     conn.close()
-    return [(w[0], w[1], w[2]) for w in works]
+    return [(w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8]) for w in works]
 
 def delete_work(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -280,6 +297,15 @@ def get_all_unique_units():
     units = cursor.fetchall()
     conn.close()
     return [u[0] for u in units]
+
+def get_all_unique_sections():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT section FROM works WHERE section IS NOT NULL AND section != ''")
+    sections = cursor.fetchall()
+    conn.close()
+    return [s[0] for s in sections]
+
 
 def upsert_template_data(template_name, placeholder_name, value):
     from datetime import datetime

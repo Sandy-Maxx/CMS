@@ -9,13 +9,14 @@ from features.excel_export.excel_exporter import export_work_to_excel
 from features.variation.Variation_report import VariationReportDialog
 from features.vitiation.Vitiation_report import VitiationReportDialog
 from features.comparison.comparison_exporter import ComparisonExporter
+from features.work_management.single_firm_export.single_firm_exporter import SingleFirmExporter
 from datetime import datetime
 from features.template_engine.template_engine_tab import TemplateEngineTab
 
 class MainWindow:
     def __init__(self, root):
         self.root = root
-        self.root.title("Construction Management System")
+        self.root.title("Contract Management System")
         self.root.geometry("800x600")
         self._create_widgets()
         self.load_works()
@@ -76,6 +77,7 @@ class MainWindow:
             context_menu.add_command(label="Export Variation Report", command=self._export_variation_report)
             context_menu.add_command(label="Export Vitiation Report", command=self._export_vitiation_report)
             context_menu.add_command(label="Export Comparison Report", command=self._export_comparison_report)
+            context_menu.add_command(label="Export Single Firm Report", command=self._export_single_firm_report)
             context_menu.add_separator()
             context_menu.add_command(label="Delete Work", command=self._delete_work)
             context_menu.post(event.x_root, event.y_root)
@@ -137,6 +139,78 @@ class MainWindow:
             import traceback
             traceback.print_exc()
             utils_helpers.show_toast(self.root, f"Error exporting comparison report: {e}", "error")
+
+    def _export_single_firm_report(self):
+        selected_item = self.works_tree.selection()
+        if not selected_item:
+            utils_helpers.show_toast(self.root, "Please select a work to generate Single Firm Report.", "warning")
+            return
+        work_id = int(selected_item[0])
+        work_details = db_manager.get_work_by_id(work_id)
+        if not work_details:
+            utils_helpers.show_toast(self.root, "Failed to retrieve work details.", "error")
+            return
+
+        # Get unique firm names for the selected work
+        firm_names = db_manager.get_unique_firm_names_by_work_id(work_id)
+        if not firm_names:
+            utils_helpers.show_toast(self.root, "No firm rates found for this work.", "info")
+            return
+
+        # Prompt user to select a firm
+        selected_firm = self._ask_for_firm_selection(firm_names)
+        if not selected_firm:
+            utils_helpers.show_toast(self.root, "Firm selection cancelled.", "info")
+            return
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            filetypes=[("Excel files", "*.xlsx")],
+            initialfile=f"{work_details['work_name'].replace(' ', '_')}_{selected_firm.replace(' ', '_')}_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        )
+        if not file_path:
+            utils_helpers.show_toast(self.root, "Export cancelled.", "info")
+            return
+        try:
+            exporter = SingleFirmExporter(work_id, selected_firm)
+            exporter.export_to_excel(file_path)
+            utils_helpers.show_toast(self.root, f"Single firm report for {selected_firm} exported successfully: {file_path}", "success")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            utils_helpers.show_toast(self.root, f"Error exporting single firm report: {e}", "error")
+
+    def _ask_for_firm_selection(self, firm_names):
+        # Simple dialog to ask for firm selection
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Select Firm")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        tk.Label(dialog, text="Select a firm:").pack(padx=10, pady=10)
+        
+        firm_var = tk.StringVar(dialog)
+        firm_var.set(firm_names[0] if firm_names else "") # Set initial value
+        
+        firm_combobox = ttk.Combobox(dialog, textvariable=firm_var, values=firm_names, state="readonly")
+        firm_combobox.pack(padx=10, pady=5)
+
+        selected_firm = None
+        def on_ok():
+            nonlocal selected_firm
+            selected_firm = firm_var.get()
+            dialog.destroy()
+
+        def on_cancel():
+            dialog.destroy()
+
+        button_frame = ttk.Frame(dialog)
+        button_frame.pack(pady=10)
+        ttk.Button(button_frame, text="OK", command=on_ok).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=on_cancel).pack(side=tk.LEFT, padx=5)
+
+        self.root.wait_window(dialog)
+        return selected_firm
 
     def load_works(self, search_query=None):
         for item in self.works_tree.get_children():

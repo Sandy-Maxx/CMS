@@ -5,10 +5,10 @@ from utils import helpers as utils_helpers
 from utils.helpers import load_icon
 
 class WorkDetailsTab(ttk.Frame):
-    def __init__(self, notebook, parent_app, work_id_var, is_new_work_var, status_label_ref, notebook_ref, schedule_items_tab_ref, firm_rates_summary_tab_ref, populate_reference_firm_combobox_callback):
+    def __init__(self, notebook, parent_app, work_data_dict, is_new_work_var, status_label_ref, notebook_ref, schedule_items_tab_ref, firm_rates_summary_tab_ref, populate_reference_firm_combobox_callback):
         super().__init__(notebook, padding=10)
         self.parent_app = parent_app
-        self.work_id_var = work_id_var
+        self.work_data_dict = work_data_dict
         self.is_new_work_var = is_new_work_var
         self.status_label = status_label_ref
         self.notebook = notebook_ref
@@ -39,12 +39,20 @@ class WorkDetailsTab(ttk.Frame):
             utils_helpers.show_toast(self, "Work Name cannot be empty!", "error")
             self.status_label.config(text="Save failed: Work Name required.")
             return
-        current_work_id = self.work_id_var.get()
+        current_work_id = self.work_data_dict['work_id']
         is_new_work = self.is_new_work_var.get()
+        
+        justification = self.work_data_dict.get('justification')
+        section = self.work_data_dict.get('section')
+        work_type = self.work_data_dict.get('work_type')
+        file_no = self.work_data_dict.get('file_no')
+        estimate_no = self.work_data_dict.get('estimate_no')
+        tender_cost = self.work_data_dict.get('tender_cost')
+
         if is_new_work:
-            new_work_id = db_manager.add_work(work_name, description)
+            new_work_id = db_manager.add_work(work_name, description, justification, section, work_type, file_no, estimate_no, tender_cost)
             if new_work_id:
-                self.work_id_var.set(new_work_id)
+                self.work_data_dict['work_id'] = new_work_id
                 self.is_new_work_var.set(False)
                 self.parent_app.window.title(f"Edit Work Details (ID: {new_work_id})")
                 utils_helpers.show_toast(self.parent_app.window, f"Work '{work_name}' created successfully! You can now add schedule items.", "success")
@@ -58,7 +66,7 @@ class WorkDetailsTab(ttk.Frame):
                 utils_helpers.show_toast(self.parent_app.window, "Failed to create new work.", "error")
                 self.status_label.config(text="Save failed: Database error or name already exists.")
         else:
-            if db_manager.update_work(current_work_id, work_name, description):
+            if db_manager.update_work(current_work_id, work_name, description, justification, section, work_type, file_no, estimate_no, tender_cost):
                 utils_helpers.show_toast(self.parent_app.window, f"Work '{work_name}' updated successfully!", "success")
                 self.status_label.config(text=f"Work '{work_name}' updated.")
             else:
@@ -66,8 +74,9 @@ class WorkDetailsTab(ttk.Frame):
                 self.status_label.config(text="Save failed: Database error or name already exists.")
 
     def load_work_data(self, work_data):
+        self.work_data_dict.update(work_data) # Update the shared dictionary
         self.work_name_entry.delete(0, tk.END)
-        self.work_name_entry.insert(0, work_data['work_name'])
+        self.work_name_entry.insert(0, self.work_data_dict['work_name'])
         self.description_text.delete("1.0", tk.END)
-        self.description_text.insert("1.0", work_data['description'])
-        self.status_label.config(text=f"Loaded work: {work_data['work_name']}")
+        self.description_text.insert("1.0", self.work_data_dict['description'])
+        self.status_label.config(text=f"Loaded work: {self.work_data_dict['work_name']}")
