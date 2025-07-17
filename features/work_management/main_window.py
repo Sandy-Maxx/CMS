@@ -46,6 +46,13 @@ class MainWindow:
         self.works_tree.configure(yscrollcommand=vsb.set)
         self.works_tree.bind("<Double-1>", self.edit_work)
         self.works_tree.bind("<Button-3>", self._show_work_context_menu)
+
+        # Context menu icons
+        self.edit_icon = load_icon("edit")
+        self.delete_icon = load_icon("delete")
+        self.report_icon = load_icon("report")
+        self.compare_icon = load_icon("compare")
+
         button_frame = ttk.Frame(self.works_frame)
         button_frame.pack(fill=tk.X, pady=10)
         
@@ -74,12 +81,12 @@ class MainWindow:
             self.works_tree.focus(item_id)
             
             context_menu = tk.Menu(self.root, tearoff=0)
-            context_menu.add_command(label="Export Variation Report", command=self._export_variation_report)
-            context_menu.add_command(label="Export Vitiation Report", command=self._export_vitiation_report)
-            context_menu.add_command(label="Export Comparison Report", command=self._export_comparison_report)
-            context_menu.add_command(label="Export Single Firm Report", command=self._export_single_firm_report)
+            context_menu.add_command(label="Export Variation Report", image=self.report_icon, compound=tk.LEFT, command=self._export_variation_report)
+            context_menu.add_command(label="Export Vitiation Report", image=self.report_icon, compound=tk.LEFT, command=self._export_vitiation_report)
+            context_menu.add_command(label="Export Comparison Report", image=self.compare_icon, compound=tk.LEFT, command=self._export_comparison_report)
+            context_menu.add_command(label="Export Single Firm Report", image=self.report_icon, compound=tk.LEFT, command=self._export_single_firm_report)
             context_menu.add_separator()
-            context_menu.add_command(label="Delete Work", command=self._delete_work)
+            context_menu.add_command(label="Delete Work", image=self.delete_icon, compound=tk.LEFT, command=self._delete_work)
             context_menu.post(event.x_root, event.y_root)
 
     def _delete_work(self):
@@ -90,7 +97,7 @@ class MainWindow:
         work_id = int(selected_item[0])
         work_name = self.works_tree.item(selected_item[0], "values")[0]
 
-        if messagebox.askyesno("Delete Work", f"Are you sure you want to delete work '{work_name}' and all its associated data?"):
+        if utils_helpers.show_confirm_dialog(self.root, f"Are you sure you want to delete work '{work_name}' and all its associated data?"):
             if db_manager.delete_work(work_id):
                 utils_helpers.show_toast(self.root, f"Work '{work_name}' deleted successfully.", "success")
                 self.load_works()

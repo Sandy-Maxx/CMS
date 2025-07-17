@@ -23,8 +23,8 @@ def configure_styles():
     style.configure("TFrame", background=background_color)
     style.configure("TLabel", font=("Segoe UI", 10), background=background_color, foreground=text_color)
     style.configure("Status.TLabel", font=("Segoe UI", 9, "italic"), foreground=light_text_color, background=background_color)
-    style.configure("Treeview", font=("Segoe UI", 10), rowheight=25, background="white", fieldbackground="white", foreground=text_color)
-    style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), background="#CFD8DC", foreground=text_color)
+    style.configure("Treeview", font=("Segoe UI", 10), rowheight=30, background="white", fieldbackground="white", foreground=text_color)
+    style.configure("Treeview.Heading", font=("Segoe UI", 11, "bold"), background="#B0BEC5", foreground=text_color)
     style.map("Treeview", background=[('selected', primary_color)])
     
     # Buttons
