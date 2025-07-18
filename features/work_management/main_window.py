@@ -12,6 +12,7 @@ from features.comparison.comparison_exporter import ComparisonExporter
 from features.work_management.single_firm_export.single_firm_exporter import SingleFirmExporter
 from datetime import datetime
 from features.template_engine.template_engine_tab import TemplateEngineTab
+from features.pdf_tools.pdf_tool_tab import PdfToolTab
 
 class MainWindow:
     def __init__(self, root):
@@ -29,6 +30,9 @@ class MainWindow:
 
         self.template_engine_tab = TemplateEngineTab(self.notebook, self)
         self.notebook.add(self.template_engine_tab, text="Template Engine")
+
+        self.pdf_tool_tab = PdfToolTab(self.notebook, self)
+        self.notebook.add(self.pdf_tool_tab, text="PDF Tools")
         
         # Search Bar
         self.search_bar = WorkSearchBar(self.works_frame, self.load_works)

@@ -46,6 +46,10 @@ def configure_styles():
     style.configure("Secondary.TButton", background=secondary_color, foreground="white")
     style.map("Secondary.TButton", background=[('active', secondary_hover)])
 
+    # Toolbutton style for icon-only buttons
+    style.configure("Toolbutton", background=background_color, relief="flat")
+    style.map("Toolbutton", background=[('active', '#E0E0E0'), ('pressed', '#B0B0B0')])
+
     # Entry and Combobox
     style.configure("TEntry", font=("Segoe UI", 10), fieldbackground="white", foreground=text_color)
     style.configure("TCombobox", font=("Segoe UI", 10), fieldbackground="white", foreground=text_color)

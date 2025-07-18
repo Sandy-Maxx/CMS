@@ -1,2 +1,1 @@
-python-docx
-num2words
+PyPDF2==3.0.1
