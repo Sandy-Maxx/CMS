@@ -1,26 +1,17 @@
 PS D:\CMS\CMS> python main.py
-Exception in Tkinter callback
+Error in export_variation_data_to_excel: name 'summary_row_start' is not defined
 Traceback (most recent call last):
-  File "C:\Program Files\Python313\Lib\tkinter\__init__.py", line 2068, in __call__
-    return self.func(*args)
-           ~~~~~~~~~^^^^^^^
-  File "D:\CMS\CMS\features\work_management\main_window.py", line 237, in add_work
-    WorkDetailsEditor(self.root, None, self.load_works)
-    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\CMS\CMS\features\work_management\work_editor.py", line 77, in __init__
-    self.window.protocol("WM_DELETE_WINDOW", self.on_close)
-                                             ^^^^^^^^^^^^^
-AttributeError: 'WorkDetailsEditor' object has no attribute 'on_close'
-Exception in Tkinter callback
-Traceback (most recent call last):
-  File "C:\Program Files\Python313\Lib\tkinter\__init__.py", line 2068, in __call__   
-    return self.func(*args)
-           ~~~~~~~~~^^^^^^^
-  File "D:\CMS\CMS\features\work_management\main_window.py", line 237, in add_work    
-    WorkDetailsEditor(self.root, None, self.load_works)
-    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\CMS\CMS\features\work_management\work_editor.py", line 77, in __init__     
-    self.window.protocol("WM_DELETE_WINDOW", self.on_close)
-                                           
-  ^^^^^^^^^^^^^
-AttributeError: 'WorkDetailsEditor' object has no attribute 'on_close'
+  File "D:\CMS\CMS\features\variation\variation_data_exporter.py", line 20, in export_variation_data_to_excel
+    write_variation_excel_report(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        worksheet,
+        ^^^^^^^^^^
+    ...<6 lines>...
+        percentage_change        
+        ^^^^^^^^^^^^^^^^^        
+    )
+    ^
+  File "D:\CMS\CMS\features\variation\variation_excel_structure.py", line 85, in write_variation_excel_report
+    subtotal_row_before = summary_row_start
+                          ^^^^^^^^^^^^^^^^^
+NameError: name 'summary_row_start' is not defined

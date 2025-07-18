@@ -6,8 +6,9 @@ from utils.helpers import load_icon
 from .work_editor import WorkDetailsEditor
 from .work_search_bar import WorkSearchBar
 from features.excel_export.excel_exporter import export_work_to_excel
-from features.variation.Variation_report import VariationReportDialog
 from features.vitiation.Vitiation_report import VitiationReportDialog
+from features.price_variation.price_variation_exporter import export_price_variation_data_to_excel
+from features.variation.variation_selection_dialog import VariationReportSelectionDialog
 from features.comparison.comparison_exporter import ComparisonExporter
 from features.work_management.single_firm_export.single_firm_exporter import SingleFirmExporter
 from datetime import datetime
@@ -89,7 +90,7 @@ class MainWindow:
             self.works_tree.focus(item_id)
             
             context_menu = tk.Menu(self.root, tearoff=0)
-            context_menu.add_command(label="Export Variation Report", image=self.report_icon, compound=tk.LEFT, command=self._export_variation_report)
+            context_menu.add_command(label="Export Variation Report (Advanced)", image=self.report_icon, compound=tk.LEFT, command=self._show_advanced_variation_report_dialog)
             context_menu.add_command(label="Export Vitiation Report", image=self.report_icon, compound=tk.LEFT, command=self._export_vitiation_report)
             context_menu.add_command(label="Export Comparison Report", image=self.compare_icon, compound=tk.LEFT, command=self._export_comparison_report)
             context_menu.add_command(label="Export Single Firm Report", image=self.report_icon, compound=tk.LEFT, command=self._export_single_firm_report)
@@ -127,6 +128,46 @@ class MainWindow:
             return
         work_id = int(selected_item[0])
         VitiationReportDialog(self.root, work_id)
+
+    def _export_price_variation_report(self):
+        selected_item = self.works_tree.selection()
+        if not selected_item:
+            utils_helpers.show_toast(self.root, "Please select a work to generate Price Variation Report.", "warning")
+            return
+        work_id = int(selected_item[0])
+        work_details = db_manager.get_work_by_id(work_id)
+        if not work_details:
+            utils_helpers.show_toast(self.root, "Failed to retrieve work details.", "error")
+            return
+        schedule_items = db_manager.get_schedule_items(work_id)
+        
+        output_path = filedialog.asksaveasfilename(
+            defaultextension=".xlsx",
+            filetypes=[("Excel files", "*.xlsx")],
+            initialfile=f"{work_details['work_name'].replace(' ', '_')}_Price_Variation_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        )
+        if not output_path:
+            utils_helpers.show_toast(self.root, "Export cancelled.", "info")
+            return
+        
+        # Get unique firm names for the selected work
+        firm_names = db_manager.get_unique_firm_names_by_work_id(work_id)
+        if not firm_names:
+            utils_helpers.show_toast(self.root, "No firm rates found for this work.", "info")
+            return
+
+        # Prompt user to select a firm
+        selected_firm = self._ask_for_firm_selection(firm_names)
+        if not selected_firm:
+            utils_helpers.show_toast(self.root, "Firm selection cancelled.", "info")
+            return
+        selected_firms = [selected_firm]
+        
+        success, message = export_price_variation_data_to_excel(work_details, schedule_items, output_path, selected_firms)
+        if success:
+            utils_helpers.show_toast(self.root, f"Price Variation Report exported successfully: {output_path}", "success")
+        else:
+            utils_helpers.show_toast(self.root, f"Error exporting Price Variation Report: {message}", "error")
 
     def _export_comparison_report(self):
         selected_item = self.works_tree.selection()

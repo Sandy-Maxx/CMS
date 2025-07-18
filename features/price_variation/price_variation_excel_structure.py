@@ -1,11 +1,14 @@
 from xlsxwriter.utility import xl_col_to_name
 
-def get_variation_table_columns():
+def get_price_variation_table_columns():
     columns = [
         ("SN", "", ""),
         ("Schedule Items", "", ""),
         ("Quantity", "Before Variation", ""),
         ("Quantity", "After Variation", ""),
+        ("Quantity", "Upto 125%", ""),
+        ("Quantity", "Upto 140%", ""),
+        ("Quantity", "Upto 150%", ""),
         ("Unit", "", ""),
         ("Unit Rate", "", ""),
         ("Total Cost", "Before Variation", ""),
@@ -13,7 +16,7 @@ def get_variation_table_columns():
     ]
     return columns
 
-def write_variation_excel_report(worksheet, workbook, work_details, schedule_items, selected_firms, total_cost_before_all_items, total_cost_after_all_items, percentage_change):
+def write_price_variation_excel_report(worksheet, workbook, work_details, schedule_items, selected_firms, total_cost_before_all_items, total_cost_after_all_items, percentage_change):
     header_format = workbook.add_format({'bold': True, 'border': 1, 'align': 'center', 'valign': 'vcenter', 'text_wrap': True})
     data_format = workbook.add_format({'border': 1})
     currency_format = workbook.add_format({'border': 1, 'num_format': '₹ #,##0.00'})
@@ -29,7 +32,7 @@ def write_variation_excel_report(worksheet, workbook, work_details, schedule_ite
     worksheet.write('B2', selected_firms[0], data_format)
 
     # Define columns for the table
-    columns = get_variation_table_columns()
+    columns = get_price_variation_table_columns()
 
     # Create a dictionary to store merged cells to avoid re-merging
     merged_cells = {}
@@ -76,20 +79,28 @@ def write_variation_excel_report(worksheet, workbook, work_details, schedule_ite
         worksheet.write(excel_row, 1, item_data['item_name'], data_format)
         worksheet.write(excel_row, 2, item_data['quantity'], data_format)
         worksheet.write(excel_row, 3, item_data['new_quantity'], data_format)
-        worksheet.write(excel_row, 4, item_data['unit'], data_format)
-        worksheet.write(excel_row, 5, item_data['unit_rate'], currency_format)
-        formula_total_cost_before = f"={xl_col_to_name(2)}{excel_row+1}*{xl_col_to_name(5)}{excel_row+1}"
-        worksheet.write_formula(excel_row, 6, formula_total_cost_before, currency_format)
-        formula_total_cost_after = f"={xl_col_to_name(3)}{excel_row+1}*{xl_col_to_name(5)}{excel_row+1}"
-        worksheet.write_formula(excel_row, 7, formula_total_cost_after, currency_format)
+        worksheet.write(excel_row, 4, item_data.get('quantity_upto_125', ''), data_format) # New column
+        worksheet.write(excel_row, 5, item_data.get('quantity_upto_140', ''), data_format) # New column
+        worksheet.write(excel_row, 6, item_data.get('quantity_upto_150', ''), data_format) # New column
+        worksheet.write(excel_row, 7, item_data['unit'], data_format)
+        worksheet.write(excel_row, 8, item_data['unit_rate'], currency_format)
+        
+        # Update column indices for formulas due to new columns
+        formula_total_cost_before = f"={xl_col_to_name(2)}{excel_row+1}*{xl_col_to_name(8)}{excel_row+1}"
+        worksheet.write_formula(excel_row, 9, formula_total_cost_before, currency_format)
+        
+        # This formula will need to be updated to reflect the new price logic
+        formula_total_cost_after = f"={xl_col_to_name(3)}{excel_row+1}*{xl_col_to_name(8)}{excel_row+1}" 
+        worksheet.write_formula(excel_row, 10, formula_total_cost_after, currency_format)
 
     # Write summary rows
     summary_row_start = start_row_data + len(schedule_items) + 1 # Add an empty row for spacing
 
-    COL_TOTAL_COST_BEFORE = 6
-    COL_TOTAL_COST_AFTER = 7
+    # Update column indices for summary rows due to new columns
+    COL_TOTAL_COST_BEFORE = 9
+    COL_TOTAL_COST_AFTER = 10
     COL_LABEL_START = 0
-    COL_LABEL_END = 5
+    COL_LABEL_END = 8 # Adjusted to cover new quantity columns
 
     # Subtotal Before/After Variation
     subtotal_row_before = summary_row_start
@@ -130,5 +141,3 @@ def write_variation_excel_report(worksheet, workbook, work_details, schedule_ite
     worksheet.merge_range(percentage_change_row, COL_LABEL_START, percentage_change_row, COL_LABEL_END, 'Percentage Change:', summary_label_format)
     formula_percentage_change = f"=(({xl_col_to_name(COL_TOTAL_COST_AFTER)}{total_gst_row_after+1}-{xl_col_to_name(COL_TOTAL_COST_BEFORE)}{total_gst_row_before+1})/{xl_col_to_name(COL_TOTAL_COST_BEFORE)}{total_gst_row_before+1})"
     worksheet.write_formula(percentage_change_row, COL_TOTAL_COST_AFTER, formula_percentage_change, summary_percentage_format)
-
-    
