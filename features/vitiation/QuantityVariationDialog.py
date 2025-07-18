@@ -105,62 +105,39 @@ class QuantityVariationDialog(tk.Toplevel):
         unit_rate_str = self.unit_rate_entry.get().strip()
         firm_name = self.firm_combobox.get().strip()
 
-        if not item_name:
-            show_toast(self, "Item Name cannot be empty!", "error")
-            return
-        if not quantity_str and self.parent_item_id is not None:
-            show_toast(self, "Quantity cannot be empty for sub-items!", "error")
-            return
-        if not unit and self.parent_item_id is not None:
-            show_toast(self, "Unit cannot be empty for sub-items!", "error")
-            return
-        if not unit_rate_str and self.parent_item_id is not None:
-            show_toast(self, "Unit Rate cannot be empty for sub-items!", "error")
-            return
-        if not firm_name and self.parent_item_id is not None:
-            show_toast(self, "Firm Name cannot be empty for sub-items!", "error")
+        if not all([item_name, quantity_str, unit, unit_rate_str, firm_name]):
+            show_toast(self, "All fields are required!", "error")
             return
 
         try:
             quantity = float(quantity_str)
-            if quantity < 0:
-                show_toast(self, "Quantity cannot be negative!", "error")
-                return
-        except ValueError:
-            show_toast(self, "Invalid quantity! Please enter a number.", "error")
-            return
-
-        try:
             unit_rate = float(unit_rate_str)
-            if unit_rate < 0:
-                show_toast(self, "Unit Rate cannot be negative!", "error")
+            if quantity < 0 or unit_rate < 0:
+                show_toast(self, "Quantity and Unit Rate cannot be negative!", "error")
                 return
         except ValueError:
-            show_toast(self, "Invalid unit rate! Please enter a number.", "error")
+            show_toast(self, "Invalid quantity or unit rate! Please enter a number.", "error")
             return
 
         if self.item_id:
-            # Editing existing item
-            if db_manager.update_schedule_item(self.item_id, item_name, unit, quantity, self.existing_item_data['parent_item_id']):
+            success = db_manager.update_schedule_item(self.item_id, item_name, unit, quantity, self.parent_item_id)
+            if success:
                 db_manager.upsert_firm_rate(self.item_id, firm_name, unit_rate)
                 show_toast(self, "Schedule item updated successfully!", "success")
-                self.main_app_instance.reference_firm_var.set(firm_name) # Set the reference firm to the one just updated
-                self.callback()
-                self.saved_item_name = item_name # Store the item name before destroying
-                self.populate_reference_firm_combobox_callback()
-                self.destroy()
-            else:
-                show_toast(self, "Failed to update schedule item.", "error")
         else:
-            # Adding new item
             new_item_id = db_manager.add_schedule_item(self.work_id, item_name, unit, quantity, self.parent_item_id)
             if new_item_id:
                 db_manager.upsert_firm_rate(new_item_id, firm_name, unit_rate)
                 show_toast(self, "Schedule item added successfully!", "success")
-                self.main_app_instance.reference_firm_var.set(firm_name) # Set the reference firm to the one just added
-                self.callback()
-                self.saved_item_name = item_name # Store the item name before destroying
-                self.populate_reference_firm_combobox_callback()
-                self.destroy()
+                self.item_id = new_item_id # So that the rest of the logic works as if we were editing
             else:
                 show_toast(self, "Failed to add schedule item.", "error")
+                return
+
+        self.main_app_instance.reference_firm_var.set(firm_name)
+        if self.callback:
+            self.callback()
+        if self.populate_reference_firm_combobox_callback:
+            self.populate_reference_firm_combobox_callback()
+        self.saved_item_name = item_name
+        self.destroy()

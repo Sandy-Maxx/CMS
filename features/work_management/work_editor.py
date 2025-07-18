@@ -74,6 +74,12 @@ class WorkDetailsEditor:
 
         self.window.transient(parent)
         self.window.grab_set()
+        self.window.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        if self.callback:
+            self.callback()
+        self.window.destroy()
     
     def load_work_data(self):
         work_data = get_work_by_id(self.work_id)
