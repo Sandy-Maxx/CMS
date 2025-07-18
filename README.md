@@ -138,10 +138,10 @@ Contains distinct feature modules of the application.
     *   `excel_exporter.py`: Implements the logic for exporting data to Excel.
 *   `template_engine/`: Module for processing and managing document templates.
     *   `__init__.py`: Initializes the Python package.
-    *   `data_manager.py`: Manages data used by the template engine.
+    *   `data_manager.py`: Manages data used by the template engine, including saving and loading template data with historical input tracking for suggestions.
     *   `date_picker_widget.py`: Implements a date picker UI widget.
     *   `special_placeholder_handler.py`: Handles special placeholders within templates.
-    *   `template_engine_tab.py`: Manages the UI and logic for the template engine tab.
+    *   `template_engine_tab.py`: Manages the UI and logic for the template engine tab, including input suggestions and loading generated documents.
     *   `template_processor.py`: Processes templates, replacing placeholders with actual data.
 *   `variation/`: Module for managing variations in work items.
     *   `__init__.py`: Initializes the Python package.
