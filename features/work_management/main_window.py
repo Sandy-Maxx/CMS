@@ -13,6 +13,7 @@ from features.work_management.single_firm_export.single_firm_exporter import Sin
 from datetime import datetime
 from features.template_engine.template_engine_tab import TemplateEngineTab
 from features.pdf_tools.pdf_tool_tab import PdfToolTab
+from features.about_tab.about_tab import AboutTab
 
 class MainWindow:
     def __init__(self, root):
@@ -33,6 +34,9 @@ class MainWindow:
 
         self.pdf_tool_tab = PdfToolTab(self.notebook, self)
         self.notebook.add(self.pdf_tool_tab, text="PDF Tools")
+
+        self.about_tab = AboutTab(self.notebook)
+        self.notebook.add(self.about_tab, text="About")
         
         # Search Bar
         self.search_bar = WorkSearchBar(self.works_frame, self.load_works)

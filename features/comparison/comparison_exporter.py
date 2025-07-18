@@ -160,9 +160,9 @@ class ComparisonExporter:
         worksheet.write(total_cost_gst_row_idx, 1, 'Total Cost (including GST)', header_format) # Description column
         for firm_name in firm_names:
             total_cost_col_idx = firm_total_cost_col_indices[firm_name]
-            total_cell_letter = get_column_letter(total_cost_col_idx)
+            total_cost_gst_cell_letter = get_column_letter(total_cost_col_idx)
             
-            formula = f'={total_cell_letter}{total_row_idx + 1}+{total_cell_letter}{gst_row_idx + 1}'
+            formula = f'={total_cost_gst_cell_letter}{total_row_idx + 1}+{total_cost_gst_cell_letter}{gst_row_idx + 1}'
             worksheet.write_formula(total_cost_gst_row_idx, total_cost_col_idx, formula, currency_format) # Apply currency format
         current_summary_row += 1
 

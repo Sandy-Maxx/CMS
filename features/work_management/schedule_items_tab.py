@@ -53,6 +53,7 @@ class ScheduleItemsTab(ttk.Frame):
         self.add_icon = load_icon("add")
         self.edit_icon = load_icon("edit")
         self.delete_icon = load_icon("delete")
+        self.variation_icon = load_icon("variation")
 
         self.add_item_button = ttk.Button(button_frame, image=self.add_icon, compound=tk.LEFT, command=self._add_new_item, style='Primary.TButton')
         self.add_item_button.pack(side=tk.LEFT, padx=5)
@@ -66,7 +67,11 @@ class ScheduleItemsTab(ttk.Frame):
         self.edit_firm_rates_button.bind("<Enter>", lambda e: self.edit_firm_rates_button.config(text=self.edit_firm_rates_button_text))
         self.edit_firm_rates_button.bind("<Leave>", lambda e: self.edit_firm_rates_button.config(text=""))
 
-        self.add_variation_button = ttk.Button(button_frame, text="Add Variation", command=self.variation_manager.add_variation_column, style='Success.TButton')
+        self.add_variation_button = ttk.Button(button_frame, image=self.variation_icon, compound=tk.LEFT, command=self.variation_manager.add_variation_column, style='Primary.TButton')
+        self.add_variation_button.pack(side=tk.LEFT, padx=5)
+        self.add_variation_button_text = "Add Variation"
+        self.add_variation_button.bind("<Enter>", lambda e: self.add_variation_button.config(text=self.add_variation_button_text))
+        self.add_variation_button.bind("<Leave>", lambda e: self.add_variation_button.config(text=""))
         self.add_variation_button.pack(side=tk.LEFT, padx=5)
 
         self.context_menu = tk.Menu(self, tearoff=0)

@@ -10,11 +10,15 @@ class TemplateEngineTab(ttk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
+        self.work_id = None
         self.template_path = None
         self.placeholders = {}
         self.template_processor = TemplateProcessor()
         self.data_manager = TemplateDataManager() # Initialize data manager
         self.create_widgets()
+
+    def set_work_id(self, work_id):
+        self.work_id = work_id
 
     def create_widgets(self):
         # Template Selection
@@ -157,6 +161,10 @@ class TemplateEngineTab(ttk.Frame):
             messagebox.showwarning("No Template", "Please select a template first.")
             return
 
+        if self.work_id is None:
+            messagebox.showwarning("No Work Selected", "Please select a work from the Works tab first.")
+            return
+
         output_file_path = filedialog.asksaveasfilename(
             defaultextension=".docx",
             filetypes=[("Word Documents", "*.docx")],
@@ -170,8 +178,11 @@ class TemplateEngineTab(ttk.Frame):
         values = {p_name: entry.get() for p_name, entry in self.placeholders.items()}
 
         try:
-            self.template_processor.replace_placeholders(self.template_path, values, output_file_path)
-            messagebox.showinfo("Success", f"Document generated successfully to {output_file_path}")
+            success, message = self.template_processor.replace_placeholders(self.template_path, values, self.work_id, output_file_path, self.firm_placeholders)
+            if success:
+                messagebox.showinfo("Success", f"Document generated successfully to {output_file_path}")
+            else:
+                messagebox.showerror("Error", f"Error generating document: {message}")
         except Exception as e:
             messagebox.showerror("Error", f"Error generating document: {e}")
 
