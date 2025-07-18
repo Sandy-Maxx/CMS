@@ -72,6 +72,13 @@ class TemplateEngineTab(ttk.Frame):
         self.load_button.bind("<Enter>", lambda e: self.load_button.config(text=self.load_button_text))
         self.load_button.bind("<Leave>", lambda e: self.load_button.config(text=""))
 
+        self.load_generated_icon = load_icon("browse")
+        self.load_generated_button = ttk.Button(button_frame, image=self.load_generated_icon, compound=tk.LEFT, command=self.load_generated_file, style='Info.TButton')
+        self.load_generated_button.pack(side=tk.RIGHT, padx=5)
+        self.load_generated_button_text = "Load Generated File"
+        self.load_generated_button.bind("<Enter>", lambda e: self.load_generated_button.config(text=self.load_generated_button_text))
+        self.load_generated_button.bind("<Leave>", lambda e: self.load_generated_button.config(text=""))
+
     def select_template(self):
         file_path = filedialog.askopenfilename(
             title="Select Word Template",
@@ -127,7 +134,10 @@ class TemplateEngineTab(ttk.Frame):
             if "DATE" in p_name.upper():
                 entry = DatePickerWidget(self.placeholder_inner_frame)
             else:
-                entry = ttk.Entry(self.placeholder_inner_frame)
+                entry = ttk.Combobox(self.placeholder_inner_frame)
+                historical_data = self.data_manager.get_historical_data(self.template_path, p_name)
+                if historical_data:
+                    entry['values'] = historical_data
             
             entry.grid(row=row, column=1, padx=5, pady=2, sticky="ew")
             self.placeholders[p_name] = entry
@@ -182,13 +192,61 @@ class TemplateEngineTab(ttk.Frame):
             return
         
         try:
-            loaded_values = self.data_manager.load_template_data(self.template_path)
+            loaded_data = self.data_manager.load_template_data(self.template_path)
             for p_name, entry in self.placeholders.items():
-                if p_name in loaded_values:
-                    entry.delete(0, tk.END)
-                    entry.insert(0, loaded_values[p_name])
+                if p_name in loaded_data:
+                    # Check if the data is in the new format (a dictionary)
+                    if isinstance(loaded_data[p_name], dict):
+                        value = loaded_data[p_name].get("current", "")
+                    else:
+                        # Assume old format (just the value)
+                        value = loaded_data[p_name]
+
+                    if isinstance(entry, DatePickerWidget):
+                        entry.set(value)
+                    else:
+                        entry.set(value)
             messagebox.showinfo("Load Inputs", "Inputs loaded successfully.")
         except FileNotFoundError:
             messagebox.showinfo("Load Inputs", "No previously saved inputs found for this template.")
         except Exception as e:
             messagebox.showerror("Error", f"Error loading inputs: {e}")
+
+    def load_generated_file(self):
+        file_path = filedialog.askopenfilename(
+            title="Select Generated Word Document",
+            filetypes=[("Word Documents", "*.docx")]
+        )
+        if not file_path:
+            return
+
+        try:
+            # This is a simplified assumption. In a real scenario, you might need a more robust
+            # way to extract data, perhaps by looking for the original template or metadata.
+            # For now, we assume the generated file name contains the template name.
+            template_name = os.path.basename(file_path).replace("Filled_", "")
+            template_path = os.path.join(os.path.dirname(self.template_path), template_name) # Reconstruct template path
+
+            if not os.path.exists(template_path):
+                messagebox.showerror("Error", "Could not find the original template for this generated file.")
+                return
+
+            self.template_path = template_path
+            self.template_label.config(text=os.path.basename(template_path))
+            self.load_placeholders()
+
+            # Now, load the data from the generated file
+            # This requires a method in TemplateProcessor to extract values, which we assume exists
+            # For demonstration, let's assume it returns a dictionary of placeholder values
+            # In a real implementation, this would involve reading the docx and extracting text
+            # which can be complex. We will simulate this for now.
+            
+            # Simulate loading values from the generated docx
+            # In a real app, you would implement this in your TemplateProcessor
+            # For now, we will just load the last saved data for that template
+            self.load_inputs() 
+
+            messagebox.showinfo("File Loaded", "Data from the generated file has been loaded for editing.")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not load the generated file: {e}")

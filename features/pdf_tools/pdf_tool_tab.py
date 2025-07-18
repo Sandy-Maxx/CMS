@@ -41,7 +41,7 @@ class PdfToolTab(ttk.Frame):
 
         # Merge PDFs Tab
         merge_tab = ttk.Frame(self.tab_control, padding=10)
-        self.tab_control.add(merge_tab, image=self.merge_icon, compound=tk.TOP) # Use icon for tab
+        self.tab_control.add(merge_tab, text="Merge PDFs") # Use icon for tab
         merge_tab.columnconfigure(0, weight=1)
         merge_tab.columnconfigure(1, weight=1)
 

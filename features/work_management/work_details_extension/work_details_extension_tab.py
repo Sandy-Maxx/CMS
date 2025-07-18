@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from database import db_manager
 from utils.helpers import validate_numeric_input
+from features.template_engine.date_picker_widget import DatePickerWidget
 
 class WorkDetailsExtensionTab(ttk.Frame):
     def __init__(self, notebook, parent_app, work_data_var, is_new_work_var):
@@ -16,6 +17,7 @@ class WorkDetailsExtensionTab(ttk.Frame):
         self.file_no_var = tk.StringVar()
         self.estimate_no_var = tk.StringVar()
         self.tender_cost_var = tk.StringVar()
+        self.tender_opening_date_var = tk.StringVar()
 
         self.vcmd_numeric = self.parent_app.window.register(validate_numeric_input)
 
@@ -62,6 +64,13 @@ class WorkDetailsExtensionTab(ttk.Frame):
         self.tender_cost_entry.grid(row=5, column=1, padx=5, pady=5, sticky="ew")
         self.tender_cost_var.trace_add("write", lambda *args: self._update_work_data('tender_cost', self.tender_cost_var.get()))
 
+        # Tender Opening Date
+        ttk.Label(self, text="Tender Opening Date:").grid(row=6, column=0, padx=5, pady=5, sticky="w")
+        self.tender_opening_date_picker = DatePickerWidget(self, self.tender_opening_date_var)
+        self.tender_opening_date_picker.grid(row=6, column=1, padx=5, pady=5, sticky="ew")
+        self.tender_opening_date_var.trace_add("write", lambda *args: self._update_work_data('tender_opening_date', self.tender_opening_date_var.get()))
+
+
         self.grid_columnconfigure(1, weight=1)
 
     def _bind_data(self):
@@ -73,6 +82,7 @@ class WorkDetailsExtensionTab(ttk.Frame):
         self.file_no_var.set(self.work_data_var.get('file_no', ''))
         self.estimate_no_var.set(self.work_data_var.get('estimate_no', ''))
         self.tender_cost_var.set(self.work_data_var.get('tender_cost', ''))
+        self.tender_opening_date_var.set(self.work_data_var.get('tender_opening_date', ''))
 
     def _update_work_data(self, key, value):
         self.work_data_var[key] = value
@@ -93,5 +103,6 @@ class WorkDetailsExtensionTab(ttk.Frame):
             'work_type': self.work_type_var.get(),
             'file_no': self.file_no_var.get(),
             'estimate_no': self.estimate_no_var.get(),
-            'tender_cost': self.tender_cost_var.get()
+            'tender_cost': self.tender_cost_var.get(),
+            'tender_opening_date': self.tender_opening_date_var.get()
         }
