@@ -12,6 +12,9 @@ def get_price_variation_table_columns():
         ("Unit", "", ""),
         ("Unit Rate", "", ""),
         ("Total Cost", "Before Variation", ""),
+        ("Total Cost", "Upto 125%", ""),
+        ("Total Cost", "Upto 140%", ""),
+        ("Total Cost", "Upto 150%", ""),
         ("Total Cost", "After Variation", ""),
     ]
     return columns
@@ -85,22 +88,28 @@ def write_price_variation_excel_report(worksheet, workbook, work_details, schedu
         worksheet.write(excel_row, 7, item_data['unit'], data_format)
         worksheet.write(excel_row, 8, item_data['unit_rate'], currency_format)
         
-        # Update column indices for formulas due to new columns
-        formula_total_cost_before = f"={xl_col_to_name(2)}{excel_row+1}*{xl_col_to_name(8)}{excel_row+1}"
-        worksheet.write_formula(excel_row, 9, formula_total_cost_before, currency_format)
+        worksheet.write(excel_row, 9, item_data['total_cost_before'], currency_format)
         
-        # This formula will need to be updated to reflect the new price logic
-        formula_total_cost_after = f"={xl_col_to_name(3)}{excel_row+1}*{xl_col_to_name(8)}{excel_row+1}" 
-        worksheet.write_formula(excel_row, 10, formula_total_cost_after, currency_format)
+        formula_cost_upto_125 = f"={xl_col_to_name(4)}{excel_row+1}*{xl_col_to_name(8)}{excel_row+1}"
+        worksheet.write_formula(excel_row, 10, formula_cost_upto_125, currency_format)
+        
+        formula_cost_upto_140 = f"={xl_col_to_name(5)}{excel_row+1}*{xl_col_to_name(8)}{excel_row+1}*0.98"
+        worksheet.write_formula(excel_row, 11, formula_cost_upto_140, currency_format)
+        
+        formula_cost_upto_150 = f"={xl_col_to_name(6)}{excel_row+1}*{xl_col_to_name(8)}{excel_row+1}*0.96"
+        worksheet.write_formula(excel_row, 12, formula_cost_upto_150, currency_format)
+        
+        formula_total_cost_after = f"={xl_col_to_name(10)}{excel_row+1}+{xl_col_to_name(11)}{excel_row+1}+{xl_col_to_name(12)}{excel_row+1}"
+        worksheet.write_formula(excel_row, 13, formula_total_cost_after, currency_format)
 
     # Write summary rows
     summary_row_start = start_row_data + len(schedule_items) + 1 # Add an empty row for spacing
 
     # Update column indices for summary rows due to new columns
     COL_TOTAL_COST_BEFORE = 9
-    COL_TOTAL_COST_AFTER = 10
+    COL_TOTAL_COST_AFTER = 13
     COL_LABEL_START = 0
-    COL_LABEL_END = 8 # Adjusted to cover new quantity columns
+    COL_LABEL_END = 12 # Adjusted to cover new quantity and cost columns
 
     # Subtotal Before/After Variation
     subtotal_row_before = summary_row_start

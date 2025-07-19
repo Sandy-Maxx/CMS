@@ -6,9 +6,9 @@ from utils.helpers import load_icon
 from .work_editor import WorkDetailsEditor
 from .work_search_bar import WorkSearchBar
 from features.excel_export.excel_exporter import export_work_to_excel
+from features.variation.Variation_report import VariationReportDialog
 from features.vitiation.Vitiation_report import VitiationReportDialog
 from features.price_variation.price_variation_exporter import export_price_variation_data_to_excel
-from features.variation.variation_selection_dialog import VariationReportSelectionDialog
 from features.comparison.comparison_exporter import ComparisonExporter
 from features.work_management.single_firm_export.single_firm_exporter import SingleFirmExporter
 from datetime import datetime
@@ -90,10 +90,11 @@ class MainWindow:
             self.works_tree.focus(item_id)
             
             context_menu = tk.Menu(self.root, tearoff=0)
-            context_menu.add_command(label="Export Variation Report (Advanced)", image=self.report_icon, compound=tk.LEFT, command=self._show_advanced_variation_report_dialog)
+            context_menu.add_command(label="Export Variation Report", image=self.report_icon, compound=tk.LEFT, command=self._export_variation_report)
             context_menu.add_command(label="Export Vitiation Report", image=self.report_icon, compound=tk.LEFT, command=self._export_vitiation_report)
             context_menu.add_command(label="Export Comparison Report", image=self.compare_icon, compound=tk.LEFT, command=self._export_comparison_report)
             context_menu.add_command(label="Export Single Firm Report", image=self.report_icon, compound=tk.LEFT, command=self._export_single_firm_report)
+            context_menu.add_command(label="Export Price Variation Report", image=self.report_icon, compound=tk.LEFT, command=self._export_price_variation_report)
             context_menu.add_separator()
             context_menu.add_command(label="Delete Work", image=self.delete_icon, compound=tk.LEFT, command=self._delete_work)
             context_menu.post(event.x_root, event.y_root)
@@ -112,6 +113,14 @@ class MainWindow:
                 self.load_works()
             else:
                 utils_helpers.show_toast(self.root, f"Failed to delete work '{work_name}'.", "error")
+
+    
+
+    
+
+    
+
+    
 
     def _export_variation_report(self):
         selected_item = self.works_tree.selection()
@@ -141,6 +150,18 @@ class MainWindow:
             return
         schedule_items = db_manager.get_schedule_items(work_id)
         
+        # Get unique firm names for the selected work
+        firm_names = db_manager.get_unique_firm_names_by_work_id(work_id)
+        if not firm_names:
+            utils_helpers.show_toast(self.root, "No firm rates found for this work.", "info")
+            return
+
+        selected_firm, variation_name = self._ask_for_price_variation_options(firm_names, work_id)
+        if not selected_firm or not variation_name:
+            utils_helpers.show_toast(self.root, "Selection cancelled.", "info")
+            return
+        selected_firms = [selected_firm]
+        
         output_path = filedialog.asksaveasfilename(
             defaultextension=".xlsx",
             filetypes=[("Excel files", "*.xlsx")],
@@ -150,20 +171,7 @@ class MainWindow:
             utils_helpers.show_toast(self.root, "Export cancelled.", "info")
             return
         
-        # Get unique firm names for the selected work
-        firm_names = db_manager.get_unique_firm_names_by_work_id(work_id)
-        if not firm_names:
-            utils_helpers.show_toast(self.root, "No firm rates found for this work.", "info")
-            return
-
-        # Prompt user to select a firm
-        selected_firm = self._ask_for_firm_selection(firm_names)
-        if not selected_firm:
-            utils_helpers.show_toast(self.root, "Firm selection cancelled.", "info")
-            return
-        selected_firms = [selected_firm]
-        
-        success, message = export_price_variation_data_to_excel(work_details, schedule_items, output_path, selected_firms)
+        success, message = export_price_variation_data_to_excel(work_details, schedule_items, output_path, selected_firms, variation_name)
         if success:
             utils_helpers.show_toast(self.root, f"Price Variation Report exported successfully: {output_path}", "success")
         else:
@@ -236,8 +244,55 @@ class MainWindow:
             traceback.print_exc()
             utils_helpers.show_toast(self.root, f"Error exporting single firm report: {e}", "error")
 
+    def _ask_for_price_variation_options(self, firm_names, work_id):
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Price Variation Options")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        # Firm Selection
+        tk.Label(dialog, text="Select a firm:").pack(padx=10, pady=5)
+        firm_var = tk.StringVar(dialog)
+        firm_var.set(firm_names[0] if firm_names else "")
+        firm_combobox = ttk.Combobox(dialog, textvariable=firm_var, values=firm_names, state="readonly")
+        firm_combobox.pack(padx=10, pady=5)
+
+        # Variation Name Selection
+        tk.Label(dialog, text="Select Variation Name:").pack(padx=10, pady=5)
+        variation_names = db_manager.get_variation_names_for_work(work_id)
+        if not variation_names:
+            messagebox.showerror("Error", "No variations found for this work.")
+            dialog.destroy()
+            return None, None
+
+        variation_name_var = tk.StringVar(dialog)
+        variation_name_var.set(variation_names[0]) # Default to the first variation name
+        variation_name_combobox = ttk.Combobox(dialog, textvariable=variation_name_var, values=variation_names, state="readonly")
+        variation_name_combobox.pack(padx=10, pady=5)
+
+        selected_firm = None
+        selected_variation_name = None
+
+        def on_ok():
+            nonlocal selected_firm, selected_variation_name
+            selected_firm = firm_var.get()
+            selected_variation_name = variation_name_var.get()
+            dialog.destroy()
+
+        def on_cancel():
+            dialog.destroy()
+
+        button_frame = ttk.Frame(dialog)
+        button_frame.pack(pady=10)
+        ttk.Button(button_frame, text="OK", command=on_ok).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=on_cancel).pack(side=tk.LEFT, padx=5)
+
+        self.root.wait_window(dialog)
+        return selected_firm, selected_variation_name
+
     def _ask_for_firm_selection(self, firm_names):
-        # Simple dialog to ask for firm selection
+        # This function is now deprecated and will be removed or refactored if not used elsewhere.
+        # For now, it remains to avoid breaking other parts of the code that might call it.
         dialog = tk.Toplevel(self.root)
         dialog.title("Select Firm")
         dialog.transient(self.root)
