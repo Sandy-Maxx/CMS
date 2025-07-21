@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import os
+from datetime import datetime
 from features.template_engine.template_processor import TemplateProcessor
 from features.template_engine.data_manager import TemplateDataManager
 from features.template_engine.date_picker_widget import DatePickerWidget
@@ -13,6 +14,7 @@ class TemplateEngineTab(ttk.Frame):
         self.work_id = None
         self.template_path = None
         self.placeholders = {}
+        self.firm_placeholders = set()
         self.template_processor = TemplateProcessor()
         self.data_manager = TemplateDataManager() # Initialize data manager
         self.create_widgets()
@@ -103,34 +105,17 @@ class TemplateEngineTab(ttk.Frame):
             return
 
         try:
-            extracted_placeholders = self.template_processor.extract_placeholders(self.template_path)
+            user_placeholders, work_placeholders, firm_placeholders = self.template_processor.extract_placeholders(self.template_path)
+            self.firm_placeholders = firm_placeholders # Store for later use
         except Exception as e:
             messagebox.showerror("Error", f"Could not read template file: {e}")
             return
 
         # Sort placeholders for consistent display
-        sorted_placeholders = sorted(list(extracted_placeholders))
+        sorted_placeholders = sorted(list(user_placeholders))
 
         row = 0
         for p_name in sorted_placeholders:
-            # Filter out derived placeholders (those with underscores that are not base names)
-            is_derived = False
-            # Define prefixes that indicate a base placeholder even if they contain underscores
-            base_prefixes_with_underscores = ("PROJECT_", "CLIENT_", "CONTRACT_", "WORK_", "ESTIMATE_")
-
-            if "_" in p_name:
-                # Check if it's a known base placeholder that might have underscores (e.g., PROJECT_NAME)
-                if p_name.startswith(base_prefixes_with_underscores):
-                    is_derived = False # It's a base placeholder, not derived
-                elif p_name.startswith(("COST", "DATE")):
-                    # If it's a COST or DATE placeholder, and contains an underscore, it's derived
-                    is_derived = True
-                else:
-                    # For other placeholders with underscores, assume they are base unless specified otherwise
-                    is_derived = False
-
-            if is_derived:
-                continue # Skip derived placeholders in the GUI
 
             ttk.Label(self.placeholder_inner_frame, text=p_name, width=30, anchor="w").grid(row=row, column=0, padx=5, pady=2, sticky="w")
             

@@ -8,19 +8,25 @@ from .schedule_items_tab import ScheduleItemsTab
 from .individual_firm_rates_tab import IndividualFirmRatesTab
 from .work_details_extension.work_details_extension_tab import WorkDetailsExtensionTab
 
-class WorkDetailsEditor:
-    def __init__(self, parent, work_id, callback):
+class WorkDetailsEditor(ttk.Frame):
+    def __init__(self, parent_frame, main_window_instance, work_id, main_window_root):
+        super().__init__(parent_frame)
         self.work_id = work_id
-        self.callback = callback
-        self.window = tk.Toplevel(parent)
-        self.window.title(f"{'New' if not work_id else 'Edit'} Work Details (ID: {work_id or 'New'})")
+        self.main_window_instance = main_window_instance
+        self.main_window_root = main_window_root # Store the main window's root
         configure_styles()
-        
+
+        # Back to list button
+        self.back_button = ttk.Button(self, text="< Back to Work List", command=self._back_to_work_list, style='Secondary.TButton')
+        self.back_button.grid(row=0, column=0, padx=5, pady=5, sticky="nw")
+
+        # The rest of the __init__ remains largely the same, but self.window becomes self
+        # and self.vcmd_numeric registration changes.
         self.work_id_var = tk.StringVar(value=str(work_id) if work_id else "")
         self.is_new_work_var = tk.BooleanVar(value=not work_id)
         self.reference_firm_var = tk.StringVar()
-        self.vcmd_numeric = self.window.register(validate_numeric_input)
-        
+        self.vcmd_numeric = self.register(validate_numeric_input)
+
         # Centralized dictionary to hold all work data
         self.work_data = {
             'work_id': work_id,
@@ -34,26 +40,24 @@ class WorkDetailsEditor:
             'tender_cost': None
         }
 
-        self.status_label = ttk.Label(self.window, text="Ready", style="Status.TLabel")
-        self.status_label.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
-        
-        self.notebook = ttk.Notebook(self.window)
-        self.notebook.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        
-        self._initialization_complete = False
+        self.status_label = ttk.Label(self, text="Ready", style="Status.TLabel")
+        self.status_label.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
+
+        self.notebook = ttk.Notebook(self)
+        self.notebook.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
         self.schedule_items_tab = ScheduleItemsTab(
             self.notebook, self, self.work_id_var, self.reference_firm_var,
             self.vcmd_numeric, self.load_firm_rates, self.update_schedule_item_display_costs,
-            self.populate_reference_firm_combobox
+            self.populate_reference_firm_combobox, self.main_window_root
         )
         self.firm_rates_tab = IndividualFirmRatesTab(
             self.notebook, self, self.vcmd_numeric, self.firm_rates_tab_load_firm_rates,
-            self.update_schedule_item_display_costs
+            self.update_schedule_item_display_costs, self.main_window_root
         )
         self.work_details_tab = WorkDetailsTab(
             self.notebook, self, self.work_data, self.is_new_work_var, self.status_label,
-            self.notebook, self.schedule_items_tab, None, self.populate_reference_firm_combobox
+            self.notebook, self.schedule_items_tab, None, self.populate_reference_firm_combobox, self.main_window_root
         )
         self.work_details_extension_tab = WorkDetailsExtensionTab(
             self.notebook, self, self.work_data, self.is_new_work_var
@@ -64,23 +68,24 @@ class WorkDetailsEditor:
         self.notebook.add(self.schedule_items_tab, text="Schedule Items")
         self.notebook.add(self.firm_rates_tab, text="Individual Firm Rates")
         
-        self.window.grid_rowconfigure(0, weight=1)
-        self.window.grid_columnconfigure(0, weight=1)
-        
+        from features.firm_documents.firm_documents_tab import FirmDocumentsTab
+        self.firm_documents_tab = FirmDocumentsTab(self.notebook, self.work_id_var)
+        self.notebook.add(self.firm_documents_tab, text="Firm Documents")
+
+        self.grid_rowconfigure(1, weight=1) # Notebook row
+        self.grid_columnconfigure(0, weight=1)
+
         if work_id:
             self.load_work_data()
-        
+
         self._initialization_complete = True
 
-        self.window.transient(parent)
-        self.window.grab_set()
-        self.window.protocol("WM_DELETE_WINDOW", self.on_close)
+        # Bind the tab change event
+        self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_change)
+        
+    def _back_to_work_list(self):
+        self.main_window_instance._show_work_list_view()
 
-    def on_close(self):
-        if self.callback:
-            self.callback()
-        self.window.destroy()
-    
     def load_work_data(self):
         work_data = get_work_by_id(self.work_id)
         if work_data:
@@ -89,6 +94,7 @@ class WorkDetailsEditor:
             self.work_details_extension_tab.load_work_data(self.work_data)
             self.schedule_items_tab._load_schedule_items()
             self.populate_reference_firm_combobox() # Call after work_id is set
+            self.firm_documents_tab.refresh_data() # Refresh firm documents tab
     
     def load_firm_rates(self, item_id, item_name):
         self.firm_rates_tab.load_firm_rates(item_id, item_name)
@@ -113,3 +119,13 @@ class WorkDetailsEditor:
             self.reference_firm_var.set(firms[0])
         elif not firms:
             self.reference_firm_var.set("")
+
+    def _on_tab_change(self, event):
+        selected_tab = self.notebook.tab(self.notebook.select(), "text")
+        if selected_tab == "Individual Firm Rates":
+            item_id = self.schedule_items_tab.get_selected_item_id()
+            item_name = self.schedule_items_tab.get_selected_item_name()
+            if item_id and item_name:
+                self.firm_rates_tab.load_firm_rates(item_id, item_name)
+            else:
+                self.firm_rates_tab.load_firm_rates(None, "No item selected") # Clear the firm rates tab

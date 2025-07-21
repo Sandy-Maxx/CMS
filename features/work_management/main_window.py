@@ -15,6 +15,7 @@ from datetime import datetime
 from features.template_engine.template_engine_tab import TemplateEngineTab
 from features.pdf_tools.pdf_tool_tab import PdfToolTab
 from features.about_tab.about_tab import AboutTab
+from features.calculation.calculation_tab import CalculationTab
 
 class MainWindow:
     def __init__(self, root):
@@ -30,31 +31,46 @@ class MainWindow:
         self.works_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.works_frame, text="Works")
 
+        # Frames for switching between work list and work editor
+        self.works_list_frame = ttk.Frame(self.works_frame)
+        self.work_editor_container_frame = ttk.Frame(self.works_frame)
+        
+        self.current_work_editor = None # To hold the WorkDetailsEditor instance
+
         self.template_engine_tab = TemplateEngineTab(self.notebook, self)
         self.notebook.add(self.template_engine_tab, text="Template Engine")
 
         self.pdf_tool_tab = PdfToolTab(self.notebook, self)
         self.notebook.add(self.pdf_tool_tab, text="PDF Tools")
 
+        self.calculation_tab = CalculationTab(self.notebook, self)
+        self.notebook.add(self.calculation_tab, text="Calculation")
+
         self.about_tab = AboutTab(self.notebook)
         self.notebook.add(self.about_tab, text="About")
         
+        # Pack the frames
+        self.works_list_frame.pack(fill=tk.BOTH, expand=True)
+        self.work_editor_container_frame.pack(fill=tk.BOTH, expand=True)
+        self.work_editor_container_frame.pack_forget() # Hide editor initially
+
         # Search Bar
-        self.search_bar = WorkSearchBar(self.works_frame, self.load_works)
+        self.search_bar = WorkSearchBar(self.works_list_frame, self.load_works)
         self.search_bar.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Label(self.works_frame, text="Works List", font=('Segoe UI', 11, 'bold')).pack(fill=tk.X, pady=(0, 10))
-        self.works_tree = ttk.Treeview(self.works_frame, columns=("name", "description"), show="headings")
+        ttk.Label(self.works_list_frame, text="Works List", font=('Segoe UI', 11, 'bold')).pack(fill=tk.X, pady=(0, 10))
+        self.works_tree = ttk.Treeview(self.works_list_frame, columns=("name", "description"), show="headings")
         self.works_tree.pack(fill=tk.BOTH, expand=True)
         self.works_tree.heading("name", text="Work Name")
         self.works_tree.heading("description", text="Description")
         self.works_tree.column("name", width=200, anchor=tk.W)
         self.works_tree.column("description", width=400, anchor=tk.W)
-        vsb = ttk.Scrollbar(self.works_frame, orient="vertical", command=self.works_tree.yview)
+        vsb = ttk.Scrollbar(self.works_list_frame, orient="vertical", command=self.works_tree.yview)
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
         self.works_tree.configure(yscrollcommand=vsb.set)
         self.works_tree.bind("<Double-1>", self.edit_work)
         self.works_tree.bind("<Button-3>", self._show_work_context_menu)
+        self.works_tree.bind("<<TreeviewSelect>>", self._on_work_selection)
 
         # Context menu icons
         self.edit_icon = load_icon("edit")
@@ -62,7 +78,7 @@ class MainWindow:
         self.report_icon = load_icon("report")
         self.compare_icon = load_icon("compare")
 
-        button_frame = ttk.Frame(self.works_frame)
+        button_frame = ttk.Frame(self.works_list_frame)
         button_frame.pack(fill=tk.X, pady=10)
         
         self.add_work_icon = load_icon("add")
@@ -82,12 +98,33 @@ class MainWindow:
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
 
+    def _show_work_list_view(self):
+        self.work_editor_container_frame.pack_forget()
+        self.works_list_frame.pack(fill=tk.BOTH, expand=True)
+        self.load_works() # Refresh the list when returning to it
+
+    def _show_work_editor_view(self, work_id=None):
+        self.works_list_frame.pack_forget()
+        self.work_editor_container_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Clear previous editor if any
+        for widget in self.work_editor_container_frame.winfo_children():
+            widget.destroy()
+        
+        # Create and pack the new WorkDetailsEditor
+        self.current_work_editor = WorkDetailsEditor(self.work_editor_container_frame, self, work_id, self.root)
+        self.current_work_editor.pack(fill=tk.BOTH, expand=True)
+        self.template_engine_tab.set_work_id(work_id) # Update the TemplateEngineTab with the current work_id
+
     def _show_work_context_menu(self, event):
         # Select item on right-click
         item_id = self.works_tree.identify_row(event.y)
         if item_id:
             self.works_tree.selection_set(item_id)
             self.works_tree.focus(item_id)
+            # Update template_engine_tab with selected work_id
+            work_id = int(item_id)
+            self.template_engine_tab.set_work_id(work_id)
             
             context_menu = tk.Menu(self.root, tearoff=0)
             context_menu.add_command(label="Export Variation Report", image=self.report_icon, compound=tk.LEFT, command=self._export_variation_report)
@@ -334,7 +371,7 @@ class MainWindow:
             self.works_tree.insert("", tk.END, iid=work[0], values=(work[1], work[2]))
 
     def add_work(self):
-        WorkDetailsEditor(self.root, None, self.load_works)
+        self._show_work_editor_view(work_id=None)
 
     def edit_work(self, event=None):
         selected_item = self.works_tree.selection()
@@ -342,7 +379,8 @@ class MainWindow:
             utils_helpers.show_toast(self.root, "Please select a work to edit.", "warning")
             return
         work_id = int(selected_item[0])
-        WorkDetailsEditor(self.root, work_id, self.load_works)
+        self.template_engine_tab.set_work_id(work_id) # Update the TemplateEngineTab with the current work_id
+        self._show_work_editor_view(work_id=work_id)
 
     def export_work(self):
         selected_item = self.works_tree.selection()
@@ -369,3 +407,11 @@ class MainWindow:
             utils_helpers.show_toast(self.root, f"Work exported successfully: {file_path}", "success")
         else:
             utils_helpers.show_toast(self.root, f"Error exporting work: {message}", "error")
+
+    def _on_work_selection(self, event):
+        selected_item = self.works_tree.selection()
+        if selected_item:
+            work_id = int(selected_item[0])
+            self.template_engine_tab.set_work_id(work_id)
+        else:
+            self.template_engine_tab.set_work_id(None) # Clear work_id if nothing is selected

@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from utils.helpers import load_icon
 
 class AboutTab(ttk.Frame):
     def __init__(self, parent):
@@ -10,6 +11,14 @@ class AboutTab(ttk.Frame):
         # Developer Information Section
         dev_info_frame = ttk.LabelFrame(self, text="About This Application", padding=15)
         dev_info_frame.pack(pady=20, padx=20, fill=tk.X)
+
+        # Load and display the logo using the helper function
+        self.logo_image = load_icon("logo", size=(100, 100)) # Assuming logo.jpg is in assets/icons
+        if self.logo_image:
+            logo_label = ttk.Label(dev_info_frame, image=self.logo_image)
+            logo_label.pack(pady=(0, 10))
+        else:
+            print("Warning: Could not load logo. Make sure 'logo.jpg' exists in assets/icons.")
 
         ttk.Label(dev_info_frame, text="Designed, Developed, and Written by:", font=('Segoe UI', 10, 'bold')).pack(pady=(0, 5))
         ttk.Label(dev_info_frame, text="Sanjeev Singh Rajput", font=('Segoe UI', 12, 'italic')).pack(pady=(0, 10))

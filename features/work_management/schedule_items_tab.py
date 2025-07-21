@@ -7,9 +7,10 @@ from features.vitiation.QuantityVariationDialog import QuantityVariationDialog
 from features.work_management.variation_manager import VariationManager
 
 class ScheduleItemsTab(ttk.Frame):
-    def __init__(self, notebook, parent_app, work_id_var, reference_firm_var, vcmd_numeric, load_firm_rates_callback, update_schedule_item_display_costs_callback, populate_reference_firm_combobox_callback):
+    def __init__(self, notebook, parent_app, work_id_var, reference_firm_var, vcmd_numeric, load_firm_rates_callback, update_schedule_item_display_costs_callback, populate_reference_firm_combobox_callback, main_window_root):
         super().__init__(notebook, padding=10)
         self.parent_app = parent_app
+        self.main_window_root = main_window_root
         self.work_id_var = work_id_var
         self.reference_firm_var = reference_firm_var
         self.vcmd_numeric = vcmd_numeric
@@ -110,25 +111,25 @@ class ScheduleItemsTab(ttk.Frame):
 
     def _add_new_item(self):
         dialog = QuantityVariationDialog(self, self.work_id_var.get(), None, None, self._load_schedule_items, self.populate_reference_firm_combobox_callback, self.parent_app, self.last_item_name)
-        self.parent_app.window.wait_window(dialog)
+        self.main_window_root.wait_window(dialog)
         if hasattr(dialog, 'saved_item_name') and dialog.saved_item_name: # Check if an item was actually added/saved
             self.last_item_name = dialog.saved_item_name
 
     def _add_sub_item(self):
         selected_item = self.schedule_tree.selection()
         if not selected_item:
-            utils_helpers.show_toast(self.parent_app.window, "Please select an item to add a sub-item.", "warning")
+            utils_helpers.show_toast(self.main_window_root, "Please select an item to add a sub-item.", "warning")
             return
         parent_item_id = selected_item[0]
         dialog = QuantityVariationDialog(self, self.work_id_var.get(), None, parent_item_id, self._load_schedule_items, self.populate_reference_firm_combobox_callback, self.parent_app, self.last_item_name)
-        self.parent_app.window.wait_window(dialog)
+        self.main_window_root.wait_window(dialog)
         if hasattr(dialog, 'saved_item_name') and dialog.saved_item_name: # Check if an item was actually added/saved
             self.last_item_name = dialog.saved_item_name
 
     def _edit_item(self):
         selected_item = self.schedule_tree.selection()
         if not selected_item:
-            utils_helpers.show_toast(self.parent_app.window, "Please select an item to edit.", "warning")
+            utils_helpers.show_toast(self.main_window_root, "Please select an item to edit.", "warning")
             return
         item_id = selected_item[0]
         QuantityVariationDialog(self, self.work_id_var.get(), item_id, None, self._load_schedule_items, self.populate_reference_firm_combobox_callback, self.parent_app)
@@ -136,19 +137,19 @@ class ScheduleItemsTab(ttk.Frame):
     def _delete_item(self):
         selected_item = self.schedule_tree.selection()
         if not selected_item:
-            utils_helpers.show_toast(self.parent_app.window, "Please select an item to delete.", "warning")
+            utils_helpers.show_toast(self.main_window_root, "Please select an item to delete.", "warning")
             return
         item_id = selected_item[0]
         if db_manager.delete_schedule_item(item_id):
-            utils_helpers.show_toast(self.parent_app.window, "Item deleted successfully.", "success")
+            utils_helpers.show_toast(self.main_window_root, "Item deleted successfully.", "success")
             self._load_schedule_items()
         else:
-            utils_helpers.show_toast(self.parent_app.window, "Failed to delete item.", "error")
+            utils_helpers.show_toast(self.main_window_root, "Failed to delete item.", "error")
 
     def _edit_firm_rates(self):
         selected_item = self.schedule_tree.selection()
         if not selected_item:
-            utils_helpers.show_toast(self.parent_app.window, "Please select an item to edit firm rates.", "warning")
+            utils_helpers.show_toast(self.main_window_root, "Please select an item to edit firm rates.", "warning")
             return
         item_id = selected_item[0]
         item_name = self.schedule_tree.item(item_id, "text")
@@ -256,3 +257,15 @@ class ScheduleItemsTab(ttk.Frame):
 
     def set_last_item_name(self, name):
         self.last_item_name = name
+
+    def get_selected_item_id(self):
+        selected_item = self.schedule_tree.selection()
+        if selected_item:
+            return int(selected_item[0])
+        return None
+
+    def get_selected_item_name(self):
+        selected_item = self.schedule_tree.selection()
+        if selected_item:
+            return self.schedule_tree.item(selected_item[0], "text")
+        return None

@@ -5,9 +5,10 @@ from utils import helpers as utils_helpers
 from utils.helpers import load_icon
 
 class IndividualFirmRatesTab(ttk.Frame):
-    def __init__(self, notebook, parent_app, vcmd_numeric, load_firm_rates_callback, update_schedule_item_display_costs_callback):
+    def __init__(self, notebook, parent_app, vcmd_numeric, load_firm_rates_callback, update_schedule_item_display_costs_callback, main_window_root):
         super().__init__(notebook, padding=10)
         self.parent_app = parent_app
+        self.main_window_root = main_window_root
         self.vcmd_numeric = vcmd_numeric
         self.load_firm_rates_callback = load_firm_rates_callback
         self.update_schedule_item_display_costs_callback = update_schedule_item_display_costs_callback
@@ -55,7 +56,7 @@ class IndividualFirmRatesTab(ttk.Frame):
 
     def _save_firm_rates(self):
         if not self.current_item_id:
-            utils_helpers.show_toast(self.parent_app.window, "No item selected.", "warning")
+            utils_helpers.show_toast(self.main_window_root, "No item selected.", "warning")
             return
         success = True
         for firm, entry in self.firm_entries:
@@ -64,17 +65,17 @@ class IndividualFirmRatesTab(ttk.Frame):
                 try:
                     rate = float(rate_str)
                     if rate < 0:
-                        utils_helpers.show_toast(self.parent_app.window, f"Rate for {firm} cannot be negative.", "error")
+                        utils_helpers.show_toast(self.main_window_root, f"Rate for {firm} cannot be negative.", "error")
                         success = False
                         continue
                     db_manager.upsert_firm_rate(self.current_item_id, firm, rate)
                 except ValueError:
-                    utils_helpers.show_toast(self.parent_app.window, f"Invalid rate for {firm}. Please enter a number.", "error")
+                    utils_helpers.show_toast(self.main_window_root, f"Invalid rate for {firm}. Please enter a number.", "error")
                     success = False
             else:
                 db_manager.delete_firm_rate_by_item_and_firm(self.current_item_id, firm)
         if success:
-            utils_helpers.show_toast(self.parent_app.window, f"Rates for {self.current_item_name} saved successfully.", "success")
+            utils_helpers.show_toast(self.main_window_root, f"Rates for {self.current_item_name} saved successfully.", "success")
             self.update_schedule_item_display_costs_callback()
         else:
-            utils_helpers.show_toast(self.parent_app.window, "Some rates could not be saved.", "error")
+            utils_helpers.show_toast(self.main_window_root, "Some rates could not be saved.", "error")

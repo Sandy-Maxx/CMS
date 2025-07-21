@@ -5,9 +5,10 @@ from utils import helpers as utils_helpers
 from utils.helpers import load_icon
 
 class WorkDetailsTab(ttk.Frame):
-    def __init__(self, notebook, parent_app, work_data_dict, is_new_work_var, status_label_ref, notebook_ref, schedule_items_tab_ref, firm_rates_summary_tab_ref, populate_reference_firm_combobox_callback):
+    def __init__(self, notebook, parent_app, work_data_dict, is_new_work_var, status_label_ref, notebook_ref, schedule_items_tab_ref, firm_rates_summary_tab_ref, populate_reference_firm_combobox_callback, main_window_root):
         super().__init__(notebook, padding=10)
         self.parent_app = parent_app
+        self.main_window_root = main_window_root
         self.work_data_dict = work_data_dict
         self.is_new_work_var = is_new_work_var
         self.status_label = status_label_ref
@@ -54,8 +55,8 @@ class WorkDetailsTab(ttk.Frame):
             if new_work_id:
                 self.work_data_dict['work_id'] = new_work_id
                 self.is_new_work_var.set(False)
-                self.parent_app.window.title(f"Edit Work Details (ID: {new_work_id})")
-                utils_helpers.show_toast(self.parent_app.window, f"Work '{work_name}' created successfully! You can now add schedule items.", "success")
+                self.main_window_root.title(f"Edit Work Details (ID: {new_work_id})")
+                utils_helpers.show_toast(self.main_window_root, f"Work '{work_name}' created successfully! You can now add schedule items.", "success")
                 self.status_label.config(text=f"Work '{work_name}' saved. Add schedule items.")
                 self.notebook.select(self.schedule_items_tab)
                 self.populate_reference_firm_combobox_callback()
@@ -63,14 +64,14 @@ class WorkDetailsTab(ttk.Frame):
                     self.firm_rates_summary_tab.work_id = new_work_id
                     self.firm_rates_summary_tab.load_data()
             else:
-                utils_helpers.show_toast(self.parent_app.window, "Failed to create new work.", "error")
+                utils_helpers.show_toast(self.main_window_root, "Failed to create new work.", "error")
                 self.status_label.config(text="Save failed: Database error or name already exists.")
         else:
             if db_manager.update_work(current_work_id, work_name, description, justification, section, work_type, file_no, estimate_no, tender_cost):
-                utils_helpers.show_toast(self.parent_app.window, f"Work '{work_name}' updated successfully!", "success")
+                utils_helpers.show_toast(self.main_window_root, f"Work '{work_name}' updated successfully!", "success")
                 self.status_label.config(text=f"Work '{work_name}' updated.")
             else:
-                utils_helpers.show_toast(self.parent_app.window, "Failed to update work.", "error")
+                utils_helpers.show_toast(self.main_window_root, "Failed to update work.", "error")
                 self.status_label.config(text="Save failed: Database error or name already exists.")
 
     def load_work_data(self, work_data):

@@ -49,16 +49,37 @@ class PdfToolTab(ttk.Frame):
         self.merge_input_paths = []
         self.merge_input_listbox = tk.Listbox(merge_tab, height=5, selectmode=tk.EXTENDED)
         self.merge_input_listbox.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+
+        # Frame for listbox buttons
+        listbox_button_frame = ttk.Frame(merge_tab)
+        listbox_button_frame.grid(row=2, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        listbox_button_frame.columnconfigure(0, weight=1)
+        listbox_button_frame.columnconfigure(1, weight=1)
+        listbox_button_frame.columnconfigure(2, weight=1)
+        listbox_button_frame.columnconfigure(3, weight=1)
         
-        self.add_files_button = ttk.Button(merge_tab, image=self.add_files_icon, style='Toolbutton', command=self._add_merge_files)
-        self.add_files_button.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
+        self.add_files_button = ttk.Button(listbox_button_frame, image=self.add_files_icon, style='Toolbutton', command=self._add_merge_files)
+        self.add_files_button.grid(row=0, column=0, sticky="ew", padx=2)
         self.add_files_button.bind("<Enter>", lambda e: self.add_files_button.config(text="Add Files"))
         self.add_files_button.bind("<Leave>", lambda e: self.add_files_button.config(text=""))
 
-        self.clear_list_button = ttk.Button(merge_tab, image=self.clear_list_icon, style='Toolbutton', command=self._clear_merge_list)
-        self.clear_list_button.grid(row=2, column=1, sticky="ew", padx=5, pady=5)
+        self.clear_list_button = ttk.Button(listbox_button_frame, image=self.clear_list_icon, style='Toolbutton', command=self._clear_merge_list)
+        self.clear_list_button.grid(row=0, column=1, sticky="ew", padx=2)
         self.clear_list_button.bind("<Enter>", lambda e: self.clear_list_button.config(text="Clear List"))
         self.clear_list_button.bind("<Leave>", lambda e: self.clear_list_button.config(text=""))
+
+        self.move_up_icon = load_icon("up")
+        self.move_down_icon = load_icon("down")
+
+        self.move_up_button = ttk.Button(listbox_button_frame, image=self.move_up_icon, style='Toolbutton', command=self._move_merge_file_up)
+        self.move_up_button.grid(row=0, column=2, sticky="ew", padx=2)
+        self.move_up_button.bind("<Enter>", lambda e: self.move_up_button.config(text="Move Up"))
+        self.move_up_button.bind("<Leave>", lambda e: self.move_up_button.config(text=""))
+
+        self.move_down_button = ttk.Button(listbox_button_frame, image=self.move_down_icon, style='Toolbutton', command=self._move_merge_file_down)
+        self.move_down_button.grid(row=0, column=3, sticky="ew", padx=2)
+        self.move_down_button.bind("<Enter>", lambda e: self.move_down_button.config(text="Move Down"))
+        self.move_down_button.bind("<Leave>", lambda e: self.move_down_button.config(text=""))
 
         ttk.Label(merge_tab, text="Output Path:").grid(row=3, column=0, sticky="w", pady=5)
         output_path_entry_frame = ttk.Frame(merge_tab)
@@ -225,6 +246,41 @@ class PdfToolTab(ttk.Frame):
     def _clear_merge_list(self):
         self.merge_input_listbox.delete(0, tk.END)
         self.merge_input_paths = []
+
+    def _move_merge_file_up(self):
+        selected_indices = self.merge_input_listbox.curselection()
+        if not selected_indices:
+            messagebox.showwarning("Selection Error", "Please select a PDF to move.")
+            return
+
+        for i in selected_indices:
+            if i > 0:
+                # Move in listbox
+                text = self.merge_input_listbox.get(i)
+                self.merge_input_listbox.delete(i)
+                self.merge_input_listbox.insert(i - 1, text)
+                # Move in internal list
+                self.merge_input_paths[i], self.merge_input_paths[i-1] = self.merge_input_paths[i-1], self.merge_input_paths[i]
+                # Update selection
+                self.merge_input_listbox.selection_set(i - 1)
+
+    def _move_merge_file_down(self):
+        selected_indices = self.merge_input_listbox.curselection()
+        if not selected_indices:
+            messagebox.showwarning("Selection Error", "Please select a PDF to move.")
+            return
+
+        # Iterate in reverse to avoid issues with changing indices
+        for i in reversed(selected_indices):
+            if i < self.merge_input_listbox.size() - 1:
+                # Move in listbox
+                text = self.merge_input_listbox.get(i)
+                self.merge_input_listbox.delete(i)
+                self.merge_input_listbox.insert(i + 1, text)
+                # Move in internal list
+                self.merge_input_paths[i], self.merge_input_paths[i+1] = self.merge_input_paths[i+1], self.merge_input_paths[i]
+                # Update selection
+                self.merge_input_listbox.selection_set(i + 1)
 
     def _browse_output_path(self, path_var, default_filename):
         file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")], initialfile=default_filename)

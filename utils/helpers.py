@@ -11,9 +11,15 @@ def load_icon(icon_name, size=(36, 36)):
     if icon_name in _icon_cache:
         return _icon_cache[icon_name]
     
-    icon_path = os.path.join(ICON_DIR, f"{icon_name}.png")
-    if not os.path.exists(icon_path):
-        print(f"Warning: Icon file not found: {icon_path}")
+    icon_path_png = os.path.join(ICON_DIR, f"{icon_name}.png")
+    icon_path_jpg = os.path.join(ICON_DIR, f"{icon_name}.jpg")
+
+    if os.path.exists(icon_path_png):
+        icon_path = icon_path_png
+    elif os.path.exists(icon_path_jpg):
+        icon_path = icon_path_jpg
+    else:
+        print(f"Warning: Icon file not found: {icon_path_png} or {icon_path_jpg}")
         return None
     
     try:

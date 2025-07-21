@@ -4,25 +4,17 @@ from utils.helpers import show_toast, validate_numeric_input
 from database import db_manager
 
 class QuantityVariationDialog(tk.Toplevel):
-    def __init__(self, parent, work_id, item_id, parent_item_id, callback, populate_reference_firm_combobox_callback, main_app_instance, last_item_name=""):
+    def __init__(self, parent, work_id, item_id, parent_item_id, callback, populate_reference_firm_combobox_callback, work_details_editor_instance, last_item_name=""):
         super().__init__(parent)
+        self.work_details_editor_instance = work_details_editor_instance
         self.work_id = work_id
         self.item_id = item_id
         self.parent_item_id = parent_item_id
         self.callback = callback
         self.populate_reference_firm_combobox_callback = populate_reference_firm_combobox_callback
-        self.main_app_instance = main_app_instance
         self.existing_item_data = None
         self.existing_firm_rate = None
         self.last_item_name = last_item_name # Store the last item name
-        self.work_id = work_id
-        self.item_id = item_id
-        self.parent_item_id = parent_item_id
-        self.callback = callback
-        self.populate_reference_firm_combobox_callback = populate_reference_firm_combobox_callback
-        self.main_app_instance = main_app_instance
-        self.existing_item_data = None
-        self.existing_firm_rate = None
 
         if self.item_id:
             self.existing_item_data = db_manager.get_schedule_item_by_id(self.item_id)
@@ -134,7 +126,7 @@ class QuantityVariationDialog(tk.Toplevel):
                 show_toast(self, "Failed to add schedule item.", "error")
                 return
 
-        self.main_app_instance.reference_firm_var.set(firm_name)
+        self.work_details_editor_instance.reference_firm_var.set(firm_name)
         if self.callback:
             self.callback()
         if self.populate_reference_firm_combobox_callback:

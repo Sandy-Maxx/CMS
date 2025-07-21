@@ -20,7 +20,11 @@ def create_tables():
         "work_type": "TEXT",
         "file_no": "TEXT",
         "estimate_no": "TEXT",
-        "tender_cost": "REAL"
+        "tender_cost": "REAL",
+        "tender_opening_date": "TEXT",
+        "loa_no": "TEXT",
+        "loa_date": "TEXT",
+        "work_commence_date": "TEXT"
     }
 
     for column, col_type in columns_to_add.items():
@@ -80,11 +84,11 @@ def create_tables():
     conn.commit()
     conn.close()
 
-def add_work(name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None):
+def add_work(name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None, tender_opening_date=None, loa_no=None, loa_date=None, work_commence_date=None):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO works (name, description, justification, section, work_type, file_no, estimate_no, tender_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost))
+        cursor.execute("INSERT INTO works (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date))
         work_id = cursor.lastrowid
         conn.commit()
         return work_id
@@ -93,11 +97,11 @@ def add_work(name, description, justification=None, section=None, work_type=None
     finally:
         conn.close()
 
-def update_work(work_id, name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None):
+def update_work(work_id, name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None, tender_opening_date=None, loa_no=None, loa_date=None, work_commence_date=None):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE works SET name = ?, description = ?, justification = ?, section = ?, work_type = ?, file_no = ?, estimate_no = ?, tender_cost = ? WHERE id = ?", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, work_id))
+        cursor.execute("UPDATE works SET name = ?, description = ?, justification = ?, section = ?, work_type = ?, file_no = ?, estimate_no = ?, tender_cost = ?, tender_opening_date = ?, loa_no = ?, loa_date = ?, work_commence_date = ? WHERE id = ?", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date, work_id))
         conn.commit()
         return cursor.rowcount > 0
     except sqlite3.IntegrityError:
@@ -108,26 +112,26 @@ def update_work(work_id, name, description, justification=None, section=None, wo
 def get_work_by_id(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost FROM works WHERE id = ?", (work_id,))
+    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date FROM works WHERE id = ?", (work_id,))
     work = cursor.fetchone()
     conn.close()
-    return {'work_id': work[0], 'work_name': work[1], 'description': work[2], 'justification': work[3], 'section': work[4], 'work_type': work[5], 'file_no': work[6], 'estimate_no': work[7], 'tender_cost': work[8]} if work else None
+    return {'work_id': work[0], 'work_name': work[1], 'description': work[2], 'justification': work[3], 'section': work[4], 'work_type': work[5], 'file_no': work[6], 'estimate_no': work[7], 'tender_cost': work[8], 'tender_opening_date': work[9], 'loa_no': work[10], 'loa_date': work[11], 'work_commence_date': work[12]} if work else None
 
 def get_works():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost FROM works")
+    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date FROM works")
     works = cursor.fetchall()
     conn.close()
-    return [(w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8]) for w in works]
+    return [(w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8], w[9], w[10], w[11], w[12]) for w in works]
 
 def get_works_by_name(search_term):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost FROM works WHERE name LIKE ?", ('%' + search_term + '%',))
+    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date FROM works WHERE name LIKE ?", ('%' + search_term + '%',))
     works = cursor.fetchall()
     conn.close()
-    return [(w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8]) for w in works]
+    return [(w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8], w[9], w[10], w[11], w[12]) for w in works]
 
 def delete_work(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -306,6 +310,30 @@ def get_all_unique_sections():
     conn.close()
     return [s[0] for s in sections]
 
+def get_all_unique_file_numbers():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT file_no FROM works WHERE file_no IS NOT NULL AND file_no != ''")
+    file_numbers = cursor.fetchall()
+    conn.close()
+    return [fn[0] for fn in file_numbers]
+
+def get_all_unique_estimate_numbers():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT estimate_no FROM works WHERE estimate_no IS NOT NULL AND estimate_no != ''")
+    estimate_numbers = cursor.fetchall()
+    conn.close()
+    return [en[0] for en in estimate_numbers]
+
+def get_all_unique_loa_numbers():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT loa_no FROM works WHERE loa_no IS NOT NULL AND loa_no != ''")
+    loa_numbers = cursor.fetchall()
+    conn.close()
+    return [ln[0] for ln in loa_numbers]
+
 
 def upsert_template_data(template_name, placeholder_name, value):
     from datetime import datetime
@@ -405,3 +433,35 @@ def get_variation_names_for_work(work_id):
     variation_names = cursor.fetchall()
     conn.close()
     return [v[0] for v in variation_names]
+
+def get_firm_documents(work_id):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted FROM firm_documents WHERE work_id = ?", (work_id,))
+    documents = cursor.fetchall()
+    conn.close()
+    return documents
+
+def get_firm_document_by_work_and_firm_name(work_id, firm_name):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted FROM firm_documents WHERE work_id = ? AND firm_name = ?", (work_id, firm_name))
+    document = cursor.fetchone()
+    conn.close()
+    if document:
+        return {
+            'id': document[0],
+            'work_id': document[1],
+            'firm_name': document[2],
+            'pg_no': document[3],
+            'pg_amount': document[4],
+            'bank_name': document[5],
+            'bank_address': document[6],
+            'firm_address': document[7],
+            'indemnity_bond_details': document[8],
+            'other_docs_details': document[9],
+            'submission_date': document[10],
+            'pg_submitted': document[11],
+            'indemnity_bond_submitted': document[12]
+        }
+    return None

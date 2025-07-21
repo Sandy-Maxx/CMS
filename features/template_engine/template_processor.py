@@ -188,16 +188,33 @@ class TemplateProcessor:
 
             if user_input_ph:
                 replacement_value = evaluate_special_placeholder(user_input_ph, data)
-                new_runs_data.append({'text': str(replacement_value), 'style': None})
+                if replacement_value is None or str(replacement_value).strip() == "":
+                    new_runs_data.append({'text': placeholder_full, 'style': None})
+                else:
+                    new_runs_data.append({'text': str(replacement_value), 'style': None})
             elif work_data_ph:
                 replacement_value = work_data_provider.get_data(work_data_ph)
-                new_runs_data.append({'text': str(replacement_value), 'style': None})
-            elif firm_ph and firm_name:
-                if firm_ph == 'firm_name':
-                    new_runs_data.append({'text': firm_name, 'style': None})
-                # Add more firm-specific placeholders here
+                if replacement_value is None or str(replacement_value).strip() == "":
+                    new_runs_data.append({'text': placeholder_full, 'style': None})
                 else:
-                    new_runs_data.append({'text': f'[Invalid Firm Placeholder: {firm_ph}]', 'style': None})
+                    new_runs_data.append({'text': str(replacement_value), 'style': None})
+            elif firm_ph and firm_name:
+                firm_document_data = work_data_provider.get_firm_document_data(firm_name)
+                if firm_ph == 'firm_name':
+                    replacement_value = firm_name
+                elif firm_ph == 'pg_submitted':
+                    replacement_value = "submitted the PG No." if firm_document_data.get('pg_submitted') == 1 else "did not submit the PG"
+                elif firm_ph == 'indemnity_bond_submitted':
+                    replacement_value = "submitted the Indemnity Bond" if firm_document_data.get('indemnity_bond_submitted') == 1 else "did not submit the Indemnity Bond"
+                elif firm_document_data and firm_ph in firm_document_data:
+                    replacement_value = firm_document_data[firm_ph]
+                else:
+                    replacement_value = None # Or some other default for invalid firm placeholders
+
+                if replacement_value is None or str(replacement_value).strip() == "":
+                    new_runs_data.append({'text': placeholder_full, 'style': None})
+                else:
+                    new_runs_data.append({'text': str(replacement_value), 'style': None})
 
             last_idx = match.end()
 

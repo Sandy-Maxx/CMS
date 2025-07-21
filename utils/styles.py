@@ -64,4 +64,21 @@ def configure_styles():
     style.configure("Info.Toast.TLabel", background="#E0F2F7", foreground="#01579B", font=("Segoe UI", 9))
     style.configure("Success.Toast.TLabel", background="#E8F5E9", foreground="#1B5E20", font=("Segoe UI", 9))
     style.configure("Error.Toast.TLabel", background="#FFEBEE", foreground="#B71C1C", font=("Segoe UI", 9))
-    style.configure("Warning.Toast.TLabel", background="#FFFDE7", foreground="#FF6F00", font=("Segoe UI", 9))
+    style.configure("DatePicker.Header.TFrame", background=primary_color, relief="raised", borderwidth=1)
+    style.configure("DatePicker.Nav.TButton", background=primary_color, foreground="white", font=("Segoe UI", 8, "bold"), relief="flat")
+    style.map("DatePicker.Nav.TButton", background=[('active', primary_hover)])
+    style.configure("DatePicker.MonthYear.TLabel", background=primary_color, foreground="white", font=("Segoe UI", 9, "bold"))
+
+    style.configure("DatePicker.Days.TFrame", background=background_color, relief="flat", borderwidth=0)
+    style.configure("DatePicker.DayHeader.TLabel", background="#CFD8DC", foreground=text_color, font=("Segoe UI", 7, "bold"))
+
+    style.configure("DatePicker.Calendar.TFrame", background="white", relief="solid", borderwidth=1)
+    style.configure("DatePicker.Day.TLabel", background="white", foreground=text_color, font=("Segoe UI", 7))
+    style.configure("DatePicker.Day.TButton", background="white", foreground=text_color, font=("Segoe UI", 7), relief="flat", borderwidth=1)
+    style.map("DatePicker.Day.TButton", background=[('active', '#E0E0E0'), ('selected', info_color)], foreground=[('selected', "white")])
+
+    style.configure("DatePicker.CurrentDay.TButton", background=info_color, foreground="white", font=("Segoe UI", 7, "bold"), relief="solid", borderwidth=1, bordercolor=info_color)
+    style.map("DatePicker.CurrentDay.TButton", background=[('active', info_hover)])
+
+    style.configure("DatePicker.Year.TCombobox", fieldbackground="white", background="white", foreground=text_color, font=("Segoe UI", 8))
+    style.map("DatePicker.Year.TCombobox", fieldbackground=[('readonly', 'white')])
