@@ -147,20 +147,17 @@ class FirmDocumentsTab(ttk.Frame):
 
     def _populate_firm_names(self):
         all_firm_names = db_manager.get_all_unique_firm_names()
+        self.firm_name_combobox['values'] = all_firm_names # Always populate with all unique names
+
         work_id = self.work_id_var.get()
-        
         if work_id:
             firms_for_work = db_manager.get_unique_firm_names_by_work_id(int(work_id))
             if firms_for_work:
-                self.firm_name_combobox['values'] = firms_for_work
-                self.firm_name_combobox.set("") # Clear current selection
-                self.firm_name_combobox.set(firms_for_work[0]) # Set to first firm
+                self.firm_name_combobox.set(firms_for_work[0]) # Set to first firm for the work
             else:
-                self.firm_name_combobox['values'] = all_firm_names
-                self.firm_name_combobox.set("")
+                self.firm_name_combobox.set("") # Clear if no firms for this work
         else:
-            self.firm_name_combobox['values'] = all_firm_names
-            self.firm_name_combobox.set("")
+            self.firm_name_combobox.set("") # Clear if no work selected
 
     def _on_firm_name_key_release(self, event):
         search_text = self.firm_name_var.get().lower()
