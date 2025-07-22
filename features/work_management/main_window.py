@@ -16,6 +16,7 @@ from features.template_engine.template_engine_tab import TemplateEngineTab
 from features.pdf_tools.pdf_tool_tab import PdfToolTab
 from features.about_tab.about_tab import AboutTab
 from features.calculation.calculation_tab import CalculationTab
+from features.work_management.firm_registration.firm_registration_tab import FirmRegistrationTab
 
 class MainWindow:
     def __init__(self, root):
@@ -45,6 +46,9 @@ class MainWindow:
 
         self.calculation_tab = CalculationTab(self.notebook, self)
         self.notebook.add(self.calculation_tab, text="Calculation")
+
+        self.firm_registration_tab = FirmRegistrationTab(self.notebook)
+        self.notebook.add(self.firm_registration_tab, text="Firm Registration")
 
         self.about_tab = AboutTab(self.notebook)
         self.notebook.add(self.about_tab, text="About")

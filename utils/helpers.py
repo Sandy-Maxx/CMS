@@ -1,9 +1,15 @@
 import tkinter as tk
 from tkinter import ttk
 import os
+import sys
 from PIL import Image, ImageTk
 
-ICON_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icons")
+if getattr(sys, 'frozen', False):
+    # Running in a PyInstaller bundle
+    ICON_DIR = os.path.join(sys._MEIPASS, "assets", "icons")
+else:
+    # Running as a normal Python script
+    ICON_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "icons")
 
 _icon_cache = {}
 

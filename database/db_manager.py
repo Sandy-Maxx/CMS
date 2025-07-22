@@ -80,6 +80,15 @@ def create_tables():
             UNIQUE(schedule_item_id, variation_name)
         )
     """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS firms (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            representative TEXT,
+            address TEXT
+        )
+    """)
     
     conn.commit()
     conn.close()

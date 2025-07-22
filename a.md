@@ -1,20 +1,22 @@
-    ~~~~~~~~~~~~~~~~^^^
-KeyboardInterrupt
-PS D:\CMS\CMS> Dated: 21-07-2025C^C
-PS D:\CMS\CMS> python main.py
 Traceback (most recent call last):
-  File "D:\CMS\CMS\main.py", line 4, in <module>
-    from features.work_management.main_window import MainWindow
-  File "D:\CMS\CMS\features\work_management\main_window.py", line 15, in <module>
-    from features.template_engine.template_engine_tab import TemplateEngineTab
-  File "D:\CMS\CMS\features\template_engine\template_engine_tab.py", line 5, in <module>
-    from features.template_engine.template_processor import TemplateProcessor
-  File "D:\CMS\CMS\features\template_engine\template_processor.py", line 4, in <module>
-    from .work_data_provider import WorkDataProvider
-  File "D:\CMS\CMS\features\template_engine\work_data_provider.py", line 79
-    f"{i+1}. {doc['firm_name']} {pg_status} {doc['pg_no'] or 'N/A'}, Dated: {doc['submission_date'] or 'N/A'}, Amount: Rs. {formatted_pg_amount}, Bank details: {doc['bank_name'] or 'N/A'}, Address: {doc['bank_address'] or 'N/A'.}\n"
-                                                                                                                 
-                                                                                                                 
- ^
-SyntaxError: f-string: expecting '=', or '!', or ':', or '}'
-PS D:\CMS\CMS> 
+  File "main.py", line 16, in <module>
+  File "main.py", line 12, in main
+  File "features\work_management\main_window.py", line 25, in __init__
+    self._create_widgets()
+    ~~~~~~~~~~~~~~~~~~~~^^
+  File "features\work_management\main_window.py", line 49, in _create_widgets
+    self.about_tab = AboutTab(self.notebook)
+                     ~~~~~~~~^^^^^^^^^^^^^^^
+  File "features\about_tab\about_tab.py", line 8, in __init__
+    self.create_widgets()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "features\about_tab\about_tab.py", line 45, in create_widgets
+    self._add_faqs_section()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "features\about_tab\about_tab.py", line 244, in _add_faqs_section
+    self._create_collapsible_section(self.accordion_frame, "Frequently Asked Questions (FAQ)", faq_content_frame)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "features\about_tab\about_tab.py", line 64, in _create_collapsible_section
+    content_builder_func(content_frame)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+TypeError: 'Frame' object is not callable
