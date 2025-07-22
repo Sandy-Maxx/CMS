@@ -14,6 +14,7 @@ class FirmDocumentsTab(ttk.Frame):
         self.work_id_var.trace("w", self._on_work_id_change)
 
         self.vcmd_numeric = self.register(validate_numeric_input)
+        self.selected_doc_id = None # To store the ID of the document being edited
 
         self._create_widgets()
         self.load_firm_documents()
@@ -146,27 +147,35 @@ class FirmDocumentsTab(ttk.Frame):
         self.load_firm_documents()
 
     def _populate_firm_names(self):
-        all_firm_names = db_manager.get_all_unique_firm_names()
-        self.firm_name_combobox['values'] = all_firm_names # Always populate with all unique names
-
         work_id = self.work_id_var.get()
         if work_id:
             firms_for_work = db_manager.get_unique_firm_names_by_work_id(int(work_id))
+            self.firm_name_combobox['values'] = firms_for_work
             if firms_for_work:
-                self.firm_name_combobox.set(firms_for_work[0]) # Set to first firm for the work
+                self.firm_name_combobox.set(firms_for_work[0])
             else:
-                self.firm_name_combobox.set("") # Clear if no firms for this work
+                self.firm_name_combobox.set("")
         else:
-            self.firm_name_combobox.set("") # Clear if no work selected
+            self.firm_name_combobox['values'] = []
+            self.firm_name_combobox.set("")
 
     def _on_firm_name_key_release(self, event):
         search_text = self.firm_name_var.get().lower()
-        if search_text == '':
-            self.firm_name_combobox['values'] = db_manager.get_all_unique_firm_names()
+        work_id = self.work_id_var.get()
+        if work_id:
+            firms_for_work = db_manager.get_unique_firm_names_by_work_id(int(work_id))
+            if search_text == '':
+                self.firm_name_combobox['values'] = firms_for_work
+            else:
+                filtered_firms = [firm for firm in firms_for_work if search_text in firm.lower()]
+                self.firm_name_combobox['values'] = filtered_firms
         else:
-            filtered_firms = [firm for firm in db_manager.get_all_unique_firm_names() if search_text in firm.lower()]
-            self.firm_name_combobox['values'] = filtered_firms
-        self.firm_name_combobox.event_generate('tk::PostCombobox')
+            self.firm_name_combobox['values'] = []
+
+        # This is a bit of a hack to force the dropdown to update
+        # when the list of values is changed dynamically.
+        self.firm_name_combobox.event_generate('<Down>')
+        self.firm_name_combobox.event_generate('<Escape>')
 
     def _on_firm_selected(self, event):
         self.load_firm_documents() # Reload documents to filter by selected firm
@@ -229,12 +238,11 @@ class FirmDocumentsTab(ttk.Frame):
             show_toast(self, f"Error adding document: {e}", "error")
 
     def _update_document(self):
-        selected_item = self.documents_tree.selection()
-        if not selected_item:
+        if self.selected_doc_id is None:
             show_toast(self, "Please select a document to update.", "warning")
             return
 
-        doc_id = int(selected_item[0])
+        doc_id = self.selected_doc_id
         firm_name = self.firm_name_var.get()
         pg_no = self.pg_no_entry.get()
         pg_amount_str = self.pg_amount_entry.get()
@@ -312,6 +320,7 @@ class FirmDocumentsTab(ttk.Frame):
 
             self.add_button.config(state=tk.DISABLED)
             self.update_button.config(state=tk.NORMAL)
+            self.selected_doc_id = doc_id # Store the ID of the selected document
         else:
             self._clear_form()
 
@@ -331,6 +340,7 @@ class FirmDocumentsTab(ttk.Frame):
         self.add_button.config(state=tk.NORMAL)
         self.update_button.config(state=tk.DISABLED)
         self.documents_tree.selection_remove(self.documents_tree.selection())
+        self.selected_doc_id = None # Clear the stored document ID
 
     def _show_context_menu(self, event):
         item_id = self.documents_tree.identify_row(event.y)

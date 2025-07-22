@@ -5,13 +5,14 @@ from utils import helpers as utils_helpers
 from utils.helpers import load_icon
 
 class IndividualFirmRatesTab(ttk.Frame):
-    def __init__(self, notebook, parent_app, vcmd_numeric, load_firm_rates_callback, update_schedule_item_display_costs_callback, main_window_root):
+    def __init__(self, notebook, parent_app, vcmd_numeric, load_firm_rates_callback, update_schedule_item_display_costs_callback, main_window_root, work_id_var):
         super().__init__(notebook, padding=10)
         self.parent_app = parent_app
         self.main_window_root = main_window_root
         self.vcmd_numeric = vcmd_numeric
         self.load_firm_rates_callback = load_firm_rates_callback
         self.update_schedule_item_display_costs_callback = update_schedule_item_display_costs_callback
+        self.work_id_var = work_id_var # Store work_id_var
         self.current_item_id = None
         self.current_item_name = None
         self.firm_entries = []
@@ -42,7 +43,7 @@ class IndividualFirmRatesTab(ttk.Frame):
             widget.destroy()
         self.firm_entries = []
         firm_rates = db_manager.get_firm_rates(item_id)
-        all_firms = db_manager.get_all_unique_firm_names()
+        all_firms = db_manager.get_unique_firm_names_by_work_id(int(self.work_id_var.get()))
         row = 0
         for firm in all_firms:
             rate = next((r['unit_rate'] for r in firm_rates if r['firm_name'] == firm), "")

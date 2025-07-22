@@ -290,6 +290,22 @@ def get_all_unique_firm_names():
     conn.close()
     return [f[0] for f in firms]
 
+def get_all_firm_names():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM firms")
+    firms = cursor.fetchall()
+    conn.close()
+    return [f[0] for f in firms]
+
+def get_all_firm_names():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM firms")
+    firms = cursor.fetchall()
+    conn.close()
+    return [f[0] for f in firms]
+
 def get_unique_firm_names_by_work_id(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()

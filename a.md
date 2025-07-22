@@ -1,22 +1,38 @@
+PS D:\CMS\CMS> python main.py
+Firm documents table columns after ALTER: ['id', 'work_id', 'firm_name', 'pg_no', 'pg_amount', 'bank_name', 'bank_address', 'firm_address', 'indemnity_bond_details', 'other_docs_details', 'submission_date', 'pg_submitted', 'indemnity_bond_submitted']
+Exception in Tkinter callback
 Traceback (most recent call last):
-  File "main.py", line 16, in <module>
-  File "main.py", line 12, in main
-  File "features\work_management\main_window.py", line 25, in __init__
-    self._create_widgets()
-    ~~~~~~~~~~~~~~~~~~~~^^
-  File "features\work_management\main_window.py", line 49, in _create_widgets
-    self.about_tab = AboutTab(self.notebook)
-                     ~~~~~~~~^^^^^^^^^^^^^^^
-  File "features\about_tab\about_tab.py", line 8, in __init__
-    self.create_widgets()
-    ~~~~~~~~~~~~~~~~~~~^^
-  File "features\about_tab\about_tab.py", line 45, in create_widgets
-    self._add_faqs_section()
-    ~~~~~~~~~~~~~~~~~~~~~~^^
-  File "features\about_tab\about_tab.py", line 244, in _add_faqs_section
-    self._create_collapsible_section(self.accordion_frame, "Frequently Asked Questions (FAQ)", faq_content_frame)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "features\about_tab\about_tab.py", line 64, in _create_collapsible_section
-    content_builder_func(content_frame)
-    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-TypeError: 'Frame' object is not callable
+  File "C:\Program Files\Python313\Lib\tkinter\__init__.py", line 2068, in __call__     
+    return self.func(*args)
+           ~~~~~~~~~^^^^^^^
+  File "D:\CMS\CMS\features\vitiation\QuantityVariationDialog.py", line 86, in _load_firms
+    firms = db_manager.get_all_firm_names() 
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   
+AttributeError: module 'database.db_manager' has no attribute 'get_all_firm_names'. Did you mean: 'get_all_unique_firm_names'?      
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Program Files\Python313\Lib\tkinter\__init__.py", line 2068, in __call__     
+    return self.func(*args)
+           ~~~~~~~~~^^^^^^^
+  File "D:\CMS\CMS\features\vitiation\QuantityVariationDialog.py", line 86, in _load_firms
+    firms = db_manager.get_all_firm_names() 
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   
+AttributeError: module 'database.db_manager' has no attribute 'get_all_firm_names'. Did you mean: 'get_all_unique_firm_names'?      
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Program Files\Python313\Lib\tkinter\__init__.py", line 2068, in __call__     
+    return self.func(*args)
+           ~~~~~~~~~^^^^^^^
+  File "D:\CMS\CMS\features\vitiation\QuantityVariationDialog.py", line 86, in _load_firms
+    firms = db_manager.get_all_firm_names() 
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   
+AttributeError: module 'database.db_manager' has no attribute 'get_all_firm_names'. Did you mean: 'get_all_unique_firm_names'?      
+Exception in Tkinter callback
+Traceback (most recent call last):
+  File "C:\Program Files\Python313\Lib\tkinter\__init__.py", line 2068, in __call__     
+    return self.func(*args)
+           ~~~~~~~~~^^^^^^^
+  File "D:\CMS\CMS\features\vitiation\QuantityVariationDialog.py", line 86, in _load_firms
+    firms = db_manager.get_all_firm_names() 
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^   
+AttributeError: module 'database.db_manager' has no attribute 'get_all_firm_names'. Did you mean: 'get_all_unique_firm_names'?      

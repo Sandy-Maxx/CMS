@@ -83,7 +83,10 @@ class QuantityVariationDialog(tk.Toplevel):
         pass
 
     def _load_firms(self):
-        firms = db_manager.get_all_unique_firm_names()
+        if self.item_id: # If editing an existing item, show only firms that have quoted for this work
+            firms = db_manager.get_unique_firm_names_by_work_id(self.work_id)
+        else: # If adding a new item, show all registered firms
+            firms = db_manager.get_all_firm_names()
         self.firm_combobox['values'] = firms
 
     def _on_firm_focus_out(self, event):

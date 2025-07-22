@@ -53,7 +53,7 @@ class WorkDetailsEditor(ttk.Frame):
         )
         self.firm_rates_tab = IndividualFirmRatesTab(
             self.notebook, self, self.vcmd_numeric, self.firm_rates_tab_load_firm_rates,
-            self.update_schedule_item_display_costs, self.main_window_root
+            self.update_schedule_item_display_costs, self.main_window_root, self.work_id_var
         )
         self.work_details_tab = WorkDetailsTab(
             self.notebook, self, self.work_data, self.is_new_work_var, self.status_label,
