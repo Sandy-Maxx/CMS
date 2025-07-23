@@ -58,7 +58,8 @@ def populate_sample_data():
                 # Add unique non-zero firm rates
                 for firm in work_firms:
                     rate = round(random.uniform(5.0, 200.0), 2) # Generate unique non-zero rates
-                    upsert_firm_rate(item_id, firm, rate)
+                    labour_rate = round(random.uniform(10.0, 50.0), 2) # Generate random labour rate
+                    upsert_firm_rate(item_id, firm, rate, labour_rate)
 
         # Add sub-items and their rates
         sub_items_to_add = [
@@ -76,7 +77,8 @@ def populate_sample_data():
                     added_item_ids[item_name] = item_id
                     for firm in work_firms:
                         rate = round(random.uniform(1.0, 100.0), 2) # Generate unique non-zero rates
-                        upsert_firm_rate(item_id, firm, rate)
+                        labour_rate = round(random.uniform(5.0, 20.0), 2) # Generate random labour rate
+                        upsert_firm_rate(item_id, firm, rate, labour_rate)
 
     print("All sample data populated successfully.")
 

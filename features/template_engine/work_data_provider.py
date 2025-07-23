@@ -5,10 +5,27 @@ class WorkDataProvider:
     def __init__(self, work_id):
         self.work_id = work_id
         self.work_details = db_manager.get_work_by_id(work_id)
+        # Mapping of template placeholders to actual work_details keys
+        self.placeholder_map = {
+            'ID': 'work_id',
+            'NAME': 'work_name',
+            'DESCRIPTION': 'description',
+            'JUSTIFICATION': 'justification',
+            'SECTION': 'section',
+            'WORK_TYPE': 'work_type',
+            'FILE_NO': 'file_no',
+            'ESTIMATE_NO': 'estimate_no',
+            'TENDER_COST': 'tender_cost',
+            'TENDER_OPENING_DATE': 'tender_opening_date',
+            'LOA_NO': 'loa_no',
+            'LOA_DATE': 'loa_date',
+            'WORK_COMMENCE_DATE': 'work_commence_date',
+        }
 
     def get_data(self, placeholder):
-        if self.work_details and placeholder in self.work_details:
-            return self.work_details[placeholder]
+        mapped_placeholder = self.placeholder_map.get(placeholder)
+        if self.work_details and mapped_placeholder and mapped_placeholder in self.work_details:
+            return self.work_details[mapped_placeholder]
         elif placeholder == 'firm_pg_details':
             return self.get_firm_pg_details_block()
         return f"[Invalid Work Data Placeholder: {placeholder}]"

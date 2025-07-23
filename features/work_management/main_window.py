@@ -17,6 +17,7 @@ from features.pdf_tools.pdf_tool_tab import PdfToolTab
 from features.about_tab.about_tab import AboutTab
 from features.calculation.calculation_tab import CalculationTab
 from features.work_management.firm_registration.firm_registration_tab import FirmRegistrationTab
+from features.AutodocGen.autodoc_manager import AutodocManager
 
 class MainWindow:
     def __init__(self, root):
@@ -52,6 +53,8 @@ class MainWindow:
 
         self.about_tab = AboutTab(self.notebook)
         self.notebook.add(self.about_tab, text="About")
+        
+        self.autodoc_manager = AutodocManager(self.root, db_manager.DATABASE_PATH)
         
         # Pack the frames
         self.works_list_frame.pack(fill=tk.BOTH, expand=True)
@@ -136,6 +139,10 @@ class MainWindow:
             context_menu.add_command(label="Export Comparison Report", image=self.compare_icon, compound=tk.LEFT, command=self._export_comparison_report)
             context_menu.add_command(label="Export Single Firm Report", image=self.report_icon, compound=tk.LEFT, command=self._export_single_firm_report)
             context_menu.add_command(label="Export Price Variation Report", image=self.report_icon, compound=tk.LEFT, command=self._export_price_variation_report)
+            context_menu.add_command(label="Export Estimate Report", image=self.report_icon, compound=tk.LEFT, command=self._export_estimate_report)
+            context_menu.add_separator()
+            context_menu.add_command(label="Letters", image=self.report_icon, compound=tk.LEFT, command=lambda: self.autodoc_manager.generate_document(work_id, "Letters"))
+            context_menu.add_command(label="Office Notes", image=self.report_icon, compound=tk.LEFT, command=lambda: self.autodoc_manager.generate_document(work_id, "OfficeNotes"))
             context_menu.add_separator()
             context_menu.add_command(label="Delete Work", image=self.delete_icon, compound=tk.LEFT, command=self._delete_work)
             context_menu.post(event.x_root, event.y_root)
@@ -217,6 +224,37 @@ class MainWindow:
             utils_helpers.show_toast(self.root, f"Price Variation Report exported successfully: {output_path}", "success")
         else:
             utils_helpers.show_toast(self.root, f"Error exporting Price Variation Report: {message}", "error")
+
+    def _export_estimate_report(self):
+        selected_item = self.works_tree.selection()
+        if not selected_item:
+            utils_helpers.show_toast(self.root, "Please select a work to generate Estimate Report.", "warning")
+            return
+        work_id = int(selected_item[0])
+        work_details = db_manager.get_work_by_id(work_id)
+        if not work_details:
+            utils_helpers.show_toast(self.root, "Failed to retrieve work details.", "error")
+            return
+
+        firm_names = db_manager.get_unique_firm_names_by_work_id(work_id)
+        if not firm_names:
+            utils_helpers.show_toast(self.root, "No firm rates found for this work.", "info")
+            return
+
+        selected_firm = self._ask_for_firm_selection(firm_names)
+        if not selected_firm:
+            utils_helpers.show_toast(self.root, "Firm selection cancelled.", "info")
+            return
+
+        # Call the new export_runner with work_id and selected_firm
+        from features.estimates.export_runner import run_export
+        try:
+            run_export(work_id, selected_firm)
+            utils_helpers.show_toast(self.root, "Estimate Report generated successfully.", "success")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            utils_helpers.show_toast(self.root, f"Error generating Estimate Report: {e}", "error")
 
     def _export_comparison_report(self):
         selected_item = self.works_tree.selection()
