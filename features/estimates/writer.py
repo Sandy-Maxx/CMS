@@ -1,15 +1,51 @@
 # features/estimates/writer.py
 
 from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment, Font
 from .constants import COLUMN_HEADERS, COLUMN_MAPPING, GST_RATE
 from .utils import get_cell_reference
 
-def write_header(worksheet):
+def write_header(worksheet, work_details):
     """
-    Writes the column headers to the first row of the worksheet.
+    Writes the administrative metadata and column headers to the worksheet.
     """
+
+    # Define styles
+    bold_font = Font(bold=True)
+    center_align = Alignment(horizontal='center', vertical='center')
+    left_align = Alignment(horizontal='left', vertical='center')
+
+    current_row = 1
+
+    # Administrative Metadata Block
+    worksheet.cell(row=current_row, column=1, value="DETAILED ESTIMATE NO.").font = bold_font
+    worksheet.cell(row=current_row, column=2, value=work_details.get('estimate_no', ''))
+    current_row += 1
+
+    worksheet.cell(row=current_row, column=1, value="ELECTRICAL DEPARTMENT").font = bold_font
+    current_row += 1
+
+    worksheet.cell(row=current_row, column=1, value="DIVISION : MUMBAI").font = bold_font
+    current_row += 1
+
+    worksheet.cell(row=current_row, column=1, value="PLACE OF WORK").font = bold_font
+    worksheet.cell(row=current_row, column=2, value="ELECTRIC LOCO SHED, KALYAN").font = bold_font
+    current_row += 2 # Blank row after this section
+
+    # Name of Work Section
+    worksheet.cell(row=current_row, column=1, value="Name of Work Section:").font = bold_font
+    current_row += 1
+    worksheet.cell(row=current_row, column=1, value=work_details.get('description', '')).font = bold_font
+    current_row += 2 # Blank row after this section
+
+    worksheet.cell(row=current_row, column=1, value="Name of Work:").font = bold_font
+    current_row += 1
+    worksheet.cell(row=current_row, column=1, value=work_details.get('description', '')).font = bold_font
+    current_row += 2 # Blank row after this section
+
+    # Write the actual column headers
     worksheet.append(COLUMN_HEADERS)
-    return 1 # Returns the row index of the header
+    return current_row + 1 # Returns the row index of the header
 
 def write_work_description_row(worksheet, data_row, current_row):
     """
@@ -63,29 +99,56 @@ def write_summary_section(worksheet, data_start_row, data_end_row):
 
     # Sub Total
     sub_total_row = [None] * len(COLUMN_HEADERS)
-    sub_total_row[COLUMN_HEADERS.index("Description")] = "Sub Total"
+    sub_total_desc_col_idx = COLUMN_HEADERS.index("Description")
+    sub_total_row[sub_total_desc_col_idx] = "Sub Total"
     total_in_rs_col_idx = COLUMN_HEADERS.index("Total in Rs") + 1
     sub_total_formula = f"=SUM({get_column_letter(total_in_rs_col_idx)}{data_start_row}:{get_column_letter(total_in_rs_col_idx)}{data_end_row})"
-    sub_total_row[total_in_rs_col_idx - 1] = sub_total_formula
+    
+    # Append the row and then set the formula cell type and alignment
     worksheet.append(sub_total_row)
+    sub_total_desc_cell = worksheet.cell(row=current_row, column=sub_total_desc_col_idx + 1)
+    sub_total_desc_cell.alignment = Alignment(horizontal='left', vertical='center')
+    sub_total_cell = worksheet.cell(row=current_row, column=total_in_rs_col_idx)
+    sub_total_cell.value = sub_total_formula
+    sub_total_cell.data_type = 'f'
+    sub_total_cell.alignment = Alignment(horizontal='right', vertical='center')
+
     sub_total_row_idx = current_row
     current_row += 1
 
     # GST @18%
     gst_row = [None] * len(COLUMN_HEADERS)
-    gst_row[COLUMN_HEADERS.index("Description")] = f"GST @{int(GST_RATE*100)}%"
+    gst_desc_col_idx = COLUMN_HEADERS.index("Description")
+    gst_row[gst_desc_col_idx] = f"GST @{int(GST_RATE*100)}%"
     gst_formula = f"={get_column_letter(total_in_rs_col_idx)}{sub_total_row_idx}*{GST_RATE}"
-    gst_row[total_in_rs_col_idx - 1] = gst_formula
+    
+    # Append the row and then set the formula cell type and alignment
     worksheet.append(gst_row)
+    gst_desc_cell = worksheet.cell(row=current_row, column=gst_desc_col_idx + 1)
+    gst_desc_cell.alignment = Alignment(horizontal='left', vertical='center')
+    gst_cell = worksheet.cell(row=current_row, column=total_in_rs_col_idx)
+    gst_cell.value = gst_formula
+    gst_cell.data_type = 'f'
+    gst_cell.alignment = Alignment(horizontal='right', vertical='center')
+
     gst_row_idx = current_row
     current_row += 1
 
     # Grand Total (All Inclusive)
     grand_total_row = [None] * len(COLUMN_HEADERS)
-    grand_total_row[COLUMN_HEADERS.index("Description")] = "Grand Total (All Inclusive)"
+    grand_total_desc_col_idx = COLUMN_HEADERS.index("Description")
+    grand_total_row[grand_total_desc_col_idx] = "Grand Total (All Inclusive)"
     grand_total_formula = f"={get_column_letter(total_in_rs_col_idx)}{sub_total_row_idx}+{get_column_letter(total_in_rs_col_idx)}{gst_row_idx}"
-    grand_total_row[total_in_rs_col_idx - 1] = grand_total_formula
+    
+    # Append the row and then set the formula cell type and alignment
     worksheet.append(grand_total_row)
+    grand_total_desc_cell = worksheet.cell(row=current_row, column=grand_total_desc_col_idx + 1)
+    grand_total_desc_cell.alignment = Alignment(horizontal='left', vertical='center')
+    grand_total_cell = worksheet.cell(row=current_row, column=total_in_rs_col_idx)
+    grand_total_cell.value = grand_total_formula
+    grand_total_cell.data_type = 'f'
+    grand_total_cell.alignment = Alignment(horizontal='right', vertical='center')
+
     grand_total_row_idx = current_row
     current_row += 1
 
@@ -93,7 +156,6 @@ def write_summary_section(worksheet, data_start_row, data_end_row):
     current_row += 1
 
     # Signature Block
-    from openpyxl.styles import Alignment, Font
 
     # Header Rows (Top-left aligned)
     worksheet.cell(row=current_row, column=1, value="PLACE : KALYAN")

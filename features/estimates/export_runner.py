@@ -19,11 +19,11 @@ def run_export(work_id, firm_name):
 
     workbook, worksheet = create_workbook_and_sheet()
 
-    # Write header
-    header_row_idx = write_header(worksheet)
-
     # Write work description row (the 'A' row)
     work_description_data = data[0] # Assuming the first record is the 'A' row
+
+    # Write header
+    header_row_idx = write_header(worksheet, work_description_data)
     current_row = write_work_description_row(worksheet, work_description_data, header_row_idx + 1)
 
     # Write schedule data rows
