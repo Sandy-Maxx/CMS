@@ -18,6 +18,7 @@ from features.about_tab.about_tab import AboutTab
 from features.calculation.calculation_tab import CalculationTab
 from features.work_management.firm_registration.firm_registration_tab import FirmRegistrationTab
 from features.AutodocGen.autodoc_manager import AutodocManager
+from .bulk_io.bulk_io_dialog import BulkIODialog
 
 class MainWindow:
     def __init__(self, root):
@@ -87,6 +88,9 @@ class MainWindow:
 
         button_frame = ttk.Frame(self.works_list_frame)
         button_frame.pack(fill=tk.X, pady=10)
+
+        
+        
         
         self.add_work_icon = load_icon("add")
         self.export_work_icon = load_icon("export")
@@ -102,6 +106,28 @@ class MainWindow:
         self.export_work_button_text = "Export Work"
         self.export_work_button.bind("<Enter>", lambda e: self.export_work_button.config(text=self.export_work_button_text))
         self.export_work_button.bind("<Leave>", lambda e: self.export_work_button.config(text=""))
+
+        self.bulk_io_icon = load_icon("browse")
+        self.bulk_io_button = ttk.Button(button_frame, image=self.bulk_io_icon, compound=tk.LEFT, command=self._open_bulk_io_dialog, style='Secondary.TButton')
+        self.bulk_io_button.pack(side=tk.LEFT, padx=5)
+        self.bulk_io_button_text = "Bulk Import/Export"
+        self.bulk_io_button.bind("<Enter>", lambda e: self.bulk_io_button.config(text=self.bulk_io_button_text))
+        self.bulk_io_button.bind("<Leave>", lambda e: self.bulk_io_button.config(text=""))
+
+        self.backup_icon = load_icon("save") # Assuming a 'save.png' icon exists or is appropriate
+        self.backup_button = ttk.Button(button_frame, image=self.backup_icon, compound=tk.LEFT, command=self._backup_database, style='Success.TButton')
+        self.backup_button.pack(side=tk.LEFT, padx=5)
+        self.backup_button_text = "Backup Database"
+        self.backup_button.bind("<Enter>", lambda e: self.backup_button.config(text=self.backup_button_text))
+        self.backup_button.bind("<Leave>", lambda e: self.backup_button.config(text=""))
+
+        self.restore_icon = load_icon("rotate") # Using a rotate icon for restore
+        self.restore_button = ttk.Button(button_frame, image=self.restore_icon, compound=tk.LEFT, command=self._restore_database, style='Warning.TButton')
+        self.restore_button.pack(side=tk.LEFT, padx=5)
+        self.restore_button_text = "Restore Database"
+        self.restore_button.bind("<Enter>", lambda e: self.restore_button.config(text=self.restore_button_text))
+        self.restore_button.bind("<Leave>", lambda e: self.restore_button.config(text=""))
+
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
 
@@ -449,6 +475,38 @@ class MainWindow:
             utils_helpers.show_toast(self.root, f"Work exported successfully: {file_path}", "success")
         else:
             utils_helpers.show_toast(self.root, f"Error exporting work: {message}", "error")
+
+    
+
+
+
+
+
+    def _backup_database(self):
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".db",
+            filetypes=[("Database files", "*.db"), ("All files", "*.*")],
+            initialfile=f"cms_database_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+        )
+        print(f"Generated backup filename: {file_path}") # Added for debugging
+        if file_path:
+            success, message = db_manager.backup_database(file_path)
+            utils_helpers.show_toast(self.root, message, "success" if success else "error")
+
+    def _restore_database(self):
+        file_path = filedialog.askopenfilename(
+            defaultextension=".db",
+            filetypes=[("Database files", "*.db"), ("All files", "*.*")]
+        )
+        if file_path:
+            if utils_helpers.show_confirm_dialog(self.root, "Restoring the database will overwrite current data. Are you sure?"):
+                success, message = db_manager.restore_database(file_path)
+                utils_helpers.show_toast(self.root, message, "success" if success else "error")
+                if success:
+                    self.load_works() # Reload data after successful restore
+
+    def _open_bulk_io_dialog(self):
+        BulkIODialog(self.root)
 
     def _on_work_selection(self, event):
         selected_item = self.works_tree.selection()

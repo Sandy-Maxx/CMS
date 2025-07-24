@@ -1,4 +1,6 @@
 import sqlite3
+import shutil
+import os
 from config import DATABASE_PATH
 
 def create_tables():
@@ -511,3 +513,21 @@ def get_firm_document_by_work_and_firm_name(work_id, firm_name):
             'indemnity_bond_submitted': document[12]
         }
     return None
+
+def backup_database(destination_path):
+    try:
+        shutil.copy2(DATABASE_PATH, destination_path)
+        return True, f"Database backed up successfully to {destination_path}"
+    except Exception as e:
+        return False, f"Error backing up database: {e}"
+
+def restore_database(source_path):
+    try:
+        # Close any existing connections to the database before restoring
+        # This is crucial to avoid database locking issues on Windows
+        # For simplicity, we'll assume the main application handles closing its connection
+        # before calling this function, or that the application is restarted after restore.
+        shutil.copy2(source_path, DATABASE_PATH)
+        return True, f"Database restored successfully from {source_path}"
+    except Exception as e:
+        return False, f"Error restoring database: {e}"
