@@ -1,6 +1,7 @@
 from PyPDF2 import PdfReader, PdfWriter
 from PyPDF2.errors import PdfReadError
 import os
+import fitz  # PyMuPDF
 
 class PdfManager:
     def __init__(self):
@@ -142,4 +143,28 @@ class PdfManager:
             return False
         except Exception as e:
             print(f"Error deleting page: {e}")
+            return False
+
+    def compress_pdf(self, input_path, output_path, compression_level):
+        """
+        Compresses a PDF using PyMuPDF, which can offer better compression.
+        :param input_path: Path to the input PDF file.
+        :param output_path: The path where the compressed PDF will be saved.
+        :param compression_level: An integer from 0 to 10, where 0 is no compression and 10 is maximum compression.
+        :return: True if successful, False otherwise.
+        """
+        try:
+            doc = fitz.open(input_path)
+            # Map compression_level (0-10) to garbage parameter (0-4)
+            # Higher compression_level means more aggressive garbage collection.
+            garbage_level = min(4, compression_level) # Map 0-10 to 0-4, clamping at 4
+
+            doc.save(output_path, garbage=garbage_level, deflate=True, clean=True)
+            doc.close()
+            return True
+        except FileNotFoundError:
+            print(f"File not found: {input_path}")
+            return False
+        except Exception as e:
+            print(f"Error compressing PDF: {e}")
             return False

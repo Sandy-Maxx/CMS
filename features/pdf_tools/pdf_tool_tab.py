@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from features.pdf_tools.pdf_manager import PdfManager
+from features.pdf_tools.compression_dial_widget import CompressionDialWidget
 from utils.helpers import load_icon
 
 class PdfToolTab(ttk.Frame):
@@ -19,6 +20,8 @@ class PdfToolTab(ttk.Frame):
         self.rotation_angle_var = tk.StringVar()
         self.delete_input_path_var = tk.StringVar()
         self.delete_page_num_var = tk.StringVar()
+        self.compress_input_path_var = tk.StringVar()
+        self.compress_output_path_var = tk.StringVar()
 
         self._create_widgets()
 
@@ -140,6 +143,44 @@ class PdfToolTab(ttk.Frame):
         arrange_tab.columnconfigure(0, weight=1)
         arrange_tab.columnconfigure(1, weight=1)
 
+        # Compress PDF Tab
+        compress_tab = ttk.Frame(self.tab_control, padding=10)
+        self.tab_control.add(compress_tab, text="Compress PDF")
+        compress_tab.columnconfigure(0, weight=1)
+        compress_tab.columnconfigure(1, weight=1)
+
+        ttk.Label(compress_tab, text="Input PDF:").grid(row=0, column=0, sticky="w", pady=5)
+        compress_input_entry_frame = ttk.Frame(compress_tab)
+        compress_input_entry_frame.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+        compress_input_entry_frame.columnconfigure(0, weight=1)
+
+        self.compress_input_path_var = tk.StringVar()
+        ttk.Entry(compress_input_entry_frame, textvariable=self.compress_input_path_var).grid(row=0, column=0, sticky="ew")
+        self.browse_compress_input_button = ttk.Button(compress_input_entry_frame, image=self.browse_icon, style='Toolbutton', command=lambda: self._browse_input_path(self.compress_input_path_var))
+        self.browse_compress_input_button.grid(row=0, column=1, sticky="e")
+        self.browse_compress_input_button.bind("<Enter>", lambda e: self.browse_compress_input_button.config(text="Browse"))
+        self.browse_compress_input_button.bind("<Leave>", lambda e: self.browse_compress_input_button.config(text=""))
+
+        ttk.Label(compress_tab, text="Output Path:").grid(row=1, column=0, sticky="w", pady=5)
+        compress_output_entry_frame = ttk.Frame(compress_tab)
+        compress_output_entry_frame.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
+        compress_output_entry_frame.columnconfigure(0, weight=1)
+
+        self.compress_output_path_var = tk.StringVar()
+        ttk.Entry(compress_output_entry_frame, textvariable=self.compress_output_path_var).grid(row=0, column=0, sticky="ew")
+        self.browse_compress_output_button = ttk.Button(compress_output_entry_frame, image=self.browse_icon, style='Toolbutton', command=lambda: self._browse_output_path(self.compress_output_path_var, "compressed.pdf"))
+        self.browse_compress_output_button.grid(row=0, column=1, sticky="e")
+        self.browse_compress_output_button.bind("<Enter>", lambda e: self.browse_compress_output_button.config(text="Browse"))
+        self.browse_compress_output_button.bind("<Leave>", lambda e: self.browse_compress_output_button.config(text=""))
+
+        self.compress_dial_widget = CompressionDialWidget(compress_tab, self._compress_pdf)
+        self.compress_dial_widget.grid(row=2, column=0, columnspan=2, sticky="ew", pady=10)
+
+        self.compress_pdf_button = ttk.Button(compress_tab, text="Compress PDF", image=self.extract_icon, compound=tk.LEFT, command=self._compress_pdf, style='Info.TButton')
+        self.compress_pdf_button.grid(row=3, column=0, columnspan=2, pady=10)
+        self.compress_pdf_button.bind("<Enter>", lambda e: self.compress_pdf_button.config(text="Compress PDF"))
+        self.compress_pdf_button.bind("<Leave>", lambda e: self.compress_pdf_button.config(text=""))
+
         # Rotate Page Section
         rotate_frame = ttk.LabelFrame(arrange_tab, text="Rotate Page", padding=10)
         rotate_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
@@ -209,6 +250,7 @@ class PdfToolTab(ttk.Frame):
             0: "Merge PDFs",
             1: "Extract Pages",
             2: "Arrange Pages",
+            3: "Compress PDF",
         }
         try:
             index = self.tab_control.index(f"@{event.x},{event.y}")
@@ -291,6 +333,8 @@ class PdfToolTab(ttk.Frame):
         file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
         if file_path:
             path_var.set(file_path)
+            if path_var == self.compress_input_path_var:
+                self.compress_dial_widget.set_pdf_path(file_path)
 
     def _merge_pdfs(self):
         if not self.merge_input_paths:
@@ -415,6 +459,28 @@ class PdfToolTab(ttk.Frame):
             self.delete_page_num_var.set("")
         else:
             messagebox.showerror("Error", "Failed to delete page. Check console for details.")
+
+    def _compress_pdf(self):
+        input_path = self.compress_input_path_var.get()
+        if not input_path:
+            messagebox.showwarning("Input Error", "Please select an input PDF.")
+            return
+        output_path = self.compress_output_path_var.get()
+        if not output_path:
+            messagebox.showwarning("Input Error", "Please specify an output path.")
+            return
+
+        if input_path == output_path:
+            messagebox.showwarning("Input Error", "Output file cannot be the same as the input file. Please choose a different output path.")
+            return
+
+        compression_level = self.compress_dial_widget.get_compression_level()
+        if self.pdf_manager.compress_pdf(input_path, output_path, compression_level):
+            messagebox.showinfo("Success", "PDF compressed successfully!")
+            self.compress_input_path_var.set("")
+            self.compress_output_path_var.set("")
+        else:
+            messagebox.showerror("Error", "Failed to compress PDF. Check console for details.")
 
 class ToolTip:
     def __init__(self, widget, text):

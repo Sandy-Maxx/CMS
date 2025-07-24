@@ -203,9 +203,15 @@ class TemplateProcessor:
                 if firm_ph == 'firm_name':
                     replacement_value = firm_name
                 elif firm_ph == 'pg_submitted':
-                    replacement_value = "submitted the PG No." if firm_document_data.get('pg_submitted') == 1 else "did not submit the PG"
+                    if firm_document_data:
+                        replacement_value = "submitted the PG No." if firm_document_data.get('pg_submitted') == 1 else "did not submit the PG"
+                    else:
+                        replacement_value = placeholder_full # Keep original placeholder if data is missing
                 elif firm_ph == 'indemnity_bond_submitted':
-                    replacement_value = "submitted the Indemnity Bond" if firm_document_data.get('indemnity_bond_submitted') == 1 else "did not submit the Indemnity Bond"
+                    if firm_document_data:
+                        replacement_value = "submitted the Indemnity Bond" if firm_document_data.get('indemnity_bond_submitted') == 1 else "did not submit the Indemnity Bond"
+                    else:
+                        replacement_value = placeholder_full # Keep original placeholder if data is missing
                 elif firm_document_data and firm_ph in firm_document_data:
                     replacement_value = firm_document_data[firm_ph]
                 else:

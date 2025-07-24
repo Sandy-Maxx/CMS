@@ -42,7 +42,7 @@ def run_export(work_id, firm_name):
     os.makedirs(output_dir, exist_ok=True)
 
     # Get work name from the description of the 'A' row
-    work_name = work_description_data.get("description", "Untitled_Work").replace(" ", "_").replace("-", "_")
+    work_name = _sanitize_filename(work_description_data.get("description", "Untitled_Work"))
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{work_name}_estimate_{timestamp}.xlsx"
     file_path = os.path.join(output_dir, filename)
@@ -50,5 +50,18 @@ def run_export(work_id, firm_name):
     # Save the workbook
     workbook.save(file_path)
     print(f"Estimate report saved to {file_path}")
+
+
+def _sanitize_filename(filename):
+    """
+    Sanitizes a string to be safe for use as a filename.
+    Removes or replaces characters that are invalid in Windows filenames.
+    """
+    # Invalid characters for Windows filenames: < > : " / \ | ? *
+    # Also control characters (0-31)
+    invalid_chars = '< > : " / \\ | ? *' + '\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\t\n\u000b\u000c\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f'
+    for char in invalid_chars:
+        filename = filename.replace(char, '_')
+    return filename
 
 
