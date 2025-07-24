@@ -44,28 +44,41 @@ def load_icon(icon_name, size=(36, 36)):
 from tkinter import messagebox
 
 def show_toast(parent, message, toast_type="info"):
-    toast = tk.Toplevel(parent)
-    toast.overrideredirect(True)
-    toast.geometry(f"300x50+{parent.winfo_screenwidth()-350}+50")
-    
-    if toast_type == "success":
-        bg_color = "#d4edda"
-        fg_color = "#155724"
-    elif toast_type == "error":
-        bg_color = "#f8d7da"
-        fg_color = "#721c24"
-    elif toast_type == "warning":
-        bg_color = "#fff3cd"
-        fg_color = "#856404"
+    # Ensure parent is the root Tkinter window
+    if isinstance(parent, tk.Tk):
+        root = parent
     else:
-        bg_color = "#d1ecf1"
-        fg_color = "#0c5460"
+        root = parent.winfo_toplevel()
+
+    # Create a frame for the toast message
+    toast_label = ttk.Label(root, text="", style=f"{toast_type.capitalize()}.Toast.TLabel", wraplength=280)
     
-    frame = ttk.Frame(toast, style="Toast.TFrame")
-    frame.pack(fill=tk.BOTH, expand=True)
-    ttk.Label(frame, text=message, style=f"{toast_type.capitalize()}.Toast.TLabel", wraplength=280).pack(pady=10, padx=10)
-    
-    parent.after(3000, toast.destroy)
+    emoji = ""
+    if toast_type == "success":
+        emoji = "✅ "
+    elif toast_type == "error":
+        emoji = "❌ "
+    elif toast_type == "warning":
+        emoji = "⚠️ "
+    else:
+        emoji = "ℹ️ "
+
+    toast_label.config(text=f"{emoji}{message}")
+
+    # Position at top-center of the root window
+    # We need to update the position after the root window has been drawn
+    def place_toast():
+        root_width = root.winfo_width()
+        toast_width = toast_label.winfo_width()
+        x = (root_width - toast_width) // 2
+        y = 20 # A little offset from the top
+        toast_label.place(x=x, y=y)
+
+    root.update_idletasks() # Ensure widgets are drawn and dimensions are available
+    place_toast()
+
+    # Schedule destruction after 3 seconds
+    root.after(3000, toast_label.destroy) # Increased duration to 5 seconds
 
 def show_confirm_dialog(parent, message):
     return messagebox.askyesno("Confirm", message, parent=parent)

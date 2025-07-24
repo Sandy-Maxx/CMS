@@ -64,7 +64,8 @@ D:/CMS/CMS/
 │       ├───selection.png
 │       ├───up-arrow.png
 │       ├───up.png
-│       └───variation.png
+│       ├───variation.png
+│       └───dark-mode.png
 ├───database/
 │   ├───__init__.py
 │   ├───db_manager_oop.py
@@ -254,6 +255,7 @@ This directory contains static assets used by the application.
     *   `add.png`: Icon for adding new items.
     *   `arrange.png`: Icon for arranging elements.
     *   `browse.png`: Icon for browsing files.
+
     *   `calendar.png`: Icon related to calendar or date selection.
     *   `cancel.png`: Icon for canceling operations.
     *   `compare.png`: Icon for comparison features.
@@ -273,12 +275,14 @@ This directory contains static assets used by the application.
     *   `up-arrow.png`: Icon for up arrow/movement.
     *   `up.png`: Another icon for up arrow/movement.
     *   `variation.png`: Icon related to variation features.
+    *   `dark-mode.png`: Icon for the dark mode toggle button.
 
 ### `database/`
 Manages database interactions.
 *   `__init__.py`: Initializes the Python package.
 *   `db_manager_oop.py`: Object-oriented database manager (possibly an alternative or newer implementation).
-*   `db_manager.py`: Contains functions and classes for managing SQLite database operations (e.g., creating tables, adding/updating/deleting works, schedule items, firm rates, template data, variations, and firm details).
+
+*   `db_manager.py`: Contains functions and classes for managing SQLite database operations (e.g., creating tables, adding/updating/deleting works, schedule items, firm rates, template data, variations, and firm details). Includes functions for database backup and restore.
 *   `__pycache__/`: Python bytecode cache.
 
 ### `exported/`
@@ -305,7 +309,7 @@ Contains distinct feature modules of the application.
 *   `calculation/`: Module for various calculations within the application.
     *   `__init__.py`: Initializes the Python package.
     *   `calculation_logic.py`: Contains the core calculation algorithms.
-    *   `calculation_tab.py`: Implements the UI and logic for the calculation tab.
+    *   `calculation_tab.py`: Implements the UI and logic for the calculation tab, including date difference calculations (days, months, years) with options to include/exclude start and end dates.
     *   `__pycache__/`: Python bytecode cache.
 *   `comparison/`: Module for comparing data between different works or firms.
     *   `comparison_data_manager.py`: Manages data for comparison operations.
@@ -367,7 +371,7 @@ Contains distinct feature modules of the application.
 *   `work_management/`: Core module for managing work-related functionalities.
     *   `__init__.py`: Initializes the Python package.
     *   `individual_firm_rates_tab.py`: Manages the UI and logic for individual firm rates.
-    *   `main_window.py`: Defines the main application window and its layout, integrating various feature tabs.
+    *   `main_window.py`: Defines the main application window and its layout, integrating various feature tabs. Includes a dark mode toggle button.
     *   `schedule_items_tab.py`: Manages the UI and logic for schedule items.
     *   `variation_manager.py`: Manages the creation, editing, and deletion of variations within work items.
     *   `work_details_tab.py`: Manages the UI and logic for displaying and editing work details.
@@ -413,8 +417,8 @@ Stores actual document templates.
 Contains utility functions and helper modules.
 *   `__init__.py`: Initializes the Python package.
 *   `date_picker.py`: Implements a date picker utility.
-*   `helpers.py`: General utility functions that can be used across different parts of the application, including UI helpers and data formatting.
-*   `styles.py`: Defines styling and theming parameters for the application's UI.
+*   `helpers.py`: General utility functions that can be used across different parts of the application, including UI helpers and data formatting. Now includes in-app toast messages with emojis.
+*   `styles.py`: Defines styling and theming parameters for the application's UI, including light and dark modes.
 *   `__pycache__/`: Python bytecode cache.
 
 ### `venv/`
@@ -428,6 +432,7 @@ This directory contains the Python virtual environment for the project. It inclu
 
 ## Dependencies
 The project relies on the following Python packages, as specified in `requirements.txt`:
+
 *   `PyPDF2==3.0.1`
 *   `PyMuPDF==1.24.5`
 *   `python-docx`
@@ -440,3 +445,42 @@ The project relies on the following Python packages, as specified in `requiremen
 *   `Pillow`
 *   `pytz`
 *   `tzdata`
+*   `python-dateutil`
+
+## Building the Executable
+The application can be packaged into a standalone executable using PyInstaller.
+
+**Prerequisites:**
+*   Ensure you have PyInstaller installed: `pip install pyinstaller`
+
+**Steps:**
+1.  **Clean previous builds (optional but recommended):**
+    ```bash
+    rmdir /s /q build dist && del /q *.spec
+    ```
+    (Note: If these directories/files don't exist, the commands will show an error, which is normal.)
+
+2.  **Build the executable:**
+    ```bash
+    python -m PyInstaller --noconfirm --onefile --windowed --add-data "assets;assets" --add-data "cms_database.db;." main.py
+    ```
+    *   `--noconfirm`: Overwrite existing files without asking.
+    *   `--onefile`: Create a single executable file.
+    *   `--windowed`: Create a windowed application (no console window).
+    *   `--add-data "assets;assets"`: Include the `assets` directory. The first `assets` is the source path, the second is the destination folder inside the executable.
+    *   `--add-data "cms_database.db;."`: Include the `cms_database.db` file in the root of the executable's data.
+    *   `main.py`: The main script of your application.
+
+3.  **Adding an Icon (Optional):**
+    If you wish to add a custom icon to your executable, you need a `.ico` file. If you only have `logo.jpg`, you'll need to convert it to `logo.ico` using an online converter or an image editing tool. Once you have `logo.ico`, you can include it in the build command:
+    ```bash
+    python -m PyInstaller --noconfirm --onefile --windowed --add-data "assets;assets" --add-data "cms_database.db;." --icon="path/to/your/logo.ico" main.py
+    ```
+    Replace `"path/to/your/logo.ico"` with the actual path to your icon file.
+
+**Output:**
+The generated executable will be located in the `dist` directory (e.g., `dist/main.exe`).
+
+## Usage
+To run the application after building the executable, simply navigate to the `dist` directory and execute `main.exe`.
+

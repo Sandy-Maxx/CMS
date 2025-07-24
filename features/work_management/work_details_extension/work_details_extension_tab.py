@@ -72,6 +72,9 @@ class WorkDetailsExtensionTab(ttk.Frame):
 
         # Tender Opening Date
         ttk.Label(self, text="Tender Opening Date:").grid(row=6, column=0, padx=5, pady=5, sticky="w")
+        self.tender_opening_date_entry = ttk.Entry(self, textvariable=self.tender_opening_date_var)
+        self.tender_opening_date_entry.grid(row=6, column=1, padx=5, pady=5, sticky="ew")
+        self.tender_opening_date_entry.bind("<Button-1>", lambda event: DatePicker(self.main_window_instance.root, self.tender_opening_date_entry, self.main_window_instance, initial_date=self.tender_opening_date_var.get(), x=self.tender_opening_date_entry.winfo_rootx(), y=self.tender_opening_date_entry.winfo_rooty() + self.tender_opening_date_entry.winfo_height()))
         self.tender_opening_date_var.trace_add("write", lambda *args: self._update_work_data('tender_opening_date', self.tender_opening_date_var.get()))
 
         # LOA No.
@@ -85,14 +88,14 @@ class WorkDetailsExtensionTab(ttk.Frame):
         ttk.Label(self, text="LOA Date:").grid(row=8, column=0, padx=5, pady=5, sticky="w")
         self.loa_date_entry = ttk.Entry(self, textvariable=self.loa_date_var)
         self.loa_date_entry.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
-        self.loa_date_entry.bind("<Button-1>", lambda event: DatePicker(self.main_window_instance.root, self.loa_date_entry, self.main_window_instance, self.loa_date_var.get()))
+        self.loa_date_entry.bind("<Button-1>", lambda event: DatePicker(self.main_window_instance.root, self.loa_date_entry, self.main_window_instance, initial_date=self.loa_date_var.get(), x=self.loa_date_entry.winfo_rootx(), y=self.loa_date_entry.winfo_rooty() + self.loa_date_entry.winfo_height()))
         self.loa_date_var.trace_add("write", lambda *args: self._update_work_data('loa_date', self.loa_date_var.get()))
 
         # Work Commence Date
         ttk.Label(self, text="Work Commence Date:").grid(row=9, column=0, padx=5, pady=5, sticky="w")
         self.work_commence_date_entry = ttk.Entry(self, textvariable=self.work_commence_date_var)
         self.work_commence_date_entry.grid(row=9, column=1, padx=5, pady=5, sticky="ew")
-        self.work_commence_date_entry.bind("<Button-1>", lambda event: DatePicker(self.main_window_instance.root, self.work_commence_date_entry, self.main_window_instance, self.work_commence_date_var.get()))
+        self.work_commence_date_entry.bind("<Button-1>", lambda event: DatePicker(self.main_window_instance.root, self.work_commence_date_entry, self.main_window_instance, initial_date=self.work_commence_date_var.get(), x=self.work_commence_date_entry.winfo_rootx(), y=self.work_commence_date_entry.winfo_rooty() + self.work_commence_date_entry.winfo_height()))
         self.work_commence_date_var.trace_add("write", lambda *args: self._update_work_data('work_commence_date', self.work_commence_date_var.get()))
 
         save_button = ttk.Button(self, text="Save Additional Details", command=self._save_data)

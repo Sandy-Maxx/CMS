@@ -32,8 +32,10 @@ class DatePicker(tk.Toplevel):
 
         if x is not None and y is not None:
             self.geometry(f"280x280+{x}+{y}") # Increased size to prevent cropping
+            print(f"DatePicker position: x={x}, y={y}") # Debugging print
         else:
             self.geometry("280x280") # Increased size to prevent cropping
+            print("DatePicker position: default (no x, y provided)") # Debugging print
 
         set_theme(self.main_window_instance.current_theme) # Apply styles based on parent's theme
 
