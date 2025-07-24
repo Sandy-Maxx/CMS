@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets', 'assets'), ('prompts', 'prompts'), ('config.py', '.'), ('features/pdf_tools/compression_dial_widget.py', 'features/pdf_tools')],
+    datas=[('assets', 'assets'), ('cms_database.db', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

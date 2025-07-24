@@ -2,14 +2,15 @@ import tkinter as tk
 from tkinter import ttk
 import calendar
 from datetime import datetime
-from utils.styles import configure_styles
+from utils.styles import set_theme
 
 class DatePicker(tk.Toplevel):
-    def __init__(self, parent, entry_widget, initial_date=None, x=None, y=None):
+    def __init__(self, parent, entry_widget, main_window_instance, initial_date=None, x=None, y=None):
         super().__init__(parent)
         self.transient(parent)
         self.grab_set()
         self.entry_widget = entry_widget
+        self.main_window_instance = main_window_instance
         self.selected_date = None
         self.current_day = datetime.now().day
         self.current_month = datetime.now().month
@@ -34,7 +35,7 @@ class DatePicker(tk.Toplevel):
         else:
             self.geometry("280x280") # Increased size to prevent cropping
 
-        configure_styles() # Apply styles
+        set_theme(self.main_window_instance.current_theme) # Apply styles based on parent's theme
 
         self._create_widgets()
         self._show_calendar()

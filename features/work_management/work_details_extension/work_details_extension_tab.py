@@ -5,11 +5,12 @@ from utils.helpers import validate_numeric_input, show_toast
 from utils.date_picker import DatePicker
 
 class WorkDetailsExtensionTab(ttk.Frame):
-    def __init__(self, notebook, parent_app, work_data_var, is_new_work_var):
+    def __init__(self, notebook, parent_app, work_data_var, is_new_work_var, main_window_instance):
         super().__init__(notebook, padding=10)
         self.parent_app = parent_app
         self.work_data_var = work_data_var
         self.is_new_work_var = is_new_work_var
+        self.main_window_instance = main_window_instance
 
         self.justification_var = tk.StringVar()
         self.section_var = tk.StringVar()
@@ -84,14 +85,14 @@ class WorkDetailsExtensionTab(ttk.Frame):
         ttk.Label(self, text="LOA Date:").grid(row=8, column=0, padx=5, pady=5, sticky="w")
         self.loa_date_entry = ttk.Entry(self, textvariable=self.loa_date_var)
         self.loa_date_entry.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
-        self.loa_date_entry.bind("<Button-1>", lambda event: DatePicker(self, self.loa_date_entry, self.loa_date_var.get()))
+        self.loa_date_entry.bind("<Button-1>", lambda event: DatePicker(self.main_window_instance.root, self.loa_date_entry, self.main_window_instance, self.loa_date_var.get()))
         self.loa_date_var.trace_add("write", lambda *args: self._update_work_data('loa_date', self.loa_date_var.get()))
 
         # Work Commence Date
         ttk.Label(self, text="Work Commence Date:").grid(row=9, column=0, padx=5, pady=5, sticky="w")
         self.work_commence_date_entry = ttk.Entry(self, textvariable=self.work_commence_date_var)
         self.work_commence_date_entry.grid(row=9, column=1, padx=5, pady=5, sticky="ew")
-        self.work_commence_date_entry.bind("<Button-1>", lambda event: DatePicker(self, self.work_commence_date_entry, self.work_commence_date_var.get()))
+        self.work_commence_date_entry.bind("<Button-1>", lambda event: DatePicker(self.main_window_instance.root, self.work_commence_date_entry, self.main_window_instance, self.work_commence_date_var.get()))
         self.work_commence_date_var.trace_add("write", lambda *args: self._update_work_data('work_commence_date', self.work_commence_date_var.get()))
 
         save_button = ttk.Button(self, text="Save Additional Details", command=self._save_data)

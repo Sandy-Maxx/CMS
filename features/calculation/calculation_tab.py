@@ -95,17 +95,17 @@ class CalculationTab(ttk.Frame):
         # Get the absolute position of the entry widget
         x = self.start_date_entry.winfo_rootx()
         y = self.start_date_entry.winfo_rooty() + self.start_date_entry.winfo_height()
-        DatePicker(self, self.start_date_entry, initial_date=self.start_date_entry.get(), x=x, y=y)
+        DatePicker(self.controller.root, self.start_date_entry, self.controller, initial_date=self.start_date_entry.get(), x=x, y=y)
 
     def _open_diff_start_date_picker(self):
         x = self.diff_start_date_entry.winfo_rootx()
         y = self.diff_start_date_entry.winfo_rooty() + self.diff_start_date_entry.winfo_height()
-        DatePicker(self, self.diff_start_date_entry, initial_date=self.diff_start_date_entry.get(), x=x, y=y)
+        DatePicker(self.controller.root, self.diff_start_date_entry, self.controller, initial_date=self.diff_start_date_entry.get(), x=x, y=y)
 
     def _open_diff_end_date_picker(self):
         x = self.diff_end_date_entry.winfo_rootx()
         y = self.diff_end_date_entry.winfo_rooty() + self.diff_end_date_entry.winfo_height()
-        DatePicker(self, self.diff_end_date_entry, initial_date=self.diff_end_date_entry.get(), x=x, y=y)
+        DatePicker(self.controller.root, self.diff_end_date_entry, self.controller, initial_date=self.diff_end_date_entry.get(), x=x, y=y)
 
     def calculate_date_difference(self):
         try:

@@ -3,6 +3,7 @@ from tkinter import ttk, filedialog, messagebox
 from database import db_manager
 from utils import helpers as utils_helpers
 from utils.helpers import load_icon
+from utils.styles import set_theme
 from .work_editor import WorkDetailsEditor
 from .work_search_bar import WorkSearchBar
 from features.excel_export.excel_exporter import export_work_to_excel
@@ -25,12 +26,20 @@ class MainWindow:
         self.root = root
         self.root.title("Contract Management System")
         self.root.geometry("800x600")
+        self.current_theme = "light" # Default theme
         self._create_widgets()
         self.load_works()
+        set_theme(self.current_theme)
 
     def _create_widgets(self):
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        # Dark Mode Toggle Button
+        self.dark_mode_icon = load_icon("dark-mode")
+        self.dark_mode_button = ttk.Button(self.root, image=self.dark_mode_icon, command=self._toggle_dark_mode, style='Toolbutton')
+        self.dark_mode_button.place(relx=1.0, rely=0, x=-10, y=10, anchor='ne') # Position top right
+
         self.works_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.works_frame, text="Works")
 
@@ -130,6 +139,13 @@ class MainWindow:
 
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
+
+    def _toggle_dark_mode(self):
+        if self.current_theme == "light":
+            self.current_theme = "dark"
+        else:
+            self.current_theme = "light"
+        set_theme(self.current_theme)
 
     def _show_work_list_view(self):
         self.work_editor_container_frame.pack_forget()

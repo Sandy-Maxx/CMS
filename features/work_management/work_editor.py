@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from database.db_manager import get_work_by_id, get_all_registered_firm_names, get_unique_firm_names_by_work_id
 from utils.helpers import show_toast, validate_numeric_input
-from utils.styles import configure_styles
+from utils.styles import set_theme
 from .work_details_tab import WorkDetailsTab
 from .schedule_items_tab import ScheduleItemsTab
 from .individual_firm_rates_tab import IndividualFirmRatesTab
@@ -14,7 +14,7 @@ class WorkDetailsEditor(ttk.Frame):
         self.work_id = work_id
         self.main_window_instance = main_window_instance
         self.main_window_root = main_window_root # Store the main window's root
-        configure_styles()
+        # No need to call set_theme here, it's handled by MainWindow
 
         # Back to list button
         self.back_button = ttk.Button(self, text="< Back to Work List", command=self._back_to_work_list, style='Secondary.TButton')
@@ -60,7 +60,7 @@ class WorkDetailsEditor(ttk.Frame):
             self.notebook, self.schedule_items_tab, None, self.populate_reference_firm_combobox, self.main_window_root
         )
         self.work_details_extension_tab = WorkDetailsExtensionTab(
-            self.notebook, self, self.work_data, self.is_new_work_var
+            self.notebook, self, self.work_data, self.is_new_work_var, self.main_window_instance
         )
         
         self.notebook.add(self.work_details_tab, text="Work Details")
