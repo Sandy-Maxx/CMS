@@ -89,4 +89,51 @@ def write_summary_section(worksheet, data_start_row, data_end_row):
     grand_total_row_idx = current_row
     current_row += 1
 
+    # Add one blank row after Grand Total
+    current_row += 1
+
+    # Signature Block
+    from openpyxl.styles import Alignment, Font
+
+    # Header Rows (Top-left aligned)
+    worksheet.cell(row=current_row, column=1, value="PLACE : KALYAN")
+    current_row += 1
+    worksheet.cell(row=current_row, column=1, value="DATE : 05-07-2025")
+    current_row += 1
+    worksheet.cell(row=current_row, column=1, value="Allocation : 47000 070 443 32")
+    current_row += 1
+
+    # Empty Space: Leave 4-5 blank rows for buffer/visual clarity.
+    current_row += 5
+
+    # Signature Row: Create four signature placeholders aligned horizontally across the page
+    bold_center_alignment = Alignment(horizontal='center', vertical='center')
+    bold_font = Font(bold=True)
+
+    # SSE/WKS
+    cell = worksheet.cell(row=current_row, column=1, value="SSE/WKS")
+    worksheet.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=2)
+    cell.alignment = bold_center_alignment
+    cell.font = bold_font
+
+    # SSE/MW
+    cell = worksheet.cell(row=current_row, column=3, value="SSE/MW")
+    worksheet.merge_cells(start_row=current_row, start_column=3, end_row=current_row, end_column=4)
+    cell.alignment = bold_center_alignment
+    cell.font = bold_font
+
+    # DEE (TRS) KALYAN
+    cell = worksheet.cell(row=current_row, column=5, value="DEE (TRS) KALYAN")
+    worksheet.merge_cells(start_row=current_row, start_column=5, end_row=current_row, end_column=6)
+    cell.alignment = bold_center_alignment
+    cell.font = bold_font
+
+    # Sr.DEE (TRS) KALYAN
+    cell = worksheet.cell(row=current_row, column=7, value="Sr.DEE (TRS) KALYAN")
+    worksheet.merge_cells(start_row=current_row, start_column=7, end_row=current_row, end_column=8)
+    cell.alignment = bold_center_alignment
+    cell.font = bold_font
+
+    current_row += 1 # Move to the next row after signature block
+
     return sub_total_row_idx, grand_total_row_idx

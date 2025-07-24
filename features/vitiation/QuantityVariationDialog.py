@@ -53,10 +53,15 @@ class QuantityVariationDialog(tk.Toplevel):
         self.unit_rate_entry = ttk.Entry(frame, validate="key", validatecommand=(self.register(validate_numeric_input), '%P'))
         self.unit_rate_entry.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
 
+        # Labour Rate
+        ttk.Label(frame, text="Labour Rate:").grid(row=4, column=0, padx=5, pady=5, sticky="w")
+        self.labour_rate_entry = ttk.Entry(frame, validate="key", validatecommand=(self.register(validate_numeric_input), '%P'))
+        self.labour_rate_entry.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
+
         # Firm
-        ttk.Label(frame, text="Firm:").grid(row=4, column=0, padx=5, pady=5, sticky="w")
+        ttk.Label(frame, text="Firm:").grid(row=5, column=0, padx=5, pady=5, sticky="w")
         self.firm_combobox = ttk.Combobox(frame, textvariable=tk.StringVar(), postcommand=self._load_firms)
-        self.firm_combobox.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
+        self.firm_combobox.grid(row=5, column=1, padx=5, pady=5, sticky="ew")
         self.firm_combobox.bind("<FocusOut>", self._on_firm_focus_out) # Allow typing custom firm
 
         if self.existing_item_data:
@@ -65,12 +70,13 @@ class QuantityVariationDialog(tk.Toplevel):
             self.unit_combobox.set(self.existing_item_data['unit'])
             if self.existing_firm_rate:
                 self.unit_rate_entry.insert(0, str(self.existing_firm_rate['unit_rate']))
+                self.labour_rate_entry.insert(0, str(self.existing_firm_rate['labour_rate']))
                 self.firm_combobox.set(self.existing_firm_rate['firm_name'])
         elif self.last_item_name: # New: Pre-fill if adding a new item and last_item_name exists
             self.item_name_entry.insert(0, self.last_item_name)
         
-        ttk.Button(frame, text="Save", command=self.save, style="Primary.TButton").grid(row=5, column=0, pady=10)
-        ttk.Button(frame, text="Cancel", command=self.destroy, style="Secondary.TButton").grid(row=5, column=1, pady=10)
+        ttk.Button(frame, text="Save", command=self.save, style="Primary.TButton").grid(row=6, column=0, pady=10)
+        ttk.Button(frame, text="Cancel", command=self.destroy, style="Secondary.TButton").grid(row=6, column=1, pady=10)
         
         frame.grid_columnconfigure(1, weight=1)
 
@@ -83,10 +89,8 @@ class QuantityVariationDialog(tk.Toplevel):
         pass
 
     def _load_firms(self):
-        if self.item_id: # If editing an existing item, show only firms that have quoted for this work
-            firms = db_manager.get_unique_firm_names_by_work_id(self.work_id)
-        else: # If adding a new item, show all registered firms
-            firms = db_manager.get_all_firm_names()
+        # When editing an item or adding a new one, always show all registered firms
+        firms = db_manager.get_all_registered_firm_names()
         self.firm_combobox['values'] = firms
 
     def _on_firm_focus_out(self, event):
@@ -98,31 +102,40 @@ class QuantityVariationDialog(tk.Toplevel):
         quantity_str = self.quantity_entry.get().strip()
         unit = self.unit_combobox.get().strip()
         unit_rate_str = self.unit_rate_entry.get().strip()
+        labour_rate_str = self.labour_rate_entry.get().strip() # New line
         firm_name = self.firm_combobox.get().strip()
 
         if not all([item_name, quantity_str, unit, unit_rate_str, firm_name]):
-            show_toast(self, "All fields are required!", "error")
+            show_toast(self, "All fields are required! (Labour Rate can be blank)", "error") # Updated message
             return
 
         try:
             quantity = float(quantity_str)
             unit_rate = float(unit_rate_str)
-            if quantity < 0 or unit_rate < 0:
-                show_toast(self, "Quantity and Unit Rate cannot be negative!", "error")
+            labour_rate = float(labour_rate_str) if labour_rate_str else 0.0 # New line: default to 0.0 if blank
+
+            if quantity < 0 or unit_rate < 0 or labour_rate < 0: # Updated condition
+                show_toast(self, "Quantity, Unit Rate, and Labour Rate cannot be negative!", "error") # Updated message
                 return
         except ValueError:
-            show_toast(self, "Invalid quantity or unit rate! Please enter a number.", "error")
+            show_toast(self, "Invalid quantity, unit rate, or labour rate! Please enter a number.", "error") # Updated message
             return
 
         if self.item_id:
             success = db_manager.update_schedule_item(self.item_id, item_name, unit, quantity, self.parent_item_id)
             if success:
-                db_manager.upsert_firm_rate(self.item_id, firm_name, unit_rate)
+                db_manager.upsert_firm_rate(self.item_id, firm_name, unit_rate, labour_rate) # Updated call
                 show_toast(self, "Schedule item updated successfully!", "success")
         else:
             new_item_id = db_manager.add_schedule_item(self.work_id, item_name, unit, quantity, self.parent_item_id)
             if new_item_id:
-                db_manager.upsert_firm_rate(new_item_id, firm_name, unit_rate)
+                db_manager.upsert_firm_rate(new_item_id, firm_name, unit_rate, labour_rate) # Updated call
+                
+                # Initialize variations for the new item
+                variation_names = db_manager.get_variation_names_for_work(self.work_id)
+                for v_name in variation_names:
+                    db_manager.add_schedule_item_variation(new_item_id, v_name, 0.0) # Initialize with 0.0
+
                 show_toast(self, "Schedule item added successfully!", "success")
                 self.item_id = new_item_id # So that the rest of the logic works as if we were editing
             else:

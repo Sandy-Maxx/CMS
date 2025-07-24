@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets', 'assets')],
+    datas=[('assets', 'assets'), ('prompts/TEMPLATE_ENGINE.md', 'prompts')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

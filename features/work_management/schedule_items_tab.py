@@ -29,19 +29,21 @@ class ScheduleItemsTab(ttk.Frame):
         self.reference_firm_combobox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         self.reference_firm_combobox.bind("<<ComboboxSelected>>", lambda e: self._load_schedule_items())
         ttk.Label(self, text="Schedule Items").grid(row=1, column=0, columnspan=2, pady=(10, 5))
-        self.schedule_tree = ttk.Treeview(self, columns=("description", "quantity", "unit", "unit_rate", "total_cost"), show="tree headings")
+        self.schedule_tree = ttk.Treeview(self, columns=("description", "quantity", "unit", "unit_rate", "labour_rate", "total_cost"), show="tree headings")
         self.schedule_tree.grid(row=2, column=0, columnspan=2, sticky="nsew")
         self.schedule_tree.heading("#0", text="Sr.No")
         self.schedule_tree.heading("description", text="Description")
         self.schedule_tree.heading("quantity", text="Quantity")
         self.schedule_tree.heading("unit", text="Unit")
         self.schedule_tree.heading("unit_rate", text="Unit Rate")
+        self.schedule_tree.heading("labour_rate", text="Labour Rate")
         self.schedule_tree.heading("total_cost", text="Total Cost")
         self.schedule_tree.column("#0", width=80, stretch=tk.NO, anchor=tk.CENTER)
         self.schedule_tree.column("description", width=250, stretch=tk.YES, anchor=tk.W)
         self.schedule_tree.column("quantity", width=80, stretch=tk.NO, anchor=tk.CENTER)
         self.schedule_tree.column("unit", width=70, stretch=tk.NO, anchor=tk.CENTER)
         self.schedule_tree.column("unit_rate", width=90, stretch=tk.NO, anchor=tk.CENTER)
+        self.schedule_tree.column("labour_rate", width=90, stretch=tk.NO, anchor=tk.CENTER)
         self.schedule_tree.column("total_cost", width=100, stretch=tk.NO, anchor=tk.CENTER)
         vsb = ttk.Scrollbar(self, orient="vertical", command=self.schedule_tree.yview)
         vsb.grid(row=2, column=2, sticky="ns")
@@ -163,7 +165,7 @@ class ScheduleItemsTab(ttk.Frame):
         if not work_id:
             return
 
-        base_columns = ["description", "quantity", "unit", "unit_rate", "total_cost"]
+        base_columns = ["description", "quantity", "unit", "unit_rate", "labour_rate", "total_cost"]
         variation_names = db_manager.get_variation_names_for_work(work_id)
         self.schedule_tree["columns"] = base_columns + variation_names
 
@@ -208,12 +210,13 @@ class ScheduleItemsTab(ttk.Frame):
                 
                 reference_firm = self.reference_firm_var.get()
                 unit_rate = next((rate['unit_rate'] for rate in item['firm_rates'] if rate['firm_name'] == reference_firm), 0)
+                labour_rate = next((rate['labour_rate'] for rate in item['firm_rates'] if rate['firm_name'] == reference_firm), 0)
                 
                 total_cost = unit_rate * item['quantity']
                 
                 variation_values = [item['variations'].get(v_name, 0) for v_name in variation_names]
 
-                values = (display_description, item['quantity'], item['unit'], utils_helpers.format_currency_inr(unit_rate), utils_helpers.format_currency_inr(total_cost)) + tuple(variation_values)
+                values = (display_description, item['quantity'], item['unit'], utils_helpers.format_currency_inr(unit_rate), utils_helpers.format_currency_inr(labour_rate), utils_helpers.format_currency_inr(total_cost)) + tuple(variation_values)
                 self.schedule_tree.insert(parent_iid, tk.END, iid=item['item_id'], text=current_sr_no, values=values)
                 self.schedule_tree.item(item['item_id'], open=True) # Expand the item
                 if item['children']:

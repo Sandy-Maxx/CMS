@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from database.db_manager import get_work_by_id, get_all_unique_firm_names, get_unique_firm_names_by_work_id
+from database.db_manager import get_work_by_id, get_all_registered_firm_names, get_unique_firm_names_by_work_id
 from utils.helpers import show_toast, validate_numeric_input
 from utils.styles import configure_styles
 from .work_details_tab import WorkDetailsTab

@@ -154,13 +154,26 @@ class AboutTab(ttk.Frame):
             guide_text_widget.tag_configure('table_row', font=('Segoe UI', 9))
 
             # Load and parse content from the Markdown file
+            import sys
+            import os
+
             try:
-                with open("prompts/TEMPLATE_ENGINE.md", "r", encoding="utf-8") as f:
+                # Determine the base path for the bundled files
+                if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+                    # Running in a PyInstaller bundle
+                    base_path = sys._MEIPASS
+                else:
+                    # Running in a normal Python environment
+                    base_path = os.path.abspath(".")
+
+                guide_file_path = os.path.join(base_path, "prompts", "TEMPLATE_ENGINE.md")
+                
+                with open(guide_file_path, "r", encoding="utf-8") as f:
                     content = f.read()
                 self._parse_markdown_to_text_widget(guide_text_widget, content)
             except FileNotFoundError:
                 guide_text_widget.config(state=tk.NORMAL)
-                guide_text_widget.insert(tk.END, "Error: Template guide file not found (prompts/TEMPLATE_ENGINE.md).")
+                guide_text_widget.insert(tk.END, "Error: Template guide file not found (prompts/TEMPLATE_ENGINE.md). Please ensure it's bundled correctly.")
                 guide_text_widget.config(state=tk.DISABLED)
             except Exception as e:
                 guide_text_widget.config(state=tk.NORMAL)

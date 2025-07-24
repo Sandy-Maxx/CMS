@@ -1,4 +1,5 @@
-from database.db_manager import create_tables, add_work, add_schedule_item, upsert_firm_rate, delete_work
+from database import db_manager
+from database.db_manager import create_tables, add_work, add_schedule_item, upsert_firm_rate, delete_work, add_firm
 from datetime import datetime
 import sqlite3
 import random
@@ -31,6 +32,10 @@ def populate_sample_data():
 
         # Generate unique firm names for this work
         work_firms = [f"{firm}-{work_name.split()[1]}" for firm in base_firms]
+
+        # Register firms in the 'firms' table
+        for firm in work_firms:
+            db_manager.add_firm(firm, f"Representative for {firm}", f"Address for {firm}")
 
         # Add sample schedule items
         items_to_add = [

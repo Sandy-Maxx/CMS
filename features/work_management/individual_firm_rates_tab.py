@@ -45,36 +45,75 @@ class IndividualFirmRatesTab(ttk.Frame):
         firm_rates = db_manager.get_firm_rates(item_id)
         all_firms = db_manager.get_unique_firm_names_by_work_id(int(self.work_id_var.get()))
         row = 0
+
+        # Add headers for the rate columns
+        ttk.Label(self.rates_frame, text="Firm Name").grid(row=row, column=0, padx=5, pady=2, sticky="w")
+        ttk.Label(self.rates_frame, text="Unit Rate").grid(row=row, column=1, padx=5, pady=2, sticky="w")
+        ttk.Label(self.rates_frame, text="Labour Rate").grid(row=row, column=2, padx=5, pady=2, sticky="w")
+        row += 1
+
         for firm in all_firms:
-            rate = next((r['unit_rate'] for r in firm_rates if r['firm_name'] == firm), "")
+            unit_rate = next((r['unit_rate'] for r in firm_rates if r['firm_name'] == firm), "")
+            labour_rate = next((r['labour_rate'] for r in firm_rates if r['firm_name'] == firm), "")
+            
             ttk.Label(self.rates_frame, text=firm).grid(row=row, column=0, padx=5, pady=2, sticky="w")
-            entry = ttk.Entry(self.rates_frame, validate="key", validatecommand=(self.vcmd_numeric, '%P'))
-            entry.grid(row=row, column=1, padx=5, pady=2, sticky="ew")
-            entry.insert(0, str(rate) if rate else "")
-            self.firm_entries.append((firm, entry))
+            
+            unit_entry = ttk.Entry(self.rates_frame, validate="key", validatecommand=(self.vcmd_numeric, '%P'))
+            unit_entry.grid(row=row, column=1, padx=5, pady=2, sticky="ew")
+            unit_entry.insert(0, str(unit_rate) if unit_rate else "")
+
+            labour_entry = ttk.Entry(self.rates_frame, validate="key", validatecommand=(self.vcmd_numeric, '%P'))
+            labour_entry.grid(row=row, column=2, padx=5, pady=2, sticky="ew")
+            labour_entry.insert(0, str(labour_rate) if labour_rate else "")
+            
+            self.firm_entries.append((firm, unit_entry, labour_entry))
             row += 1
         self.rates_frame.grid_columnconfigure(1, weight=1)
+        self.rates_frame.grid_columnconfigure(2, weight=1)
 
     def _save_firm_rates(self):
         if not self.current_item_id:
             utils_helpers.show_toast(self.main_window_root, "No item selected.", "warning")
             return
         success = True
-        for firm, entry in self.firm_entries:
-            rate_str = entry.get().strip()
-            if rate_str:
+        for firm, unit_entry, labour_entry in self.firm_entries:
+            unit_rate_str = unit_entry.get().strip()
+            labour_rate_str = labour_entry.get().strip()
+
+            unit_rate = None
+            labour_rate = None
+
+            if unit_rate_str:
                 try:
-                    rate = float(rate_str)
-                    if rate < 0:
-                        utils_helpers.show_toast(self.main_window_root, f"Rate for {firm} cannot be negative.", "error")
+                    unit_rate = float(unit_rate_str)
+                    if unit_rate < 0:
+                        utils_helpers.show_toast(self.main_window_root, f"Unit Rate for {firm} cannot be negative.", "error")
                         success = False
                         continue
-                    db_manager.upsert_firm_rate(self.current_item_id, firm, rate)
                 except ValueError:
-                    utils_helpers.show_toast(self.main_window_root, f"Invalid rate for {firm}. Please enter a number.", "error")
+                    utils_helpers.show_toast(self.main_window_root, f"Invalid Unit Rate for {firm}. Please enter a number.", "error")
                     success = False
+                    continue
+            
+            if labour_rate_str:
+                try:
+                    labour_rate = float(labour_rate_str)
+                    if labour_rate < 0:
+                        utils_helpers.show_toast(self.main_window_root, f"Labour Rate for {firm} cannot be negative.", "error")
+                        success = False
+                        continue
+                except ValueError:
+                    utils_helpers.show_toast(self.main_window_root, f"Invalid Labour Rate for {firm}. Please enter a number.", "error")
+                    success = False
+                    continue
+
+            # Only upsert if at least one rate is provided
+            if unit_rate is not None or labour_rate is not None:
+                db_manager.upsert_firm_rate(self.current_item_id, firm, unit_rate, labour_rate)
             else:
+                # If both are empty, delete the entry for this firm and item
                 db_manager.delete_firm_rate_by_item_and_firm(self.current_item_id, firm)
+
         if success:
             utils_helpers.show_toast(self.main_window_root, f"Rates for {self.current_item_name} saved successfully.", "success")
             self.update_schedule_item_display_costs_callback()

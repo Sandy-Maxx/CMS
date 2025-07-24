@@ -236,12 +236,12 @@ def get_firm_rates(schedule_item_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, firm_name, unit_rate, date_recorded FROM firm_rates WHERE schedule_item_id = ?",
+        "SELECT id, firm_name, unit_rate, labour_rate, date_recorded FROM firm_rates WHERE schedule_item_id = ?",
         (schedule_item_id,)
     )
     rates = cursor.fetchall()
     conn.close()
-    return [{'rate_id': r[0], 'firm_name': r[1], 'unit_rate': r[2], 'date_recorded': r[3]} for r in rates]
+    return [{'rate_id': r[0], 'firm_name': r[1], 'unit_rate': r[2], 'labour_rate': r[3], 'date_recorded': r[4]} for r in rates]
 
 def get_firm_rate_by_id(rate_id):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -296,15 +296,20 @@ def delete_firm_rate_by_item_and_firm(schedule_item_id, firm_name):
     conn.close()
     return cursor.rowcount > 0
 
-def get_all_unique_firm_names():
+def add_firm(name, representative, address):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT firm_name FROM firm_rates")
-    firms = cursor.fetchall()
-    conn.close()
-    return [f[0] for f in firms]
+    try:
+        cursor.execute("INSERT INTO firms (name, representative, address) VALUES (?, ?, ?)", (name, representative, address))
+        firm_id = cursor.lastrowid
+        conn.commit()
+        return firm_id
+    except sqlite3.IntegrityError:
+        return None
+    finally:
+        conn.close()
 
-def get_all_firm_names():
+def get_all_registered_firm_names():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM firms")
@@ -312,13 +317,9 @@ def get_all_firm_names():
     conn.close()
     return [f[0] for f in firms]
 
-def get_all_firm_names():
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM firms")
-    firms = cursor.fetchall()
-    conn.close()
-    return [f[0] for f in firms]
+
+
+
 
 def get_unique_firm_names_by_work_id(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -410,12 +411,18 @@ def add_schedule_item_variation(schedule_item_id, variation_name, quantity):
     try:
         cursor.execute(
             "INSERT INTO schedule_item_variations (schedule_item_id, variation_name, quantity) VALUES (?, ?, ?)",
-            (schedule_item_id, variation_name, quantity)
+            (schedule_item_id, str(variation_name), quantity)
         )
         conn.commit()
         return cursor.lastrowid
     except sqlite3.IntegrityError:
-        return None
+        # If it already exists, update it instead of failing
+        cursor.execute(
+            "UPDATE schedule_item_variations SET quantity = ? WHERE schedule_item_id = ? AND variation_name = ?",
+            (quantity, schedule_item_id, str(variation_name))
+        )
+        conn.commit()
+        return cursor.rowcount > 0
     finally:
         conn.close()
 
@@ -424,7 +431,7 @@ def update_schedule_item_variation(schedule_item_id, variation_name, quantity):
     cursor = conn.cursor()
     cursor.execute(
         "UPDATE schedule_item_variations SET quantity = ? WHERE schedule_item_id = ? AND variation_name = ?",
-        (quantity, schedule_item_id, variation_name)
+        (quantity, schedule_item_id, str(variation_name))
     )
     conn.commit()
     conn.close()

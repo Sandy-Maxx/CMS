@@ -1,20 +1,19 @@
-PS D:\CMS\CMS> python main.py
-Firm documents table columns after ALTER: ['id', 'work_id', 'firm_name', 'pg_no', 'pg_amount', 'bank_name', 'bank_address', 'firm_address', 'indemnity_bond_details', 'other_docs_details', 'submission_date', 'pg_submitted', 'indemnity_bond_submitted']
-Traceback (most recent call last):
-  File "D:\CMS\CMS\features\work_management\main_window.py", line 252, in _export_estimate_report
-    run_export(work_id, selected_firm)
-    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
-  File "D:\CMS\CMS\features\estimates\export_runner.py", line 15, in run_export
-    data = load_data(work_id, firm_name)
-  File "D:\CMS\CMS\features\estimates\data_loader.py", line 33, in load_data
-    firm_rate = db_manager.get_firm_rate_for_item(item['item_id'], firm_name)
-  File "D:\CMS\CMS\database\db_manager.py", line 260, in get_firm_rate_for_item
-    cursor.execute(
-    ~~~~~~~~~~~~~~^
-        "SELECT id, schedule_item_id, firm_name, unit_rate, labour_rate, date_recorded FROM firm_rates WHERE schedule_item_id = ? AND firm_name = ?",
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        (schedule_item_id, firm_name)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-sqlite3.OperationalError: no such column: labour_rate
+now at above the header row add this block:
+
+Row	Column (approx.)	Content
+Row 1	A1	DETAILED ESTIMATE NO. : ELSKYN/WKS/2025/14/Safety Sling
+F1 (or further right)	ELECTRICAL DEPARTMENT
+Row 2	(empty cells for spacing)	
+Row 3	F3	DIVISION : MUMBAI
+Row 4	F4	PLACE OF WORK : ELECTRIC LOCO SHED, KALYAN
+
+Note:
+
+Left-aligned block begins at A1 and ends mid-sheet.
+
+Right-aligned block is around F1:F4 or later columns depending on page width.
+
+This is a two-column layout using merged or spaced cells.
+
+🔹 now below above block and just above header row put a merged row like
+Name Of Work: (here goes the  dynamically populated description of work)

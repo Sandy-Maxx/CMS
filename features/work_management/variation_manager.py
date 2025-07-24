@@ -1,4 +1,5 @@
 
+import time
 import tkinter as tk
 from tkinter import ttk, simpledialog
 from database import db_manager
@@ -32,13 +33,13 @@ class VariationManager:
         self.schedule_items_tab._load_schedule_items()
 
     def delete_variation(self, variation_name):
-        confirm = utils_helpers.show_confirm_dialog(self.schedule_items_tab.parent_app.window, f"Are you sure you want to delete the variation '{variation_name}'?")
+        confirm = utils_helpers.show_confirm_dialog(self.schedule_items_tab.main_window_root, f"Are you sure you want to delete the variation '{variation_name}'?")
         if confirm:
             if db_manager.delete_variation_by_name(self.work_id, variation_name):
-                utils_helpers.show_toast(self.schedule_items_tab.parent_app.window, f"Variation '{variation_name}' deleted successfully.", "success")
+                utils_helpers.show_toast(self.schedule_items_tab.main_window_root, f"Variation '{variation_name}' deleted successfully.", "success")
                 self.schedule_items_tab._load_schedule_items()
             else:
-                utils_helpers.show_toast(self.schedule_items_tab.parent_app.window, f"Error deleting variation '{variation_name}'.", "error")
+                utils_helpers.show_toast(self.schedule_items_tab.main_window_root, f"Error deleting variation '{variation_name}'.", "error")
 
     def on_cell_edit(self, event):
         schedule_tree = self.schedule_items_tab.get_schedule_tree()
@@ -93,7 +94,7 @@ class VariationManager:
         except (ValueError, TypeError):
             utils_helpers.show_toast(self.schedule_items_tab.parent_app.window, "Invalid quantity.", "error")
         except Exception as e:
-            utils_helpers.show_toast(self.schedule_items_tab.parent_app.window, f"Error: {e}", "error")
+            utils_helpers.show_toast(self.schedule_items_tab.parent_app.window.root, f"Error: {e}", "error")
 
     def get_variation_names(self):
         return db_manager.get_variation_names_for_work(self.work_id)
