@@ -43,7 +43,11 @@ class IndividualFirmRatesTab(ttk.Frame):
             widget.destroy()
         self.firm_entries = []
         firm_rates = db_manager.get_firm_rates(item_id)
-        all_firms = db_manager.get_unique_firm_names_by_work_id(int(self.work_id_var.get()))
+        work_id = self.work_id_var.get()
+        if not work_id:
+            self.item_label.config(text="No work selected")
+            return
+        all_firms = db_manager.get_unique_firm_names_by_work_id(int(work_id))
         row = 0
 
         # Add headers for the rate columns

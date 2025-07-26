@@ -1,9 +1,11 @@
 from docx import Document
 import re
-from features.AutodocGen.constants import USER_PLACEHOLDER_PATTERN, WORK_DATA_PLACEHOLDER_PATTERN, FIRM_PLACEHOLDER_PATTERN
+from datetime import datetime
+from features.AutodocGen.constants import USER_PLACEHOLDER_PATTERN, WORK_DATA_PLACEHOLDER_PATTERN, FIRM_PLACEHOLDER_PATTERN, ALL_FIRMS_PG_DETAILS_PATTERN
 from features.template_engine.special_placeholder_handler import evaluate_special_placeholder
 from features.template_engine.work_data_provider import WorkDataProvider
 from features.AutodocGen.pg_details_formatter import PGDetailsFormatter
+from utils.helpers import format_currency_inr
 
 class DocumentGenerator:
     def __init__(self, data_fetcher):
@@ -12,107 +14,114 @@ class DocumentGenerator:
 
     def generate(self, template_path, data, output_path, is_firm_specific=False):
         document = Document(template_path)
-        work_id = data.get('work_id') # Assuming work_id is passed in data
+        work_id = data.get('work_id')
         work_data_provider = WorkDataProvider(work_id)
 
-        # Process paragraphs in the main body
+        # Process all paragraphs in the document
         for paragraph in document.paragraphs:
-            self._replace_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
+            self._replace_placeholders_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
 
-        # Process tables in the main body
         for table in document.tables:
             for row in table.rows:
                 for cell in row.cells:
                     for paragraph in cell.paragraphs:
-                        self._replace_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
+                        self._replace_placeholders_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
 
-        # Process headers and footers
         for section in document.sections:
-            # Headers
-            header = section.header
-            for paragraph in header.paragraphs:
-                self._replace_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
-            for table in header.tables:
+            for paragraph in section.header.paragraphs:
+                self._replace_placeholders_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
+            for table in section.header.tables:
                 for row in table.rows:
                     for cell in row.cells:
                         for paragraph in cell.paragraphs:
-                            self._replace_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
-
-            # Footers
-            footer = section.footer
-            for paragraph in footer.paragraphs:
-                self._replace_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
-            for table in footer.tables:
+                            self._replace_placeholders_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
+            
+            for paragraph in section.footer.paragraphs:
+                self._replace_placeholders_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
+            for table in section.footer.tables:
                 for row in table.rows:
                     for cell in row.cells:
                         for paragraph in cell.paragraphs:
-                            self._replace_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
+                            self._replace_placeholders_in_paragraph(paragraph, data, work_data_provider, is_firm_specific)
 
         document.save(output_path)
 
-    def _replace_in_paragraph(self, paragraph, data, work_data_provider, is_firm_specific, firm_name=None):
-        full_text = "".join([run.text for run in paragraph.runs])
+    def _replace_placeholders_in_paragraph(self, paragraph, data, work_data_provider, is_firm_specific):
+        # Regex to find [PLACEHOLDER:FORMAT] or <<PLACEHOLDER>>
+        placeholder_regex = r"(\[([\w_:-]+)\])|(<<([\w_]+)>>)"
         
-        # Combined regex for all placeholder types
-        matches = list(re.finditer(r"(\{\{([a-zA-Z0-9_.]+)\}\}\]|\[([a-zA-Z0-9_]+)\]|<<([a-zA-Z0-9_]+)>>|\[ALL_FIRMS_PG_DETAILS\])", full_text))
+        replacements = {}
+        full_text = "".join(run.text for run in paragraph.runs)
 
-        if not matches:
-            return
+        # Handle the special case [ALL_FIRMS_PG_DETAILS] separately
+        if "[ALL_FIRMS_PG_DETAILS]" in full_text:
+            work_id = data.get('work_id')
+            if work_id:
+                pg_details = self.data_fetcher.fetch_all_firms_pg_details(work_id)
+                replacement_value = self.pg_formatter.format_pg_details(pg_details)
+            else:
+                replacement_value = "N/A (Work ID not available)"
+            replacements["[ALL_FIRMS_PG_DETAILS]"] = str(replacement_value)
 
-        new_runs_data = []
-        last_idx = 0
-
-        for match in matches:
+        # Find all other placeholders
+        for match in re.finditer(placeholder_regex, full_text):
             placeholder_full = match.group(0)
-            user_input_ph = match.group(2)
-            work_data_ph = match.group(3)
-            firm_ph = match.group(4)
+            
+            if placeholder_full in replacements:
+                continue
 
-            if match.start() > last_idx:
-                new_runs_data.append({'text': full_text[last_idx:match.start()], 'style': None})
-
+            key = match.group(2) or match.group(4)
             replacement_value = None
 
-            if placeholder_full == "[ALL_FIRMS_PG_DETAILS]":
-                work_id = data.get('work_id')
-                if work_id:
-                    pg_details = self.data_fetcher.fetch_all_firms_pg_details(work_id)
-                    replacement_value = self.pg_formatter.format_pg_details(pg_details)
+            # Handle [PLACEHOLDER]
+            if match.group(1):
+                # Handle Date Placeholders like [DATE:DD-MM-YYYY]
+                if key.upper().startswith("DATE:"):
+                    try:
+                        date_format = key.split(":")[1]
+                        py_format = date_format.replace("DD", "%d").replace("MM", "%m").replace("YYYY", "%Y")
+                        replacement_value = datetime.now().strftime(py_format)
+                    except Exception:
+                        replacement_value = f"[Invalid Date Format: {key}]"
                 else:
-                    replacement_value = "N/A (Work ID not available)"
-            elif user_input_ph:
-                replacement_value = evaluate_special_placeholder(user_input_ph, data)
-            elif work_data_ph:
-                replacement_value = work_data_provider.get_data(work_data_ph)
-            elif firm_ph and is_firm_specific:
-                # Assuming firm_name is available in data if is_firm_specific is True
-                current_firm_name = data.get('firm_name') 
-                if current_firm_name:
-                    firm_document_data = work_data_provider.get_firm_document_data(current_firm_name)
-                    if firm_ph == 'firm_name':
-                        replacement_value = current_firm_name
-                    elif firm_ph == 'pg_submitted':
-                        replacement_value = "submitted the PG No." if firm_document_data.get('pg_submitted') == 1 else "did not submit the PG"
-                    elif firm_ph == 'indemnity_bond_submitted':
-                        replacement_value = "submitted the Indemnity Bond" if firm_document_data.get('indemnity_bond_submitted') == 1 else "did not submit the Indemnity Bond"
-                    elif firm_document_data and firm_ph in firm_document_data:
-                        replacement_value = firm_document_data[firm_ph]
+                    # Standard work data placeholder
+                    replacement_value = work_data_provider.get_data(key.upper())
+                    if key.upper() == "TENDER_COST":
+                        replacement_value = format_currency_inr(replacement_value)
 
-            if replacement_value is None or str(replacement_value).strip() == "":
-                new_runs_data.append({'text': placeholder_full, 'style': None})
-            else:
-                new_runs_data.append({'text': str(replacement_value), 'style': None})
+                    if replacement_value is None or "[Invalid" in str(replacement_value):
+                        replacement_value = evaluate_special_placeholder(key, data)
 
-            last_idx = match.end()
+            # Handle <<PLACEHOLDER>>
+            elif match.group(3):
+                if is_firm_specific:
+                    current_firm_name = data.get('firm_name')
+                    if current_firm_name:
+                        firm_document_data = work_data_provider.get_firm_document_data(current_firm_name)
+                        
+                        # Use lowercase key for lookup in the dictionary
+                        lookup_key = key.lower()
 
-        if last_idx < len(full_text):
-            new_runs_data.append({'text': full_text[last_idx:], 'style': None})
+                        if lookup_key == 'firm_name':
+                            replacement_value = current_firm_name
+                        elif lookup_key == 'pg_submitted':
+                            replacement_value = "submitted the PG No." if firm_document_data.get('pg_submitted') == 1 else "did not submit the PG"
+                        elif lookup_key == 'indemnity_bond_submitted':
+                            replacement_value = "submitted the Indemnity Bond" if firm_document_data.get('indemnity_bond_submitted') == 1 else "did not submit the Indemnity Bond"
+                        elif firm_document_data and lookup_key in firm_document_data:
+                            value = firm_document_data[lookup_key]
+                            if lookup_key == 'pg_amount':
+                                replacement_value = format_currency_inr(value)
+                            else:
+                                replacement_value = value
+                else:
+                    replacement_value = work_data_provider.get_data(key.upper())
 
-        for i in reversed(range(len(paragraph.runs))):
-            p = paragraph.runs[i]
-            p.element.getparent().remove(p.element)
+            if replacement_value is not None and str(replacement_value).strip() != "":
+                replacements[placeholder_full] = str(replacement_value)
 
-        for run_data in new_runs_data:
-            new_run = paragraph.add_run(run_data['text'])
-            if run_data['style']:
-                new_run.style = run_data['style']
+        # Apply the replacements to the runs in the paragraph
+        for placeholder, value in replacements.items():
+            for run in paragraph.runs:
+                if placeholder in run.text:
+                    run.text = run.text.replace(placeholder, str(value))

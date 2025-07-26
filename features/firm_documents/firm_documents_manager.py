@@ -57,6 +57,30 @@ def get_firm_documents(work_id):
     conn.close()
     return documents
 
+def get_firm_document_by_work_and_firm_name(work_id, firm_name):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted FROM firm_documents WHERE work_id = ? AND firm_name = ?", (work_id, firm_name))
+    document = cursor.fetchone()
+    conn.close()
+    if document:
+        return {
+            'id': document[0],
+            'work_id': document[1],
+            'firm_name': document[2],
+            'pg_no': document[3],
+            'pg_amount': document[4],
+            'bank_name': document[5],
+            'bank_address': document[6],
+            'firm_address': document[7],
+            'indemnity_bond_details': document[8],
+            'other_docs_details': document[9],
+            'submission_date': document[10],
+            'pg_submitted': document[11],
+            'indemnity_bond_submitted': document[12]
+        }
+    return None
+
 def update_firm_document(doc_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()

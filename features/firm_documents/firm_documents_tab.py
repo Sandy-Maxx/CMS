@@ -1,17 +1,19 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from features.firm_documents.firm_documents_manager import (
-    add_firm_document, get_firm_documents, update_firm_document, delete_firm_document
+    add_firm_document, get_firm_documents, update_firm_document, delete_firm_document, get_firm_document_by_work_and_firm_name
 )
 from database import db_manager
 from utils.helpers import show_toast, validate_numeric_input
+from utils.date_picker import DatePicker
 from datetime import datetime
 
 class FirmDocumentsTab(ttk.Frame):
-    def __init__(self, parent_notebook, work_id_var):
+    def __init__(self, parent_notebook, work_id_var, main_window_instance):
         super().__init__(parent_notebook)
         self.work_id_var = work_id_var
         self.work_id_var.trace("w", self._on_work_id_change)
+        self.main_window_instance = main_window_instance
 
         self.vcmd_numeric = self.register(validate_numeric_input)
         self.selected_doc_id = None # To store the ID of the document being edited
@@ -82,6 +84,7 @@ class FirmDocumentsTab(ttk.Frame):
         self.submission_date_entry = ttk.Entry(input_frame)
         self.submission_date_entry.grid(row=10, column=1, padx=5, pady=5, sticky=tk.EW)
         self.submission_date_entry.insert(0, datetime.now().strftime("%Y-%m-%d")) # Default to today
+        self.submission_date_entry.bind("<Button-1>", lambda event: DatePicker(self.main_window_instance.root, self.submission_date_entry, self.main_window_instance, initial_date=self.submission_date_entry.get(), x=self.submission_date_entry.winfo_rootx(), y=self.submission_date_entry.winfo_rooty() + self.submission_date_entry.winfo_height()))
 
         button_frame = ttk.Frame(input_frame)
         button_frame.grid(row=11, column=0, columnspan=2, pady=10)
@@ -149,10 +152,10 @@ class FirmDocumentsTab(ttk.Frame):
     def _populate_firm_names(self):
         work_id = self.work_id_var.get()
         if work_id:
-            firms_for_work = db_manager.get_unique_firm_names_by_work_id(int(work_id))
-            self.firm_name_combobox['values'] = firms_for_work
-            if firms_for_work:
-                self.firm_name_combobox.set(firms_for_work[0])
+            all_firms = db_manager.get_all_registered_firm_names()
+            self.firm_name_combobox['values'] = all_firms
+            if all_firms:
+                self.firm_name_combobox.set(all_firms[0])
             else:
                 self.firm_name_combobox.set("")
         else:
@@ -161,26 +164,50 @@ class FirmDocumentsTab(ttk.Frame):
 
     def _on_firm_name_key_release(self, event):
         search_text = self.firm_name_var.get().lower()
-        work_id = self.work_id_var.get()
-        if work_id:
-            firms_for_work = db_manager.get_unique_firm_names_by_work_id(int(work_id))
-            if search_text == '':
-                self.firm_name_combobox['values'] = firms_for_work
-            else:
-                filtered_firms = [firm for firm in firms_for_work if search_text in firm.lower()]
-                self.firm_name_combobox['values'] = filtered_firms
+        all_firms = db_manager.get_all_registered_firm_names()
+        if search_text == '':
+            self.firm_name_combobox['values'] = all_firms
         else:
-            self.firm_name_combobox['values'] = []
-
-        # This is a bit of a hack to force the dropdown to update
-        # when the list of values is changed dynamically.
-        self.firm_name_combobox.event_generate('<Down>')
-        self.firm_name_combobox.event_generate('<Escape>')
+            filtered_firms = [firm for firm in all_firms if search_text in firm.lower()]
+            self.firm_name_combobox['values'] = filtered_firms
 
     def _on_firm_selected(self, event):
+        selected_firm_name = self.firm_name_var.get() # Store the selected firm name
+        self._clear_form() # Clear form first
+        self.firm_name_combobox.set(selected_firm_name) # Re-set the selected firm name
+        work_id = self.work_id_var.get()
+        firm_name = self.firm_name_var.get()
+        if work_id and firm_name:
+            doc = get_firm_document_by_work_and_firm_name(int(work_id), firm_name)
+            if doc:
+                self.selected_doc_id = doc['id']
+                self.pg_submitted_var.set(bool(doc['pg_submitted']))
+                self.pg_no_entry.delete(0, tk.END)
+                self.pg_no_entry.insert(0, doc['pg_no'] if doc['pg_no'] else "")
+                self.pg_amount_entry.delete(0, tk.END)
+                self.pg_amount_entry.insert(0, doc['pg_amount'] if doc['pg_amount'] else "")
+                self.bank_name_entry.delete(0, tk.END)
+                self.bank_name_entry.insert(0, doc['bank_name'] if doc['bank_name'] else "")
+                self.bank_address_entry.delete(0, tk.END)
+                self.bank_address_entry.insert(0, doc['bank_address'] if doc['bank_address'] else "")
+                self.indemnity_bond_submitted_var.set(bool(doc['indemnity_bond_submitted']))
+                self.indemnity_bond_details_entry.delete(0, tk.END)
+                self.indemnity_bond_details_entry.insert(0, doc['indemnity_bond_details'] if doc['indemnity_bond_details'] else "")
+                self.firm_address_entry.delete(0, tk.END)
+                self.firm_address_entry.insert(0, doc['firm_address'] if doc['firm_address'] else "")
+                self.other_docs_details_entry.delete(0, tk.END)
+                self.other_docs_details_entry.insert(0, doc['other_docs_details'] if doc['other_docs_details'] else "")
+                self.submission_date_entry.delete(0, tk.END)
+                self.submission_date_entry.insert(0, doc['submission_date'] if doc['submission_date'] else "")
+
+                self._toggle_pg_fields()
+                self._toggle_indemnity_bond_fields()
+                self.add_button.config(state=tk.DISABLED)
+                self.update_button.config(state=tk.NORMAL)
+            else:
+                self._clear_form()
+                self.firm_name_combobox.set(selected_firm_name) # Re-set the selected firm name if no doc found
         self.load_firm_documents() # Reload documents to filter by selected firm
-        # Optionally, pre-fill other fields if there's a single document for this firm/work
-        # For now, just reloading the list is sufficient to show documents for the selected firm.
 
     def load_firm_documents(self):
         for item in self.documents_tree.get_children():
@@ -193,9 +220,6 @@ class FirmDocumentsTab(ttk.Frame):
         documents = get_firm_documents(int(work_id))
         selected_firm = self.firm_name_var.get()
         for doc in documents:
-            # doc[0] is id, doc[1] is work_id
-            # doc[2] is firm_name, ..., doc[10] is submission_date
-            # doc[11] is pg_submitted, doc[12] is indemnity_bond_submitted
             if not selected_firm or doc[2] == selected_firm: # doc[2] is firm_name
                 self.documents_tree.insert("", tk.END, iid=doc[0], values=(
                     doc[2], bool(doc[11]), doc[3], doc[4], doc[5], doc[6], bool(doc[12]), doc[7], doc[8], doc[9], doc[10]
@@ -295,6 +319,9 @@ class FirmDocumentsTab(ttk.Frame):
             doc_id = int(selected_item[0])
             values = self.documents_tree.item(selected_item[0], "values")
             
+            print(f"Selected doc_id: {doc_id}")
+            print(f"Retrieved values from treeview: {values}")
+
             self.firm_name_combobox.set(values[0])
             self.pg_submitted_var.set(values[1])
             self.pg_no_entry.delete(0, tk.END)

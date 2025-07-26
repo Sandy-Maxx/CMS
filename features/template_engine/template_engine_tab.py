@@ -105,8 +105,7 @@ class TemplateEngineTab(ttk.Frame):
             return
 
         try:
-            user_placeholders, work_placeholders, firm_placeholders = self.template_processor.extract_placeholders(self.template_path)
-            self.firm_placeholders = firm_placeholders # Store for later use
+            user_placeholders = self.template_processor.extract_placeholders(self.template_path)
         except Exception as e:
             messagebox.showerror("Error", f"Could not read template file: {e}")
             return

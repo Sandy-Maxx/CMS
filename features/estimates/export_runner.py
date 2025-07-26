@@ -1,6 +1,7 @@
 # features/estimates/export_runner.py
 
 import os
+import sys
 from datetime import datetime
 from .data_loader import load_data
 from .workbook_builder import create_workbook_and_sheet
@@ -38,7 +39,14 @@ def run_export(work_id, firm_name):
     apply_all_styles_and_formats(worksheet, header_row_idx, data_start_row, data_end_row, summary_start_row, summary_end_row, COLUMN_HEADERS, data)
 
     # Determine output directory and filename
-    output_dir = "exported"
+    if getattr(sys, 'frozen', False):
+        # Running in a PyInstaller bundle
+        application_path = os.path.dirname(sys.executable)
+    else:
+        # Running in a normal Python environment
+        application_path = os.path.dirname(os.path.abspath(__file__))
+
+    output_dir = os.path.join(application_path, "exported") # Construct path relative to executable
     os.makedirs(output_dir, exist_ok=True)
 
     # Get work name from the description of the 'A' row

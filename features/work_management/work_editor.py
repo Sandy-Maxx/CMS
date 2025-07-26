@@ -7,6 +7,7 @@ from .work_details_tab import WorkDetailsTab
 from .schedule_items_tab import ScheduleItemsTab
 from .individual_firm_rates_tab import IndividualFirmRatesTab
 from .work_details_extension.work_details_extension_tab import WorkDetailsExtensionTab
+from features.firm_documents.firm_documents_tab import FirmDocumentsTab
 
 class WorkDetailsEditor(ttk.Frame):
     def __init__(self, parent_frame, main_window_instance, work_id, main_window_root):
@@ -68,8 +69,8 @@ class WorkDetailsEditor(ttk.Frame):
         self.notebook.add(self.schedule_items_tab, text="Schedule Items")
         self.notebook.add(self.firm_rates_tab, text="Individual Firm Rates")
         
-        from features.firm_documents.firm_documents_tab import FirmDocumentsTab
-        self.firm_documents_tab = FirmDocumentsTab(self.notebook, self.work_id_var)
+        # Initialize other tabs here
+        self.firm_documents_tab = FirmDocumentsTab(self.notebook, self.work_id_var, self.main_window_instance)
         self.notebook.add(self.firm_documents_tab, text="Firm Documents")
 
         self.grid_rowconfigure(1, weight=1) # Notebook row

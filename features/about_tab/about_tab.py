@@ -107,6 +107,31 @@ class AboutTab(ttk.Frame):
                 {
                     "question": "How do I use the 'PDF Tools'?",
                     "answer": "The 'PDF Tools' tab provides functionalities related to PDF documents, such as merging multiple PDFs into one, or extracting specific pages from a PDF."
+                },
+                {
+                    "question": "What are the auto-populated placeholders?",
+                    "answer": """The application can automatically populate certain placeholders with data from the selected work. These placeholders are typically enclosed in square brackets `[]` and include:
+*   **[ID]**: The unique identifier of the work.
+*   **[NAME]**: The name of the work.
+*   **[DESCRIPTION]**: A description of the work.
+*   **[JUSTIFICATION]**: The justification for the work.
+*   **[SECTION]**: The section related to the work.
+*   **[WORK_TYPE]**: The type of work.
+*   **[FILE_NO]**: The file number associated with the work.
+*   **[ESTIMATE_NO]**: The estimate number for the work.
+*   **[TENDER_COST]**: The tender cost of the work.
+*   **[TENDER_OPENING_DATE]**: The date of tender opening.
+*   **[LOA_NO]**: The Letter of Acceptance (LOA) number.
+*   **[LOA_DATE]**: The date of the Letter of Acceptance (LOA).
+*   **[WORK_COMMENCE_DATE]**: The work commencement date.
+*   **[firm_pg_details]**: This special placeholder will be replaced with a formatted block of text containing details of all Performance Guarantees (PGs) submitted by firms for the selected work."""
+                },
+                {
+                    "question": "What are the different types of placeholders?",
+                    "answer": """The application uses three types of placeholders in templates:
+*   **[PLACEHOLDER]**: These are standard placeholders that you can fill with any text.
+*   **<<PLACEHOLDER>>**: These placeholders are designed for numerical values and will be automatically formatted as currency.
+*   **{{PLACEHOLDER}}**: These placeholders are for dates and will automatically open a date picker for easy selection."""
                 }
             ]
 
@@ -144,16 +169,8 @@ class AboutTab(ttk.Frame):
         def build_guide_content(parent_frame):
             guide_text_widget = tk.Text(parent_frame, wrap=tk.WORD, height=15, state=tk.DISABLED, font=('Segoe UI', 9))
             guide_text_widget.pack(fill=tk.BOTH, expand=True)
-            
-            guide_text_widget.tag_configure('h1', font=('Segoe UI', 14, 'bold'))
-            guide_text_widget.tag_configure('h2', font=('Segoe UI', 12, 'bold'))
-            guide_text_widget.tag_configure('h3', font=('Segoe UI', 11, 'bold'))
-            guide_text_widget.tag_configure('bold', font=('Segoe UI', 9, 'bold'))
-            guide_text_widget.tag_configure('code', font=('Consolas', 9), background='#f0f0f0')
-            guide_text_widget.tag_configure('table_header', font=('Segoe UI', 9, 'bold'), background='#e0e0e0')
-            guide_text_widget.tag_configure('table_row', font=('Segoe UI', 9))
 
-            # Load and parse content from the Markdown file
+            # Load and display content from the Markdown file as plain text
             import sys
             import os
 
@@ -170,7 +187,11 @@ class AboutTab(ttk.Frame):
                 
                 with open(guide_file_path, "r", encoding="utf-8") as f:
                     content = f.read()
-                self._parse_markdown_to_text_widget(guide_text_widget, content)
+                
+                guide_text_widget.config(state=tk.NORMAL)
+                guide_text_widget.insert(tk.END, content)
+                guide_text_widget.config(state=tk.DISABLED)
+
             except FileNotFoundError:
                 guide_text_widget.config(state=tk.NORMAL)
                 guide_text_widget.insert(tk.END, "Error: Template guide file not found (prompts/TEMPLATE_ENGINE.md). Please ensure it's bundled correctly.")

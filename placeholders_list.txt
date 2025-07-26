@@ -1,0 +1,53 @@
+### Comprehensive List of Auto-Populated Placeholders
+
+These placeholders can be embedded directly into your Word `.docx` letter templates. When a document is generated for a specific "Work" and "Firm" (if applicable) using the `AutodocGen` feature, the application will automatically replace these placeholders with the corresponding data from your database.
+
+---
+
+#### Work Details Placeholders (Wrapped in `[]`)
+
+These placeholders are populated from the `works` table in your `cms_database.db`.
+
+| Placeholder Name      | Description                                     | Example Value                               |
+| :-------------------- | :---------------------------------------------- | :------------------------------------------ |
+| `[WORK_NAME]`         | Name of the work/project                        | `Construction of New Office Building`       |
+| `[DESCRIPTION]`       | Detailed description of the work                | `Includes civil, electrical, and plumbing.` |
+| `[JUSTIFICATION]`     | Justification for the work                      | `Urgent need for expansion.`                |
+| `[SECTION]`           | Section responsible for the work                | `Civil Engineering Department`              |
+| `[WORK_TYPE]`         | Type of work (e.g., On Quotation, RSP ITEM)     | `On Quotation (M&P Below Lacks)`          |
+| `[FILE_NO]`           | File number associated with the work            | `PWD/2024/001`                              |
+| `[ESTIMATE_NO]`       | Estimate number for the work                    | `EST/2024/005`                              |
+| `[TENDER_COST]`       | Tender cost of the work                         | `1500000.00`                                |
+| `[TENDER_OPENING_DATE]` | Date of tender opening (DD-MM-YYYY)           | `25-07-2025`                                |
+| `[LOA_NO]`            | Letter of Acceptance (LOA) number               | `LOA/2024/010`                              |
+| `[LOA_DATE]`          | Date of Letter of Acceptance (DD-MM-YYYY)       | `01-08-2025`                                |
+| `[WORK_COMMENCE_DATE]` | Date when work commenced (DD-MM-YYYY)         | `15-08-2025`                                |
+| `[ALL_FIRMS_PG_DETAILS]` | Special placeholder that generates a formatted list of all firms' PG details for the selected work. | (Generates a block of text like: "Firm A: PG No. PGN001, Amount 100000.00, Bank XYZ. Firm B: ...") |
+
+---
+
+#### Firm Details Placeholders (Wrapped in `<<>>`)
+
+These placeholders are populated from the `firms` and `firm_documents` tables in your `cms_database.db`, specific to the selected firm.
+
+| Placeholder Name          | Description                                     | Example Value                               |
+| :------------------------ | :---------------------------------------------- | :------------------------------------------ |
+| `<<FIRM_NAME>>`           | Name of the firm                                | `ABC Construction Pvt. Ltd.`                |
+| `<<REPRESENTATIVE>>`      | Representative of the firm                      | `Mr. John Doe`                              |
+| `<<FIRM_ADDRESS>>`        | Address of the firm                             | `123 Main Street, City, State, 12345`       |
+| `<<PG_NO>>`               | Performance Guarantee (PG) number               | `PG/2024/001`                               |
+| `<<PG_AMOUNT>>`           | Performance Guarantee (PG) amount               | `75000.00`                                  |
+| `<<BANK_NAME>>`           | Bank name for PG                                | `State Bank of India`                       |
+| `<<BANK_ADDRESS>>`        | Bank address for PG                             | `Bank Street, City, State, 12345`           |
+| `<<INDEMNITY_BOND_DETAILS>>` | Details of Indemnity Bond                     | `Bond for material advance`                 |
+| `<<OTHER_DOCS_DETAILS>>`  | Details of other submitted documents            | `Compliance certificates, safety plan`      |
+| `<<SUBMISSION_DATE>>`     | Date of document submission (DD-MM-YYYY)        | `20-07-2025`                                |
+| `<<PG_SUBMITTED>>`        | Whether PG was submitted (True/False). This will be replaced with "submitted the PG No." or "did not submit the PG". | `submitted the PG No.`                      |
+| `<<INDEMNITY_BOND_SUBMITTED>>` | Whether Indemnity Bond was submitted (True/False). This will be replaced with "submitted the Indemnity Bond" or "did not submit the Indemnity Bond". | `did not submit the Indemnity Bond`         |
+
+---
+
+**How to Use:**
+
+*   **For `AutodocGen` (Letters/Office Notes):** When generating documents from the "Works" tab (right-click context menu), these `[]` and `<<>>` placeholders will be automatically filled based on the selected work and firm.
+*   **For `Template Engine` Tab:** The `Template Engine` tab is designed for `{{}}` placeholders, which require manual input or special handling. It will *ignore* `[]` and `<<>>` placeholders, as those are handled by the `AutodocGen`'s direct database mapping.

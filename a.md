@@ -1,7 +1,3 @@
-PS D:\CMS\CMS> python main.py
-Firm documents table columns after ALTER: ['id', 'work_id', 'firm_name', 'pg_no', 'pg_amount', 'bank_name', 'bank_address', 'firm_address', 'indemnity_bond_details', 'other_docs_details', 'submission_date', 'pg_submitted', 'indemnity_bond_submitted']
-Toast position: x=276, y=46, width=300, height=50
-Root window: x=26, y=26, width=800
-DatePicker position: x=211, y=467
-Toast position: x=276, y=46, width=300, height=50
-Root window: x=26, y=26, width=800
+TEMPLATE ENGINE IS OK BUT THE AUTO REPORT GENETRATION IN D:\CMS\CMS\features\AutodocGen IS HAVING THIS :
+IN THE EXE THE IN THE TEMPLATE WITH MANY  [] WRAPPED PLACEHOLDERS THE OUTPUT IS REPLACING ONLY ONE PLACEHOLDER. IT SHOULD REPLACE   │
+│    ALL THE PLACEHOLDERS IN HEADER, FOOTER, PARAGRAPHS, TABLE ETC. NO MATTER HOW MANY TIMES A PLACEHOLDER GETS REPEATD EVERY INSTANSE MUST BE POPULATED WITH DYNAMIC DATA. IF THERE IS SOME PLACEHOLDER WHOSE VALUE IS NOT AVAILABLE THEN JUST LEAVE THAT PLACEHOLDER AS IT IS.
