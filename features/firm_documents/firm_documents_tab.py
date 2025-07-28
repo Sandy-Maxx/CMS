@@ -152,7 +152,7 @@ class FirmDocumentsTab(ttk.Frame):
     def _populate_firm_names(self):
         work_id = self.work_id_var.get()
         if work_id:
-            all_firms = db_manager.get_all_registered_firm_names()
+            all_firms = db_manager.get_unique_firm_names_by_work_id(int(work_id))
             self.firm_name_combobox['values'] = all_firms
             if all_firms:
                 self.firm_name_combobox.set(all_firms[0])
@@ -164,12 +164,14 @@ class FirmDocumentsTab(ttk.Frame):
 
     def _on_firm_name_key_release(self, event):
         search_text = self.firm_name_var.get().lower()
-        all_firms = db_manager.get_all_registered_firm_names()
-        if search_text == '':
-            self.firm_name_combobox['values'] = all_firms
-        else:
-            filtered_firms = [firm for firm in all_firms if search_text in firm.lower()]
-            self.firm_name_combobox['values'] = filtered_firms
+        work_id = self.work_id_var.get()
+        if work_id:
+            all_firms = db_manager.get_unique_firm_names_by_work_id(int(work_id))
+            if search_text == '':
+                self.firm_name_combobox['values'] = all_firms
+            else:
+                filtered_firms = [firm for firm in all_firms if search_text in firm.lower()]
+                self.firm_name_combobox['values'] = filtered_firms
 
     def _on_firm_selected(self, event):
         selected_firm_name = self.firm_name_var.get() # Store the selected firm name
