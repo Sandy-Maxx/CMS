@@ -358,6 +358,47 @@ def evaluate_special_placeholder(placeholder_name, data):
 - File paths are validated before template processing
 - Special placeholder logic has input validation
 
+## FAQ Implementation Rationale
+
+The FAQ system underwent a significant refactor to address maintainability and user experience concerns:
+
+### Design Decisions
+
+1. **Dynamic Content Generation**: 
+   - FAQ answers are generated dynamically from the database schema
+   - Eliminates manual maintenance of placeholder lists
+   - Ensures FAQ content stays synchronized with system capabilities
+
+2. **Simplified Widget Management**:
+   - Direct reference storage (`faq["answer_widget"]`) replaces complex lookups
+   - Reduces cognitive overhead for developers
+   - Improves debugging and maintenance
+
+3. **Unified Display Format**:
+   - Consistent formatting across all placeholder categories
+   - Clear visual hierarchy with proper grouping
+   - Auto-generated timestamps for freshness indicators
+
+4. **Error Resilience**:
+   - Graceful fallbacks when database introspection fails
+   - User-friendly error messages instead of system crashes
+   - Maintains FAQ functionality even with partial failures
+
+### Benefits Achieved
+
+- **Reduced Maintenance**: No manual updates required for new database columns
+- **Improved Accuracy**: FAQ content reflects actual system state
+- **Better UX**: Users see exactly what placeholders are available
+- **Developer Efficiency**: Cleaner code with fewer edge cases
+
+### Alternative Approaches Considered
+
+1. **Static Configuration Files**: Rejected due to sync issues
+2. **Database-Driven FAQ Content**: Too complex for this use case
+3. **Template-Based Generation**: Overkill for simple placeholder lists
+
+The chosen approach balances simplicity, maintainability, and user value.
+
 ## Future Enhancements
 
 Potential areas for improvement:
