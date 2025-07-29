@@ -19,6 +19,9 @@ def create_firm_documents_table():
             submission_date TEXT,
             pg_submitted INTEGER DEFAULT 0,
             indemnity_bond_submitted INTEGER DEFAULT 0,
+            pg_type TEXT,
+            pg_vetted_on TEXT,
+            ib_vetted_on TEXT,
             FOREIGN KEY (work_id) REFERENCES works(id)
         )
     ''')
@@ -31,6 +34,12 @@ def create_firm_documents_table():
         cursor.execute("ALTER TABLE firm_documents ADD COLUMN pg_submitted INTEGER DEFAULT 0")
     if 'indemnity_bond_submitted' not in columns:
         cursor.execute("ALTER TABLE firm_documents ADD COLUMN indemnity_bond_submitted INTEGER DEFAULT 0")
+    if 'pg_type' not in columns:
+        cursor.execute("ALTER TABLE firm_documents ADD COLUMN pg_type TEXT")
+    if 'pg_vetted_on' not in columns:
+        cursor.execute("ALTER TABLE firm_documents ADD COLUMN pg_vetted_on TEXT")
+    if 'ib_vetted_on' not in columns:
+        cursor.execute("ALTER TABLE firm_documents ADD COLUMN ib_vetted_on TEXT")
 
     cursor.execute("PRAGMA table_info(firm_documents)")
     updated_columns = [col[1] for col in cursor.fetchall()]
@@ -39,12 +48,12 @@ def create_firm_documents_table():
     conn.commit()
     conn.close()
 
-def add_firm_document(work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted):
+def add_firm_document(work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO firm_documents (work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted)
+        "INSERT INTO firm_documents (work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on)
     )
     conn.commit()
     conn.close()
@@ -52,7 +61,7 @@ def add_firm_document(work_id, firm_name, pg_no, pg_amount, bank_name, bank_addr
 def get_firm_documents(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted FROM firm_documents WHERE work_id = ?", (work_id,))
+    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on FROM firm_documents WHERE work_id = ?", (work_id,))
     documents = cursor.fetchall()
     conn.close()
     return documents
@@ -60,7 +69,7 @@ def get_firm_documents(work_id):
 def get_firm_document_by_work_and_firm_name(work_id, firm_name):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted FROM firm_documents WHERE work_id = ? AND firm_name = ?", (work_id, firm_name))
+    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on FROM firm_documents WHERE work_id = ? AND firm_name = ?", (work_id, firm_name))
     document = cursor.fetchone()
     conn.close()
     if document:
@@ -77,16 +86,19 @@ def get_firm_document_by_work_and_firm_name(work_id, firm_name):
             'other_docs_details': document[9],
             'submission_date': document[10],
             'pg_submitted': document[11],
-            'indemnity_bond_submitted': document[12]
+            'indemnity_bond_submitted': document[12],
+            'pg_type': document[13],
+            'pg_vetted_on': document[14],
+            'ib_vetted_on': document[15]
         }
     return None
 
-def update_firm_document(doc_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted):
+def update_firm_document(doc_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     cursor.execute(
-        "UPDATE firm_documents SET firm_name = ?, pg_no = ?, pg_amount = ?, bank_name = ?, bank_address = ?, firm_address = ?, indemnity_bond_details = ?, other_docs_details = ?, submission_date = ?, pg_submitted = ?, indemnity_bond_submitted = ? WHERE id = ?",
-        (firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, doc_id)
+        "UPDATE firm_documents SET firm_name = ?, pg_no = ?, pg_amount = ?, bank_name = ?, bank_address = ?, firm_address = ?, indemnity_bond_details = ?, other_docs_details = ?, submission_date = ?, pg_submitted = ?, indemnity_bond_submitted = ?, pg_type = ?, pg_vetted_on = ?, ib_vetted_on = ? WHERE id = ?",
+        (firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on, doc_id)
     )
     conn.commit()
     conn.close()

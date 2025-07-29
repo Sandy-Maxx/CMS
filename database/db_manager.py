@@ -26,7 +26,15 @@ def create_tables():
         "tender_opening_date": "TEXT",
         "loa_no": "TEXT",
         "loa_date": "TEXT",
-        "work_commence_date": "TEXT"
+        "work_commence_date": "TEXT",
+        "admin_approval_office_note_no": "TEXT",
+        "admin_approval_date": "TEXT",
+        "work_type_category": "TEXT",
+        "work_type_subcategory": "TEXT",
+        "concurrence_letter_no": "TEXT",
+        "concurrence_letter_dated": "TEXT",
+        "dr_dfm_eoffice_note_no": "TEXT",
+        "computer_no": "TEXT"
     }
 
     for column, col_type in columns_to_add.items():
@@ -85,22 +93,35 @@ def create_tables():
     """)
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS firms (
+        CREATE TABLE IF NOT EXISTS firm_documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            representative TEXT,
-            address TEXT
+            work_id INTEGER,
+            firm_name TEXT NOT NULL,
+            pg_no TEXT,
+            pg_amount REAL,
+            bank_name TEXT,
+            bank_address TEXT,
+            firm_address TEXT,
+            indemnity_bond_details TEXT,
+            other_docs_details TEXT,
+            submission_date TEXT,
+            pg_submitted INTEGER,
+            indemnity_bond_submitted INTEGER,
+            pg_type TEXT,
+            pg_vetted_on TEXT,
+            ib_vetted_on TEXT,
+            FOREIGN KEY (work_id) REFERENCES works(id)
         )
     """)
     
     conn.commit()
     conn.close()
 
-def add_work(name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None, tender_opening_date=None, loa_no=None, loa_date=None, work_commence_date=None):
+def add_work(name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None, tender_opening_date=None, loa_no=None, loa_date=None, work_commence_date=None, admin_approval_office_note_no=None, admin_approval_date=None, work_type_category=None, work_type_subcategory=None, concurrence_letter_no=None, concurrence_letter_dated=None, dr_dfm_eoffice_note_no=None, computer_no=None):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO works (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date))
+        cursor.execute("INSERT INTO works (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date, admin_approval_office_note_no, admin_approval_date, work_type_category, work_type_subcategory, concurrence_letter_no, concurrence_letter_dated, dr_dfm_eoffice_note_no, computer_no) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date, admin_approval_office_note_no, admin_approval_date, work_type_category, work_type_subcategory, concurrence_letter_no, concurrence_letter_dated, dr_dfm_eoffice_note_no, computer_no))
         work_id = cursor.lastrowid
         conn.commit()
         return work_id
@@ -109,11 +130,11 @@ def add_work(name, description, justification=None, section=None, work_type=None
     finally:
         conn.close()
 
-def update_work(work_id, name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None, tender_opening_date=None, loa_no=None, loa_date=None, work_commence_date=None):
+def update_work(work_id, name, description, justification=None, section=None, work_type=None, file_no=None, estimate_no=None, tender_cost=None, tender_opening_date=None, loa_no=None, loa_date=None, work_commence_date=None, admin_approval_office_note_no=None, admin_approval_date=None, work_type_category=None, work_type_subcategory=None, concurrence_letter_no=None, concurrence_letter_dated=None, dr_dfm_eoffice_note_no=None, computer_no=None):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE works SET name = ?, description = ?, justification = ?, section = ?, work_type = ?, file_no = ?, estimate_no = ?, tender_cost = ?, tender_opening_date = ?, loa_no = ?, loa_date = ?, work_commence_date = ? WHERE id = ?", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date, work_id))
+        cursor.execute("UPDATE works SET name = ?, description = ?, justification = ?, section = ?, work_type = ?, file_no = ?, estimate_no = ?, tender_cost = ?, tender_opening_date = ?, loa_no = ?, loa_date = ?, work_commence_date = ?, admin_approval_office_note_no = ?, admin_approval_date = ?, work_type_category = ?, work_type_subcategory = ?, concurrence_letter_no = ?, concurrence_letter_dated = ?, dr_dfm_eoffice_note_no = ?, computer_no = ? WHERE id = ?", (name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date, admin_approval_office_note_no, admin_approval_date, work_type_category, work_type_subcategory, concurrence_letter_no, concurrence_letter_dated, dr_dfm_eoffice_note_no, computer_no, work_id))
         conn.commit()
         return cursor.rowcount > 0
     except sqlite3.IntegrityError:
@@ -124,10 +145,36 @@ def update_work(work_id, name, description, justification=None, section=None, wo
 def get_work_by_id(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date FROM works WHERE id = ?", (work_id,))
+    cursor.execute("SELECT id, name, description, justification, section, work_type, file_no, estimate_no, tender_cost, tender_opening_date, loa_no, loa_date, work_commence_date, admin_approval_office_note_no, admin_approval_date, work_type_category, work_type_subcategory, concurrence_letter_no, concurrence_letter_dated, dr_dfm_eoffice_note_no, computer_no FROM works WHERE id = ?", (work_id,))
     work = cursor.fetchone()
     conn.close()
-    return {'work_id': work[0], 'work_name': work[1], 'description': work[2], 'justification': work[3], 'section': work[4], 'work_type': work[5], 'file_no': work[6], 'estimate_no': work[7], 'tender_cost': work[8], 'tender_opening_date': work[9], 'loa_no': work[10], 'loa_date': work[11], 'work_commence_date': work[12]} if work else None
+    return {'work_id': work[0], 'work_name': work[1], 'description': work[2], 'justification': work[3], 'section': work[4], 'work_type': work[5], 'file_no': work[6], 'estimate_no': work[7], 'tender_cost': work[8], 'tender_opening_date': work[9], 'loa_no': work[10], 'loa_date': work[11], 'work_commence_date': work[12], 'admin_approval_office_note_no': work[13], 'admin_approval_date': work[14], 'work_type_category': work[15], 'work_type_subcategory': work[16], 'concurrence_letter_no': work[17], 'concurrence_letter_dated': work[18], 'dr_dfm_eoffice_note_no': work[19], 'computer_no': work[20]} if work else None
+
+def get_work_by_id_all_columns(work_id):
+    """Get work by ID using SELECT * to fetch all columns dynamically."""
+    from database.managers.database_utils import get_work_columns
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM works WHERE id = ?", (work_id,))
+    work = cursor.fetchone()
+    conn.close()
+    if work:
+        columns = get_work_columns()
+        return dict(zip(columns, work))
+    return None
+
+def get_firm_documents_all_columns(work_id):
+    """Get firm documents using SELECT * to fetch all columns dynamically."""
+    from database.managers.database_utils import get_firm_documents_columns
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM firm_documents WHERE work_id = ?", (work_id,))
+    documents = cursor.fetchall()
+    conn.close()
+    if documents:
+        columns = get_firm_documents_columns()
+        return [dict(zip(columns, doc)) for doc in documents]
+    return []
 
 def get_works():
     conn = sqlite3.connect(DATABASE_PATH)
@@ -298,16 +345,50 @@ def delete_firm_rate_by_item_and_firm(schedule_item_id, firm_name):
     conn.close()
     return cursor.rowcount > 0
 
-def add_firm(name, representative, address):
+def add_firm_document(work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     try:
-        cursor.execute("INSERT INTO firms (name, representative, address) VALUES (?, ?, ?)", (name, representative, address))
-        firm_id = cursor.lastrowid
+        cursor.execute("""
+            INSERT INTO firm_documents (
+                work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, 
+                indemnity_bond_details, other_docs_details, submission_date, pg_submitted, 
+                indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, 
+            indemnity_bond_details, other_docs_details, submission_date, pg_submitted, 
+            indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on
+        ))
         conn.commit()
-        return firm_id
-    except sqlite3.IntegrityError:
+        return cursor.lastrowid
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
         return None
+    finally:
+        conn.close()
+
+def update_firm_document(doc_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE firm_documents SET
+                firm_name = ?, pg_no = ?, pg_amount = ?, bank_name = ?, bank_address = ?, 
+                firm_address = ?, indemnity_bond_details = ?, other_docs_details = ?, 
+                submission_date = ?, pg_submitted = ?, indemnity_bond_submitted = ?, 
+                pg_type = ?, pg_vetted_on = ?, ib_vetted_on = ?
+            WHERE id = ?
+        """, (
+            firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, 
+            indemnity_bond_details, other_docs_details, submission_date, pg_submitted, 
+            indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on, doc_id
+        ))
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+        return False
     finally:
         conn.close()
 
@@ -485,7 +566,7 @@ def get_variation_names_for_work(work_id):
 def get_firm_documents(work_id):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted FROM firm_documents WHERE work_id = ?", (work_id,))
+    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on FROM firm_documents WHERE work_id = ?", (work_id,))
     documents = cursor.fetchall()
     conn.close()
     return documents
@@ -493,7 +574,7 @@ def get_firm_documents(work_id):
 def get_firm_document_by_work_and_firm_name(work_id, firm_name):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted FROM firm_documents WHERE work_id = ? AND firm_name = ?", (work_id, firm_name))
+    cursor.execute("SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, firm_address, indemnity_bond_details, other_docs_details, submission_date, pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on FROM firm_documents WHERE work_id = ? AND firm_name = ?", (work_id, firm_name))
     document = cursor.fetchone()
     conn.close()
     if document:
@@ -510,7 +591,10 @@ def get_firm_document_by_work_and_firm_name(work_id, firm_name):
             'other_docs_details': document[9],
             'submission_date': document[10],
             'pg_submitted': document[11],
-            'indemnity_bond_submitted': document[12]
+            'indemnity_bond_submitted': document[12],
+            'pg_type': document[13],
+            'pg_vetted_on': document[14],
+            'ib_vetted_on': document[15]
         }
     return None
 

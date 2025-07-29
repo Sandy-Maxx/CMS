@@ -1,98 +1,295 @@
 from database import db_manager
 from utils.helpers import format_currency_inr
+from datetime import datetime
+from database.managers.database_utils import get_work_columns, get_firm_documents_columns
 
 class WorkDataProvider:
     def __init__(self, work_id):
         self.work_id = work_id
-        self.work_details = db_manager.get_work_by_id(work_id)
-        # Mapping of template placeholders to actual work_details keys
-        self.placeholder_map = {
-            'ID': 'work_id',
-            'NAME': 'work_name',
-            'DESCRIPTION': 'description',
-            'JUSTIFICATION': 'justification',
-            'SECTION': 'section',
-            'WORK_TYPE': 'work_type',
-            'FILE_NO': 'file_no',
-            'ESTIMATE_NO': 'estimate_no',
-            'TENDER_COST': 'tender_cost',
-            'TENDER_OPENING_DATE': 'tender_opening_date',
-            'LOA_NO': 'loa_no',
-            'LOA_DATE': 'loa_date',
-            'WORK_COMMENCE_DATE': 'work_commence_date',
+        # Fetch ALL columns using SELECT * for both tables
+        self.work_details = db_manager.get_work_by_id_all_columns(work_id)
+        self.firm_documents = db_manager.get_firm_documents_all_columns(work_id)
+
+    def generate_placeholders(self):
+        """Generate a consolidated dictionary of all placeholders dynamically."""
+        # 1. Retrieve column lists via the new helper
+        work_columns = get_work_columns()
+        firm_columns = get_firm_documents_columns()
+        
+        # 2. Generate work placeholders: [COLUMN_NAME] format
+        work_placeholders = {}
+        if self.work_details:
+            for column in work_columns:
+                work_placeholders[f'[{column.upper()}]'] = self.work_details.get(column)
+        
+        # 3. Generate firm placeholders: <<COLUMN_NAME>> format
+        # Iterate over every firm row linked to the work
+        firm_placeholders = {}
+        for firm_doc in self.firm_documents:
+            for column in firm_columns:
+                # For multiple firms, we use the last firm's data for each placeholder
+                # (This follows the original behavior but could be modified as needed)
+                firm_placeholders[f'<<{column.upper()}>>'] = firm_doc.get(column)
+        
+        # 4. Generate special placeholders
+        special_placeholders = {
+            '[CURRENT_DATE]': datetime.now().strftime("%Y-%m-%d"),
+            '[CURRENT_TIME]': datetime.now().strftime("%H:%M:%S"),
+            '[FIRM_PG_DETAILS]': self._generate_firm_pg_details(),
+            '[ALL_FIRMS_PG_DETAILS]': self._generate_all_firms_pg_details()
         }
+        
+        # 5. Create consolidated dict from dynamic creation
+        consolidated_placeholders = {**work_placeholders, **firm_placeholders, **special_placeholders}
+        
+        # 6. Define aliases for backward compatibility or friendlier names
+        # Aliases are merged AFTER dynamic creation so future columns won't break them
+        aliases = {
+            '[WORK_NAME]': '[NAME]',  # Map [WORK_NAME] → [NAME]
+            # Add more aliases here as needed
+        }
+        
+        # 7. Apply aliases by checking if the target placeholder exists
+        for alias_key, target_key in aliases.items():
+            if target_key in consolidated_placeholders:
+                consolidated_placeholders[alias_key] = consolidated_placeholders[target_key]
+        
+        return consolidated_placeholders
 
-    def get_data(self, placeholder):
-        mapped_placeholder = self.placeholder_map.get(placeholder)
-        if self.work_details and mapped_placeholder and mapped_placeholder in self.work_details:
-            return self.work_details[mapped_placeholder]
-        elif placeholder == 'firm_pg_details':
-            return self.get_firm_pg_details_block()
-        return f"[Invalid Work Data Placeholder: {placeholder}]"
-
+    def _generate_firm_pg_details(self):
+        """Generate FIRM_PG_DETAILS multi-line string from firm rows."""
+        if not self.firm_documents:
+            return ""
+        
+        details_list = []
+        for i, firm_doc in enumerate(self.firm_documents):
+            pg_status = "submitted the PG No." if firm_doc.get('pg_submitted') == 1 else "did not submit the PG"
+            
+            # Format PG Amount with Indian Rupee symbol
+            pg_amount = firm_doc.get('pg_amount')
+            formatted_pg_amount = format_currency_inr(pg_amount) if pg_amount is not None else 'N/A'
+            
+            details_list.append(
+                f"{i+1}. {firm_doc.get('firm_name', 'N/A')} {pg_status} {firm_doc.get('pg_no') or 'N/A'}, "
+                f"Dated: {firm_doc.get('submission_date') or 'N/A'}, Amount: Rs. {formatted_pg_amount}, "
+                f"Bank details: {firm_doc.get('bank_name') or 'N/A'}, "
+                f"Address: {firm_doc.get('bank_address') or 'N/A'}."
+            )
+        
+        return "\n".join(details_list)
+    
+    def _generate_all_firms_pg_details(self):
+        """Generate ALL_FIRMS_PG_DETAILS multi-line string from all firm rows."""
+        # For now, this is the same as _generate_firm_pg_details
+        # But it could be extended to include additional details per firm
+        return self._generate_firm_pg_details()
+    
     def get_firm_document_data(self, firm_name):
-        # Assuming there's a function in db_manager to get firm documents by work_id and firm_name
-        # This might need to be added to db_manager if it doesn't exist
-        firm_docs = db_manager.get_firm_documents(self.work_id) # This gets all firm docs for the work
-        for doc in firm_docs:
-            if doc[2] == firm_name: # firm_name is at index 2 in the tuple
-                # Convert tuple to dictionary for easier access
-                # This assumes the order of columns in get_firm_documents matches the table schema
-                return {
-                    'id': doc[0],
-                    'work_id': doc[1],
-                    'firm_name': doc[2],
-                    'pg_no': doc[3],
-                    'pg_amount': doc[4],
-                    'bank_name': doc[5],
-                    'bank_address': doc[6],
-                    'firm_address': doc[7],
-                    'indemnity_bond_details': doc[8],
-                    'other_docs_details': doc[9],
-                    'submission_date': doc[10],
-                    'pg_submitted': doc[11],
-                    'indemnity_bond_submitted': doc[12]
-                }
+        """Get firm document data for a specific firm name."""
+        for firm_doc in self.firm_documents:
+            if firm_doc.get('firm_name') == firm_name:
+                return firm_doc
         return None
 
     def get_firm_names_list(self):
-        # This function should return a comma-separated string of firm names
-        # associated with the current work_id. You might need to implement
-        # a new function in db_manager for this, or adapt an existing one.
-        # For now, I'll use get_unique_firm_names_by_work_id and join them.
-        firm_names = db_manager.get_unique_firm_names_by_work_id(self.work_id)
+        """Get comma-separated list of firm names for this work."""
+        firm_names = [doc.get('firm_name') for doc in self.firm_documents if doc.get('firm_name')]
         return ', '.join(firm_names)
 
     def get_firm_pg_details_block(self):
-        firm_documents = db_manager.get_firm_documents(self.work_id)
-        if not firm_documents:
-            return ""
-
-        details_list = []
-        for i, doc_tuple in enumerate(firm_documents):
-            # Assuming the order of columns in get_firm_documents matches the table schema
-            doc = {
-                'id': doc_tuple[0],
-                'work_id': doc_tuple[1],
-                'firm_name': doc_tuple[2],
-                'pg_no': doc_tuple[3],
-                'pg_amount': doc_tuple[4],
-                'bank_name': doc_tuple[5],
-                'bank_address': doc_tuple[6],
-                'firm_address': doc_tuple[7],
-                'indemnity_bond_details': doc_tuple[8],
-                'other_docs_details': doc_tuple[9],
-                'submission_date': doc_tuple[10],
-                'pg_submitted': doc_tuple[11],
-                'indemnity_bond_submitted': doc_tuple[12]
-            }
-
-            pg_status = "submitted the PG No." if doc['pg_submitted'] == 1 else "did not submit the PG"
-            
-            # Format PG Amount with Indian Rupee symbol
-            formatted_pg_amount = format_currency_inr(doc['pg_amount']) if doc['pg_amount'] is not None else 'N/A'
-
-            details_list.append(
-                f"{i+1}. {doc['firm_name']} {pg_status} {doc['pg_no'] or 'N/A'}, Dated: {doc['submission_date'] or 'N/A'}, Amount: Rs. {formatted_pg_amount}, Bank details: {doc['bank_name'] or 'N/A'}, Address: {doc['bank_address'] or 'N/A'}.\n"
-            )
-        return "\n".join(details_list)
+        """Legacy method - now delegates to the new implementation."""
+        return self._generate_firm_pg_details()
+    
+    def get_available_placeholders(self):
+        """Get a dictionary of all available placeholders with their descriptions."""
+        # Get column lists
+        work_columns = get_work_columns()
+        firm_columns = get_firm_documents_columns()
+        
+        placeholders = {}
+        
+        # Work placeholders with descriptions
+        work_descriptions = {
+            'id': 'Work unique identifier',
+            'name': 'Work name/title',
+            'description': 'Work description',
+            'justification': 'Work justification text',
+            'section': 'Work section',
+            'file_no': 'File number',
+            'estimate_no': 'Estimate number',
+            'admin_approval_office_note_no': 'Admin approval office note number',
+            'admin_approval_date': 'Administrative approval date',
+            'concurrence_letter_no': 'Concurrence letter number',
+            'concurrence_letter_dated': 'Concurrence letter date',
+            'dr_dfm_eoffice_note_no': 'DR/DFM eOffice note number',
+            'computer_no': 'Computer number',
+            'work_type': 'Complete work type (category + subcategory)',
+            'work_type_category': 'Work category (DRM Power/Sr.DEE Power/HQ Power)',
+            'work_type_subcategory': 'Work subcategory (M&P/RSP/SERVICE)',
+            'tender_cost': 'Tender cost amount',
+            'tender_opening_date': 'Date of tender opening',
+            'loa_no': 'Letter of Acceptance number',
+            'loa_date': 'LOA issue date',
+            'work_commence_date': 'Work commencement date'
+        }
+        
+        # Add work placeholders
+        for column in work_columns:
+            placeholder_key = f'[{column.upper()}]'
+            description = work_descriptions.get(column.lower(), f'Work {column.replace("_", " ").title()}')
+            placeholders[placeholder_key] = description
+        
+        # Firm placeholders with descriptions
+        firm_descriptions = {
+            'firm_name': 'Name of the firm',
+            'firm_address': 'Address of the firm',
+            'pg_no': 'Performance Guarantee number',
+            'pg_amount': 'Performance Guarantee amount',
+            'bank_name': 'Bank name for PG',
+            'bank_address': 'Bank address for PG',
+            'submission_date': 'Date of document submission',
+            'pg_submitted': 'Whether PG was submitted',
+            'indemnity_bond_submitted': 'Whether Indemnity Bond was submitted',
+            'pg_vetted_on': 'Date PG was vetted',
+            'ib_vetted_on': 'Date Indemnity Bond was vetted',
+            'pg_type': 'Type of Performance Guarantee',
+            'indemnity_bond_details': 'Details of Indemnity Bond',
+            'other_docs_details': 'Details of other documents'
+        }
+        
+        # Add firm placeholders
+        for column in firm_columns:
+            placeholder_key = f'<<{column.upper()}>>'  
+            description = firm_descriptions.get(column.lower(), f'Firm {column.replace("_", " ").title()}')
+            placeholders[placeholder_key] = description
+        
+        # Add special placeholders
+        special_placeholders = {
+            '[CURRENT_DATE]': 'Today\'s date (auto-generated)',
+            '[CURRENT_TIME]': 'Current time (auto-generated)',
+            '[FIRM_PG_DETAILS]': 'Formatted list of all firms\' PG details',
+            '[ALL_FIRMS_PG_DETAILS]': 'Complete PG details for all firms'
+        }
+        
+        placeholders.update(special_placeholders)
+        
+        # Add aliases
+        aliases = {
+            '[WORK_NAME]': 'Alias for [NAME] - Work name/title'
+        }
+        
+        placeholders.update(aliases)
+        
+        return placeholders
+    
+    @staticmethod
+    def get_available_placeholders_static():
+        """Static method to get available placeholders without needing a work_id."""
+        # Get column lists
+        work_columns = get_work_columns()
+        firm_columns = get_firm_documents_columns()
+        
+        placeholders = {}
+        
+        # Work placeholders with descriptions
+        work_descriptions = {
+            'id': 'Work unique identifier',
+            'name': 'Work name/title', 
+            'description': 'Work description',
+            'justification': 'Work justification text',
+            'section': 'Work section',
+            'file_no': 'File number',
+            'estimate_no': 'Estimate number',
+            'admin_approval_office_note_no': 'Admin approval office note number',
+            'admin_approval_date': 'Administrative approval date',
+            'concurrence_letter_no': 'Concurrence letter number',
+            'concurrence_letter_dated': 'Concurrence letter date',
+            'dr_dfm_eoffice_note_no': 'DR/DFM eOffice note number',
+            'computer_no': 'Computer number',
+            'work_type': 'Complete work type (category + subcategory)',
+            'work_type_category': 'Work category (DRM Power/Sr.DEE Power/HQ Power)',
+            'work_type_subcategory': 'Work subcategory (M&P/RSP/SERVICE)',
+            'tender_cost': 'Tender cost amount',
+            'tender_opening_date': 'Date of tender opening',
+            'loa_no': 'Letter of Acceptance number',
+            'loa_date': 'LOA issue date',
+            'work_commence_date': 'Work commencement date'
+        }
+        
+        # Add work placeholders
+        for column in work_columns:
+            placeholder_key = f'[{column.upper()}]'
+            description = work_descriptions.get(column.lower(), f'Work {column.replace("_", " ").title()}')
+            placeholders[placeholder_key] = description
+        
+        # Firm placeholders with descriptions
+        firm_descriptions = {
+            'firm_name': 'Name of the firm',
+            'firm_address': 'Address of the firm',
+            'pg_no': 'Performance Guarantee number',
+            'pg_amount': 'Performance Guarantee amount',
+            'bank_name': 'Bank name for PG',
+            'bank_address': 'Bank address for PG',
+            'submission_date': 'Date of document submission',
+            'pg_submitted': 'Whether PG was submitted',
+            'indemnity_bond_submitted': 'Whether Indemnity Bond was submitted',
+            'pg_vetted_on': 'Date PG was vetted',
+            'ib_vetted_on': 'Date Indemnity Bond was vetted',
+            'pg_type': 'Type of Performance Guarantee',
+            'indemnity_bond_details': 'Details of Indemnity Bond',
+            'other_docs_details': 'Details of other documents'
+        }
+        
+        # Add firm placeholders
+        for column in firm_columns:
+            placeholder_key = f'<<{column.upper()}>>'  
+            description = firm_descriptions.get(column.lower(), f'Firm {column.replace("_", " ").title()}')
+            placeholders[placeholder_key] = description
+        
+        # Add special placeholders
+        special_placeholders = {
+            '[CURRENT_DATE]': 'Today\'s date (auto-generated)',
+            '[CURRENT_TIME]': 'Current time (auto-generated)',
+            '[FIRM_PG_DETAILS]': 'Formatted list of all firms\' PG details',
+            '[ALL_FIRMS_PG_DETAILS]': 'Complete PG details for all firms'
+        }
+        
+        placeholders.update(special_placeholders)
+        
+        # Add aliases
+        aliases = {
+            '[WORK_NAME]': 'Alias for [NAME] - Work name/title'
+        }
+        
+        placeholders.update(aliases)
+        
+        return placeholders
+    
+    def get_data(self, key):
+        """Get data for a specific placeholder key with alias support."""
+        # Define aliases for backward compatibility or friendlier names
+        # Aliases are merged AFTER dynamic creation so future columns won't break them
+        aliases = {
+            'WORK_NAME': 'NAME',  # Map [WORK_NAME] → [NAME]
+            # Add more aliases here as needed
+        }
+        
+        # Check if the key is an alias, if so use the actual column name
+        actual_key = aliases.get(key, key)
+        
+        # Try to get data from work_details first
+        if self.work_details and actual_key.lower() in self.work_details:
+            return self.work_details[actual_key.lower()]
+        
+        # Handle special cases
+        if key == 'CURRENT_DATE':
+            return datetime.now().strftime("%Y-%m-%d")
+        elif key == 'CURRENT_TIME':
+            return datetime.now().strftime("%H:%M:%S")
+        elif key == 'FIRM_PG_DETAILS':
+            return self._generate_firm_pg_details()
+        elif key == 'ALL_FIRMS_PG_DETAILS':
+            return self._generate_all_firms_pg_details()
+        
+        # Return None if key not found (will be handled by caller)
+        return None

@@ -6,6 +6,7 @@ from features.firm_documents.firm_documents_manager import (
 from database import db_manager
 from utils.helpers import show_toast, validate_numeric_input
 from utils.date_picker import DatePicker
+from utils.minimal_date_picker import MinimalDatePicker
 from datetime import datetime
 
 class FirmDocumentsTab(ttk.Frame):
@@ -22,8 +23,12 @@ class FirmDocumentsTab(ttk.Frame):
         self.load_firm_documents()
 
     def _create_widgets(self):
+        # Create form frame to hold all widgets
+        self.form_frame = ttk.Frame(self)
+        self.form_frame.pack(fill=tk.BOTH, expand=True)
+        
         # Input Frame
-        input_frame = ttk.LabelFrame(self, text="Add/Edit Firm Document")
+        input_frame = ttk.LabelFrame(self.form_frame, text="Add/Edit Firm Document")
         input_frame.pack(padx=10, pady=10, fill=tk.X)
 
         # Firm Name
@@ -39,15 +44,33 @@ class FirmDocumentsTab(ttk.Frame):
         self.pg_submitted_checkbutton = ttk.Checkbutton(input_frame, text="PG Submitted", variable=self.pg_submitted_var, command=self._toggle_pg_fields)
         self.pg_submitted_checkbutton.grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
 
-        # PG No.
-        ttk.Label(input_frame, text="PG No.:").grid(row=2, column=0, padx=5, pady=5, sticky=tk.W)
+        # PG Type
+        ttk.Label(input_frame, text="PG Type:").grid(row=2, column=0, padx=5, pady=5, sticky=tk.W)
+        self.pg_type_var = tk.StringVar()
+        self.pg_type_combobox = ttk.Combobox(input_frame, textvariable=self.pg_type_var, values=[
+            "G – Performance Guarantee", "BG – Bank Guarantee", "PBG – Performance Bank Guarantee",
+            "ABG – Advance Bank Guarantee", "RBG – Retention Bank Guarantee", "MBG – Mobilization Bank Guarantee",
+            "FDR – Fixed Deposit Receipt", "SD – Security Deposit", "EMD – Earnest Money Deposit",
+            "PS – Performance Security", "IB – Insurance Bond", "SB – Surety Bond"
+        ])
+        self.pg_type_combobox.grid(row=2, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.pg_type_combobox.bind("<<ComboboxSelected>>", self._toggle_pg_fields)
+
+        # PG No
+        ttk.Label(input_frame, text="PG No.:").grid(row=2, column=2, padx=5, pady=5, sticky=tk.W)
         self.pg_no_entry = ttk.Entry(input_frame)
-        self.pg_no_entry.grid(row=2, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.pg_no_entry.grid(row=2, column=3, padx=5, pady=5, sticky=tk.EW)
 
         # PG Amount
         ttk.Label(input_frame, text="PG Amount:").grid(row=3, column=0, padx=5, pady=5, sticky=tk.W)
         self.pg_amount_entry = ttk.Entry(input_frame, validate="key", validatecommand=(self.vcmd_numeric, '%P'))
         self.pg_amount_entry.grid(row=3, column=1, padx=5, pady=5, sticky=tk.EW)
+
+        # PG Vetted On
+        ttk.Label(input_frame, text="PG Vetted On:").grid(row=3, column=2, padx=5, pady=5, sticky=tk.W)
+        self.pg_vetted_on_var = tk.StringVar()
+        self.pg_vetted_on_picker = MinimalDatePicker(input_frame, textvariable=self.pg_vetted_on_var)
+        self.pg_vetted_on_picker.grid(row=3, column=3, padx=5, pady=5, sticky=tk.EW)
 
         # Bank Name
         ttk.Label(input_frame, text="Bank Name:").grid(row=4, column=0, padx=5, pady=5, sticky=tk.W)
@@ -69,6 +92,12 @@ class FirmDocumentsTab(ttk.Frame):
         self.indemnity_bond_details_entry = ttk.Entry(input_frame)
         self.indemnity_bond_details_entry.grid(row=7, column=1, padx=5, pady=5, sticky=tk.EW)
 
+        # IB Vetted On
+        ttk.Label(input_frame, text="IB Vetted On:").grid(row=7, column=2, padx=5, pady=5, sticky=tk.W)
+        self.ib_vetted_on_var = tk.StringVar()
+        self.ib_vetted_on_picker = MinimalDatePicker(input_frame, textvariable=self.ib_vetted_on_var)
+        self.ib_vetted_on_picker.grid(row=7, column=3, padx=5, pady=5, sticky=tk.EW)
+
         # Firm Address
         ttk.Label(input_frame, text="Firm Address:").grid(row=8, column=0, padx=5, pady=5, sticky=tk.W)
         self.firm_address_entry = ttk.Entry(input_frame)
@@ -81,10 +110,10 @@ class FirmDocumentsTab(ttk.Frame):
 
         # Submission Date
         ttk.Label(input_frame, text="Submission Date:").grid(row=10, column=0, padx=5, pady=5, sticky=tk.W)
-        self.submission_date_entry = ttk.Entry(input_frame)
-        self.submission_date_entry.grid(row=10, column=1, padx=5, pady=5, sticky=tk.EW)
-        self.submission_date_entry.insert(0, datetime.now().strftime("%Y-%m-%d")) # Default to today
-        self.submission_date_entry.bind("<Button-1>", lambda event: DatePicker(self.main_window_instance.root, self.submission_date_entry, self.main_window_instance, initial_date=self.submission_date_entry.get(), x=self.submission_date_entry.winfo_rootx(), y=self.submission_date_entry.winfo_rooty() + self.submission_date_entry.winfo_height()))
+        self.submission_date_var = tk.StringVar()
+        self.submission_date_var.set(datetime.now().strftime("%d-%m-%Y"))
+        self.submission_date_picker = MinimalDatePicker(input_frame, textvariable=self.submission_date_var)
+        self.submission_date_picker.grid(row=10, column=1, padx=5, pady=5, sticky=tk.EW)
 
         button_frame = ttk.Frame(input_frame)
         button_frame.grid(row=11, column=0, columnspan=2, pady=10)
@@ -96,37 +125,44 @@ class FirmDocumentsTab(ttk.Frame):
         self.clear_button.pack(side=tk.LEFT, padx=5)
 
         input_frame.grid_columnconfigure(1, weight=1)
+        input_frame.grid_columnconfigure(3, weight=1)
 
         # Documents List
-        documents_frame = ttk.LabelFrame(self, text="Firm Documents")
+        documents_frame = ttk.LabelFrame(self.form_frame, text="Firm Documents")
         documents_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
         self.documents_tree = ttk.Treeview(documents_frame, columns=(
-            "firm_name", "pg_submitted", "pg_no", "pg_amount", "bank_name", "bank_address",
-            "indemnity_bond_submitted", "indemnity_bond_details", "firm_address", "other_docs_details", "submission_date"
+            "firm_name", "pg_submitted", "pg_type", "pg_no", "pg_amount", "bank_name", "bank_address", "pg_vetted_on",
+            "indemnity_bond_submitted", "indemnity_bond_details", "ib_vetted_on", "firm_address", "other_docs_details", "submission_date"
         ), show="headings")
         self.documents_tree.pack(fill=tk.BOTH, expand=True)
 
         self.documents_tree.heading("firm_name", text="Firm Name")
         self.documents_tree.heading("pg_submitted", text="PG Submitted")
+        self.documents_tree.heading("pg_type", text="PG Type")
         self.documents_tree.heading("pg_no", text="PG No.")
         self.documents_tree.heading("pg_amount", text="PG Amount")
         self.documents_tree.heading("bank_name", text="Bank Name")
         self.documents_tree.heading("bank_address", text="Bank Address")
+        self.documents_tree.heading("pg_vetted_on", text="PG Vetted On")
         self.documents_tree.heading("indemnity_bond_submitted", text="IB Submitted")
         self.documents_tree.heading("indemnity_bond_details", text="Indemnity Bond Details")
+        self.documents_tree.heading("ib_vetted_on", text="IB Vetted On")
         self.documents_tree.heading("firm_address", text="Firm Address")
         self.documents_tree.heading("other_docs_details", text="Other Docs Details")
         self.documents_tree.heading("submission_date", text="Submission Date")
 
         self.documents_tree.column("firm_name", width=100)
         self.documents_tree.column("pg_submitted", width=80)
+        self.documents_tree.column("pg_type", width=100)
         self.documents_tree.column("pg_no", width=80)
         self.documents_tree.column("pg_amount", width=80)
         self.documents_tree.column("bank_name", width=100)
         self.documents_tree.column("bank_address", width=120)
+        self.documents_tree.column("pg_vetted_on", width=100)
         self.documents_tree.column("indemnity_bond_submitted", width=80)
         self.documents_tree.column("indemnity_bond_details", width=150)
+        self.documents_tree.column("ib_vetted_on", width=100)
         self.documents_tree.column("firm_address", width=120)
         self.documents_tree.column("other_docs_details", width=150)
         self.documents_tree.column("submission_date", width=100)
@@ -224,7 +260,7 @@ class FirmDocumentsTab(ttk.Frame):
         for doc in documents:
             if not selected_firm or doc[2] == selected_firm: # doc[2] is firm_name
                 self.documents_tree.insert("", tk.END, iid=doc[0], values=(
-                    doc[2], bool(doc[11]), doc[3], doc[4], doc[5], doc[6], bool(doc[12]), doc[7], doc[8], doc[9], doc[10]
+                    doc[2], bool(doc[11]), doc[13], doc[3], doc[4], doc[5], doc[6], doc[14], bool(doc[12]), doc[7], doc[15], doc[8], doc[9], doc[10]
                 ))
 
     def _add_document(self):
@@ -242,8 +278,11 @@ class FirmDocumentsTab(ttk.Frame):
         indemnity_bond_details = self.indemnity_bond_details_entry.get()
         other_docs_details = self.other_docs_details_entry.get()
         submission_date = self.submission_date_entry.get()
+        pg_type = self.pg_type_var.get()
+        pg_vetted_on = self.pg_vetted_on_entry.get()
+        ib_vetted_on = self.ib_vetted_on_entry.get()
 
-        if not all([firm_name, submission_date]): # Only firm name and submission date are strictly required
+        if not all([firm_name, submission_date]):
             show_toast(self, "Firm Name and Submission Date are required.", "warning")
             return
 
@@ -255,7 +294,7 @@ class FirmDocumentsTab(ttk.Frame):
             add_firm_document(
                 int(work_id), firm_name, pg_no, pg_amount, bank_name, bank_address,
                 firm_address, indemnity_bond_details, other_docs_details, submission_date,
-                pg_submitted, indemnity_bond_submitted
+                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on
             )
             show_toast(self, "Document added successfully.", "success")
             self._clear_form()
@@ -278,6 +317,9 @@ class FirmDocumentsTab(ttk.Frame):
         indemnity_bond_details = self.indemnity_bond_details_entry.get()
         other_docs_details = self.other_docs_details_entry.get()
         submission_date = self.submission_date_entry.get()
+        pg_type = self.pg_type_var.get()
+        pg_vetted_on = self.pg_vetted_on_entry.get()
+        ib_vetted_on = self.ib_vetted_on_entry.get()
 
         if not all([firm_name, submission_date]):
             show_toast(self, "Firm Name and Submission Date are required.", "warning")
@@ -291,7 +333,7 @@ class FirmDocumentsTab(ttk.Frame):
             update_firm_document(
                 doc_id, firm_name, pg_no, pg_amount, bank_name, bank_address,
                 firm_address, indemnity_bond_details, other_docs_details, submission_date,
-                pg_submitted, indemnity_bond_submitted
+                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on
             )
             show_toast(self, "Document updated successfully.", "success")
             self._clear_form()
@@ -325,24 +367,29 @@ class FirmDocumentsTab(ttk.Frame):
             print(f"Retrieved values from treeview: {values}")
 
             self.firm_name_combobox.set(values[0])
-            self.pg_submitted_var.set(values[1])
+            self.pg_submitted_var.set(values[1] == 'True')
+            self.pg_type_combobox.set(values[2])
             self.pg_no_entry.delete(0, tk.END)
-            self.pg_no_entry.insert(0, values[2])
+            self.pg_no_entry.insert(0, values[3])
             self.pg_amount_entry.delete(0, tk.END)
-            self.pg_amount_entry.insert(0, values[3])
+            self.pg_amount_entry.insert(0, values[4])
             self.bank_name_entry.delete(0, tk.END)
-            self.bank_name_entry.insert(0, values[4])
+            self.bank_name_entry.insert(0, values[5])
             self.bank_address_entry.delete(0, tk.END)
-            self.bank_address_entry.insert(0, values[5])
-            self.indemnity_bond_submitted_var.set(values[6])
+            self.bank_address_entry.insert(0, values[6])
+            self.pg_vetted_on_entry.delete(0, tk.END)
+            self.pg_vetted_on_entry.insert(0, values[7])
+            self.indemnity_bond_submitted_var.set(values[8] == 'True')
             self.indemnity_bond_details_entry.delete(0, tk.END)
-            self.indemnity_bond_details_entry.insert(0, values[7])
+            self.indemnity_bond_details_entry.insert(0, values[9])
+            self.ib_vetted_on_entry.delete(0, tk.END)
+            self.ib_vetted_on_entry.insert(0, values[10])
             self.firm_address_entry.delete(0, tk.END)
-            self.firm_address_entry.insert(0, values[8])
+            self.firm_address_entry.insert(0, values[11])
             self.other_docs_details_entry.delete(0, tk.END)
-            self.other_docs_details_entry.insert(0, values[9])
+            self.other_docs_details_entry.insert(0, values[12])
             self.submission_date_entry.delete(0, tk.END)
-            self.submission_date_entry.insert(0, values[10])
+            self.submission_date_entry.insert(0, values[13])
 
             self._toggle_pg_fields()
             self._toggle_indemnity_bond_fields()
@@ -356,12 +403,15 @@ class FirmDocumentsTab(ttk.Frame):
     def _clear_form(self):
         self.firm_name_combobox.set("")
         self.pg_submitted_var.set(False)
+        self.pg_type_combobox.set("")
         self.pg_no_entry.delete(0, tk.END)
         self.pg_amount_entry.delete(0, tk.END)
         self.bank_name_entry.delete(0, tk.END)
         self.bank_address_entry.delete(0, tk.END)
+        self.pg_vetted_on_entry.delete(0, tk.END)
         self.indemnity_bond_submitted_var.set(False)
         self.indemnity_bond_details_entry.delete(0, tk.END)
+        self.ib_vetted_on_entry.delete(0, tk.END)
         self.firm_address_entry.delete(0, tk.END)
         self.other_docs_details_entry.delete(0, tk.END)
         self.submission_date_entry.delete(0, tk.END)
@@ -380,13 +430,26 @@ class FirmDocumentsTab(ttk.Frame):
             context_menu.add_command(label="Delete", command=self._delete_document)
             context_menu.post(event.x_root, event.y_root)
 
-    def _toggle_pg_fields(self):
+    def _toggle_pg_fields(self, event=None):
         state = tk.NORMAL if self.pg_submitted_var.get() else tk.DISABLED
+        self.pg_type_combobox.config(state=state)
         self.pg_no_entry.config(state=state)
         self.pg_amount_entry.config(state=state)
         self.bank_name_entry.config(state=state)
         self.bank_address_entry.config(state=state)
 
+        pg_type = self.pg_type_var.get()
+        if pg_type in ["FDR – Fixed Deposit Receipt", "SD – Security Deposit", "EMD – Earnest Money Deposit"]:
+            self.pg_vetted_on_placeholder = "DD-MM-YYYY"
+            self.pg_vetted_on_var.set(self.pg_vetted_on_placeholder if self.pg_submitted_var.get() else "")
+        else:
+            self.pg_vetted_on_var.set(self.pg_vetted_on_placeholder if state == tk.NORMAL else "")
+
     def _toggle_indemnity_bond_fields(self):
         state = tk.NORMAL if self.indemnity_bond_submitted_var.get() else tk.DISABLED
         self.indemnity_bond_details_entry.config(state=state)
+        # For minimal date picker, we just clear/reset the value based on state
+        if state == tk.DISABLED:
+            self.ib_vetted_on_var.set("")
+        else:
+            self.ib_vetted_on_var.set("DD-MM-YYYY")

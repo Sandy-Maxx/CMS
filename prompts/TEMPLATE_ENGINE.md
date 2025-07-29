@@ -45,15 +45,29 @@ You can define custom placeholders within the Template Engine interface. These w
 | `{{project_manager}}`   | Name of the project manager.                       | Jane Doe                |
 | `{{report_title}}`      | Title of a specific report.                        | Monthly Progress Report |
 
-## Special Command Placeholders (`<< >>`)
+## Work-Level Placeholders (`[ ]`)
 
-These placeholders are used for special commands or system-level instructions within the template. Their exact behavior depends on the template engine's implementation.
+These placeholders are automatically populated with work-related data from the database. They are replaced during the first pass of the merge process.
 
-| Placeholder             | Description                                        | Example Usage           |
+| Placeholder             | Description                                        | Example Value           |
 | :---------------------- | :------------------------------------------------- | :---------------------- |
-| `<<PAGE_BREAK>>`        | Inserts a page break at this position.             | `<<PAGE_BREAK>>`        |
-| `<<NEW_SECTION>>`       | Starts a new section in the document.              | `<<NEW_SECTION>>`       |
-| `<<TOC>>`               | Inserts a Table of Contents.                       | `<<TOC>>`               |
+| `[WORK_NAME]`           | The name of the work from database.               | Highway Construction    |
+| `[CLIENT_NAME]`         | The client name from work details.                | State Highway Dept      |
+| `[CURRENT_DATE]`        | Current date when document is generated.          | 2025-01-21              |
+| `[CURRENT_TIME]`        | Current time when document is generated.          | 14:30:00                |
+
+## Firm-Level Placeholders (`<< >>`)
+
+These placeholders are populated with firm-specific data and are replaced during the second pass of the merge process. When generating documents for multiple firms, each firm gets its own data.
+
+| Placeholder             | Description                                        | Example Value           |
+| :---------------------- | :------------------------------------------------- | :---------------------- |
+| `<<FIRM_NAME>>`         | Name of the firm from firm documents.             | Elite Builders Ltd      |
+| `<<PG_AMOUNT>>`         | Performance guarantee amount for the firm.        | ₹ 50,00,000.00          |
+| `<<PG_NO>>`             | Performance guarantee number.                      | PG-2025-001             |
+| `<<SUBMISSION_DATE>>`   | Date when PG was submitted.                        | 2025-01-15              |
+| `<<BANK_NAME>>`         | Bank name for the firm's PG.                      | State Bank of India     |
+| `<<BANK_ADDRESS>>`      | Bank address for the firm's PG.                   | Main Branch, City       |
 
 ## Advanced Placeholders (Conditional Logic & Loops)
 
@@ -89,10 +103,21 @@ Used to repeat a block of content for each item in a collection (e.g., for each 
 
 For date placeholders, you can often specify a format. While the default format is `YYYY-MM-DD`, you might be able to use specific formatting codes depending on the underlying template engine's capabilities (e.g., `{{agreement_date:DD-MM-YYYY}}`). Consult the application's specific date formatting options if available.
 
+## Placeholder Processing Order
+
+The template engine processes placeholders in the following order:
+
+1. **Pass 1: Work-Level Placeholders** - `[PLACEHOLDER]` tokens are replaced first with work-related data
+2. **Pass 2: Firm-Level Placeholders** - `<<PLACEHOLDER>>` tokens are replaced with firm-specific data
+3. **Pass 3: User Input Placeholders** - `{{placeholder}}` tokens are replaced with user-provided values
+
+**Debugging Feature:** Unknown placeholders remain untouched in the final document, making it easy to identify missing data or typos.
+
 ## Important Notes:
 
 *   **Case Sensitivity:** Placeholders are case-sensitive. Ensure you match the exact casing shown in this guide.
-*   **Double Curly Braces (`{{ }}`):** All standard data placeholders are enclosed in double curly braces.
-*   **Double Angle Brackets (`<< >>`):** Special command placeholders use double angle brackets.
+*   **Double Curly Braces (`{{ }}`):** User input placeholders are enclosed in double curly braces.
+*   **Square Brackets (`[ ]`):** Work-level placeholders use square brackets.
+*   **Double Angle Brackets (`<< >>`):** Firm-level placeholders use double angle brackets.
 *   **Autofill Data (`[autofill_data]`):** For dynamic lists like schedule items, you will need to use the `[autofill_data]` and `[/autofill_data]` tags in your Word template to define the repeating section. Refer to the Template Engine's detailed documentation or examples for proper usage.
 *   **Preview and Verify:** Always preview your generated documents to ensure all placeholders are correctly replaced and the formatting is as expected.

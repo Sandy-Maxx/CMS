@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from utils.helpers import load_icon
+from features.template_engine.work_data_provider import WorkDataProvider
+from datetime import datetime
 
 class AboutTab(ttk.Frame):
     def __init__(self, parent):
@@ -72,6 +74,56 @@ class AboutTab(ttk.Frame):
         title_label.bind("<Button-1>", lambda e: self._toggle_section(title))
         arrow_label.bind("<Button-1>", lambda e: self._toggle_section(title))
 
+    def _get_dynamic_placeholder_content(self):
+        """Generate dynamic placeholder content that can be refreshed."""
+        try:
+            placeholders = WorkDataProvider.get_available_placeholders_static()
+            
+            # Create formatted placeholder text dynamically
+            work_placeholders = []
+            firm_placeholders = []
+            special_placeholders = []
+            
+            for key, desc in placeholders.items():
+                if key.startswith('[') and key.endswith(']'):
+                    if key in ('[CURRENT_DATE]', '[CURRENT_TIME]', '[FIRM_PG_DETAILS]', '[ALL_FIRMS_PG_DETAILS]'):
+                        special_placeholders.append(f"*   **{key}**: {desc}")
+                    else:
+                        work_placeholders.append(f"*   **{key}**: {desc}")
+                elif key.startswith('<<') and key.endswith('>>'):
+                    firm_placeholders.append(f"*   **{key}**: {desc}")
+            
+            work_placeholders_text = "\n".join(work_placeholders)
+            firm_placeholders_text = "\n".join(firm_placeholders) 
+            special_placeholders_text = "\n".join(special_placeholders)
+            
+            # Generate dynamic placeholder list answer
+            return f"""Here is the comprehensive list of all available placeholders for the AutoDocGen template system (auto-generated from current database schema):
+
+**WORK DETAILS (use [PLACEHOLDER] format):**
+{work_placeholders_text}
+
+**FIRM DETAILS (use <<PLACEHOLDER>> format):**
+{firm_placeholders_text}
+
+**SPECIAL PLACEHOLDERS:**
+{special_placeholders_text}
+
+**TEMPLATE ENGINE PLACEHOLDERS (use {{{{PLACEHOLDER}}}} format):**
+*   **{{{{any_placeholder_name}}}}** - For manual input fields
+*   **{{{{COST}}}}** - Base cost value with mathematical operations
+*   **{{{{COST_1.1}}}}** - Cost multiplied by 1.1
+*   **{{{{COST_IN_WORDS}}}}** - Cost converted to words
+*   **{{{{COST_00}}}}** - Cost rounded to nearest 100
+*   **{{{{DATE_field}}}}** - Any date field with date picker
+
+**💡 This list is automatically updated when new database fields are added!
+
+(Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"""
+            
+        except Exception as e:
+            return f"Error loading dynamic placeholders: {e}. Please contact support."
+
     def _add_faqs_section(self):
         def build_faq_content(parent_frame):
             self.faq_canvas = tk.Canvas(parent_frame)
@@ -81,12 +133,65 @@ class AboutTab(ttk.Frame):
             self.faq_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
             self.faq_canvas.configure(yscrollcommand=self.faq_scrollbar.set)
-            self.faq_canvas.bind('<Configure>', lambda e: self.faq_canvas.configure(scrollregion = self.faq_canvas.bbox("all")))
-            self.faq_canvas.bind('<Configure>', lambda e: self.faq_canvas.itemconfig(self.faq_canvas.find_withtag("inner_frame"), width=e.width), add='+')
+            self.faq_canvas.bind('\u003cConfigure\u003e', lambda e: self.faq_canvas.configure(scrollregion = self.faq_canvas.bbox("all")))
+            self.faq_canvas.bind('\u003cConfigure\u003e', lambda e: self.faq_canvas.itemconfig(self.faq_canvas.find_withtag("inner_frame"), width=e.width), add='+')
 
             self.faq_inner_frame = ttk.Frame(self.faq_canvas)
             self.faq_canvas.create_window((0, 0), window=self.faq_inner_frame, anchor="nw", width=self.faq_canvas.winfo_width(), tags="inner_frame")
 
+            # Add mouse wheel scrolling
+            def _on_mousewheel(event):
+                self.faq_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+            self.faq_canvas.bind("<MouseWheel>", _on_mousewheel)
+            self.faq_inner_frame.bind("<MouseWheel>", _on_mousewheel)
+
+            # Get dynamic placeholder data
+            try:
+                placeholders = WorkDataProvider.get_available_placeholders_static()
+                
+                # Create formatted placeholder text dynamically
+                work_placeholders = []
+                firm_placeholders = []
+                special_placeholders = []
+                
+                for key, desc in placeholders.items():
+                    if key.startswith('[') and key.endswith(']'):
+                        if key in ('[CURRENT_DATE]', '[CURRENT_TIME]', '[FIRM_PG_DETAILS]', '[ALL_FIRMS_PG_DETAILS]'):
+                            special_placeholders.append(f"*   **{key}**: {desc}")
+                        else:
+                            work_placeholders.append(f"*   **{key}**: {desc}")
+                    elif key.startswith('<<') and key.endswith('>>'):
+                        firm_placeholders.append(f"*   **{key}**: {desc}")
+                
+                work_placeholders_text = "\n".join(work_placeholders)
+                firm_placeholders_text = "\n".join(firm_placeholders) 
+                special_placeholders_text = "\n".join(special_placeholders)
+                
+                # Generate dynamic placeholder list answer
+                dynamic_placeholder_answer = f"""Here is the comprehensive list of all available placeholders for the AutoDocGen template system (auto-generated from current database schema):
+
+**WORK DETAILS (use [PLACEHOLDER] format):**
+{work_placeholders_text}
+
+**FIRM DETAILS (use <<PLACEHOLDER>> format):**
+{firm_placeholders_text}
+
+**SPECIAL PLACEHOLDERS:**
+{special_placeholders_text}
+
+**TEMPLATE ENGINE PLACEHOLDERS (use {{{{PLACEHOLDER}}}} format):**
+*   **{{{{any_placeholder_name}}}}** - For manual input fields
+*   **{{{{COST}}}}** - Base cost value with mathematical operations
+*   **{{{{COST_1.1}}}}** - Cost multiplied by 1.1
+*   **{{{{COST_IN_WORDS}}}}** - Cost converted to words
+*   **{{{{COST_00}}}}** - Cost rounded to nearest 100
+*   **{{{{DATE_field}}}}** - Any date field with date picker
+
+**💡 This list is automatically updated when new database fields are added!"""
+                
+            except Exception as e:
+                dynamic_placeholder_answer = f"Error loading dynamic placeholders: {e}. Please contact support."
 
             faqs = [
                 {
@@ -109,59 +214,81 @@ class AboutTab(ttk.Frame):
                     "answer": "The 'PDF Tools' tab provides functionalities related to PDF documents, such as merging multiple PDFs into one, or extracting specific pages from a PDF."
                 },
                 {
-                    "question": "What are the auto-populated placeholders?",
-                    "answer": """The application can automatically populate certain placeholders with data from the selected work. These placeholders are typically enclosed in square brackets `[]` and include:
-*   **[ID]**: The unique identifier of the work.
-*   **[NAME]**: The name of the work.
-*   **[DESCRIPTION]**: A description of the work.
-*   **[JUSTIFICATION]**: The justification for the work.
-*   **[SECTION]**: The section related to the work.
-*   **[WORK_TYPE]**: The type of work.
-*   **[FILE_NO]**: The file number associated with the work.
-*   **[ESTIMATE_NO]**: The estimate number for the work.
-*   **[TENDER_COST]**: The tender cost of the work.
-*   **[TENDER_OPENING_DATE]**: The date of tender opening.
-*   **[LOA_NO]**: The Letter of Acceptance (LOA) number.
-*   **[LOA_DATE]**: The date of the Letter of Acceptance (LOA).
-*   **[WORK_COMMENCE_DATE]**: The work commencement date.
-*   **[firm_pg_details]**: This special placeholder will be replaced with a formatted block of text containing details of all Performance Guarantees (PGs) submitted by firms for the selected work."""
-                },
-                {
                     "question": "What are the different types of placeholders?",
                     "answer": """The application uses three types of placeholders in templates:
 *   **[PLACEHOLDER]**: These are standard placeholders that you can fill with any text.
 *   **<<PLACEHOLDER>>**: These placeholders are designed for numerical values and will be automatically formatted as currency.
 *   **{{PLACEHOLDER}}**: These placeholders are for dates and will automatically open a date picker for easy selection."""
+                },
+                {
+                    "question": "Complete List of Available Placeholders for AutoDocGen (Auto-Generated)",
+                    "answer": dynamic_placeholder_answer
+                },
+                {
+                    "question": "One-Click Placeholder Copy for AutoDocGen Templates",
+                    "answer": "Click the button below to copy all available placeholders to your clipboard, including the newly added ones. You can then paste them into your Word document templates as needed."
                 }
             ]
 
-            for i, faq in enumerate(faqs):
+            # Store as instance variable for access in toggle method
+            self.faqs = faqs
+
+            for i, faq in enumerate(self.faqs):
                 question_frame = ttk.Frame(self.faq_inner_frame, style='Card.TFrame')
                 question_frame.pack(fill=tk.X, pady=5, padx=5)
 
                 question_label = ttk.Label(question_frame, text=faq["question"], font=('Segoe UI', 10, 'bold'), cursor="hand2")
                 question_label.pack(fill=tk.X, pady=5, padx=5)
+
                 question_label.bind("<Button-1>", lambda e, idx=i: self._toggle_faq_answer(idx))
 
-                answer_label = ttk.Label(question_frame, text=faq["answer"], wraplength=450, justify=tk.LEFT)
-                answer_label.pack(fill=tk.X, pady=5, padx=5)
-                answer_label.pack_forget() # Hide by default
+                # For the two problematic FAQ items, use Text widget with proper state handling
+                if "Complete List" in faq["question"] or "One-Click Placeholder Copy" in faq["question"]:
+                    # Create text widget with proper state initialization
+                    answer_text = tk.Text(question_frame, wrap=tk.WORD, height=20, font=('Segoe UI', 9), 
+                                        relief=tk.FLAT, borderwidth=0, selectbackground="#316AC5", 
+                                        selectforeground="white", padx=10, pady=5, state=tk.DISABLED)
+                    
+                    # Enable, insert content, then disable
+                    answer_text.config(state=tk.NORMAL)
+                    answer_text.insert(tk.END, faq["answer"])
+                    answer_text.config(state=tk.DISABLED)
+                    
+                    # Add vertical scrollbar
+                    answer_scrollbar = ttk.Scrollbar(question_frame, orient="vertical", command=answer_text.yview)
+                    answer_text.configure(yscrollcommand=answer_scrollbar.set)
+                    
+                    # Create answer_frame to hold text and scrollbar
+                    answer_frame = ttk.Frame(question_frame)
+                    
+                    # Pack both inside their parent answer_frame
+                    answer_text.pack(in_=answer_frame, side=tk.LEFT, fill=tk.BOTH, expand=True)
+                    answer_scrollbar.pack(in_=answer_frame, side=tk.RIGHT, fill=tk.Y)
+                    
+                    answer_frame.pack(fill=tk.BOTH, expand=True, pady=5, padx=5)
+                    answer_frame.pack_forget()  # Hide by default
+                    
+                    # Assign answer_frame to faq["answer_widget"] for new toggle logic
+                    faq["answer_widget"] = answer_frame
+                else:
+                    # For regular FAQs, use Label as before
+                    answer_label = ttk.Label(question_frame, text=faq["answer"], wraplength=450, justify=tk.LEFT)
+                    answer_label.pack(fill=tk.X, pady=5, padx=5)
+                    answer_label.pack_forget() # Hide by default
+                    
+                    # Store direct reference to answer widget
+                    faq["answer_widget"] = answer_label
 
                 self.faq_inner_frame.grid_columnconfigure(0, weight=1)
 
         self._create_collapsible_section(self.accordion_frame, "Frequently Asked Questions (FAQ)", build_faq_content)
 
-    def _toggle_faq_answer(self, index):
-        # Get all answer labels
-        answer_labels = [widget for widget in self.faq_inner_frame.winfo_children()[index].winfo_children() if isinstance(widget, ttk.Label) and widget != self.faq_inner_frame.winfo_children()[index].winfo_children()[0]]
-        
-        if answer_labels:
-            answer_label = answer_labels[0]
-            if answer_label.winfo_ismapped():
-                answer_label.pack_forget()
-            else:
-                answer_label.pack(fill=tk.X, pady=5, padx=5)
-
+    def _toggle_faq_answer(self, idx):
+        ans = self.faqs[idx]["answer_widget"]
+        if ans.winfo_ismapped():
+            ans.pack_forget()
+        else:
+            ans.pack(fill=tk.BOTH, expand=True, pady=5, padx=5)
         self.faq_canvas.update_idletasks()
         self.faq_canvas.config(scrollregion=self.faq_canvas.bbox("all"))
 
@@ -218,24 +345,6 @@ class AboutTab(ttk.Frame):
             self.faq_canvas.update_idletasks()
             self.faq_canvas.config(scrollregion=self.faq_canvas.bbox("all"))
 
-    
-
-
-    def _toggle_faq_answer(self, index):
-        # Get all answer labels
-        answer_labels = [widget for widget in self.faq_inner_frame.winfo_children()[index].winfo_children() if isinstance(widget, ttk.Label) and widget != self.faq_inner_frame.winfo_children()[index].winfo_children()[0]]
-        
-        if answer_labels:
-            answer_label = answer_labels[0]
-            if answer_label.winfo_ismapped():
-                answer_label.pack_forget()
-            else:
-                answer_label.pack(fill=tk.X, pady=5, padx=5)
-
-        self.faq_canvas.update_idletasks()
-        self.faq_canvas.config(scrollregion=self.faq_canvas.bbox("all"))
-
-    
 
     def _parse_markdown_to_text_widget(self, text_widget, markdown_content):
         text_widget.config(state=tk.NORMAL)

@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 from database import db_manager
 from utils import helpers as utils_helpers
 from utils.helpers import load_icon
+from utils.modern_components import add_mousewheel_support
 
 class WorkDetailsTab(ttk.Frame):
     def __init__(self, notebook, parent_app, work_data_dict, is_new_work_var, status_label_ref, notebook_ref, schedule_items_tab_ref, firm_rates_summary_tab_ref, populate_reference_firm_combobox_callback, main_window_root):
@@ -25,6 +26,9 @@ class WorkDetailsTab(ttk.Frame):
         ttk.Label(self, text="Description:").grid(row=1, column=0, padx=5, pady=5, sticky="nw")
         self.description_text = tk.Text(self, wrap='word', height=5)
         self.description_text.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        
+        # Add mouse wheel scrolling support to description text
+        add_mousewheel_support(self.description_text)
         self.grid_columnconfigure(1, weight=1)
         self.save_icon = load_icon("save")
         self.save_button = ttk.Button(self, image=self.save_icon, compound=tk.LEFT, command=self._save_work_details, style='Primary.TButton')

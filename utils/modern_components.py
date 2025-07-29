@@ -232,6 +232,59 @@ class SectionHeader(ttk.Frame):
         separator = ttk.Separator(self, orient=tk.HORIZONTAL, style="Modern.TSeparator")
         separator.pack(fill=tk.X, pady=(10, 0))
 
+def add_mousewheel_support(widget, canvas=None):
+    """Add mouse wheel scrolling support to widgets for Windows, macOS, and Linux"""
+    def _on_mousewheel_windows(event):
+        """Handle mouse wheel events on Windows and macOS"""
+        if canvas:
+            # For Canvas widgets
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        elif hasattr(widget, 'yview_scroll'):
+            # For widgets with yview_scroll method (Treeview, Text, Listbox, etc.)
+            widget.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        elif hasattr(widget, 'yview'):
+            # For widgets with yview method
+            widget.yview_scroll(int(-1 * (event.delta / 120)), "units")
+    
+    def _on_mousewheel_linux_up(event):
+        """Handle mouse wheel up events on Linux"""
+        if canvas:
+            canvas.yview_scroll(-1, "units")
+        elif hasattr(widget, 'yview_scroll'):
+            widget.yview_scroll(-1, "units")
+        elif hasattr(widget, 'yview'):
+            widget.yview_scroll(-1, "units")
+    
+    def _on_mousewheel_linux_down(event):
+        """Handle mouse wheel down events on Linux"""
+        if canvas:
+            canvas.yview_scroll(1, "units")
+        elif hasattr(widget, 'yview_scroll'):
+            widget.yview_scroll(1, "units")
+        elif hasattr(widget, 'yview'):
+            widget.yview_scroll(1, "units")
+    
+    # Bind mouse wheel events for different platforms
+    # Windows and macOS
+    widget.bind("<MouseWheel>", _on_mousewheel_windows)
+    # Linux/Unix
+    widget.bind("<Button-4>", _on_mousewheel_linux_up)
+    widget.bind("<Button-5>", _on_mousewheel_linux_down)
+    
+    # For widgets that might have child widgets, bind to them too
+    def bind_to_children(parent_widget):
+        for child in parent_widget.winfo_children():
+            try:
+                child.bind("<MouseWheel>", _on_mousewheel_windows)
+                child.bind("<Button-4>", _on_mousewheel_linux_up)
+                child.bind("<Button-5>", _on_mousewheel_linux_down)
+                bind_to_children(child)
+            except tk.TclError:
+                # Some widgets don't support binding
+                pass
+    
+    bind_to_children(widget)
+
 class ModernTreeview(ttk.Treeview):
     """Enhanced treeview with modern styling and features"""
     def __init__(self, parent, style="Modern.Treeview", **kwargs):
@@ -243,6 +296,9 @@ class ModernTreeview(ttk.Treeview):
         
         self.configure(yscrollcommand=self.v_scrollbar.set, 
                       xscrollcommand=self.h_scrollbar.set)
+        
+        # Add mouse wheel support
+        add_mousewheel_support(self)
     
     def pack_with_scrollbars(self, **pack_kwargs):
         """Pack the treeview with scrollbars"""

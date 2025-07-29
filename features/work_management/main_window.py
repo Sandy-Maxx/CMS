@@ -15,6 +15,7 @@ from datetime import datetime
 from features.template_engine.template_engine_tab import TemplateEngineTab
 from features.pdf_tools.pdf_tool_tab import PdfToolTab
 from utils.styles import set_theme
+from utils.modern_components import add_mousewheel_support
 from features.about_tab.about_tab import AboutTab
 from features.calculation.calculation_tab import CalculationTab
 from features.work_management.firm_registration.firm_registration_tab import FirmRegistrationTab
@@ -60,6 +61,7 @@ class MainWindow:
         
         self.autodoc_manager = AutodocManager(self.root, db_manager.DATABASE_PATH)
         
+        
         # Pack the frames
         self.works_list_frame.pack(fill=tk.BOTH, expand=True)
         self.work_editor_container_frame.pack(fill=tk.BOTH, expand=True)
@@ -82,6 +84,9 @@ class MainWindow:
         self.works_tree.bind("<Double-1>", self.edit_work)
         self.works_tree.bind("<Button-3>", self._show_work_context_menu)
         self.works_tree.bind("<<TreeviewSelect>>", self._on_work_selection)
+        
+        # Add mouse wheel scrolling support
+        add_mousewheel_support(self.works_tree)
 
         # Context menu icons
         self.edit_icon = load_icon("edit")
@@ -172,6 +177,8 @@ class MainWindow:
             context_menu.add_separator()
             context_menu.add_command(label="Letters", image=self.report_icon, compound=tk.LEFT, command=lambda: self.autodoc_manager.generate_document(work_id, "Letters"))
             context_menu.add_command(label="Office Notes", image=self.report_icon, compound=tk.LEFT, command=lambda: self.autodoc_manager.generate_document(work_id, "OfficeNotes"))
+            
+            
             context_menu.add_separator()
             context_menu.add_command(label="Delete Work", image=self.delete_icon, compound=tk.LEFT, command=self._delete_work)
             context_menu.post(event.x_root, event.y_root)
@@ -510,6 +517,7 @@ class MainWindow:
 
     def _open_bulk_io_dialog(self):
         BulkIODialog(self.root)
+
 
     def _on_work_selection(self, event):
         selected_item = self.works_tree.selection()

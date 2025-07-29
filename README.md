@@ -481,6 +481,193 @@ The application can be packaged into a standalone executable using PyInstaller.
 **Output:**
 The generated executable will be located in the `dist` directory (e.g., `dist/main.exe`).
 
+## Template Engine & Placeholder System
+
+### Quick Start: Adding Database Placeholders
+
+The CMS features a powerful template engine that automatically generates placeholders from database columns. Here's how the system works:
+
+**Add a DB column → run migrations → placeholder instantly available**
+
+1. **Add a new column to any table** (e.g., `works` or `firm_documents`):
+   ```sql
+   ALTER TABLE works ADD COLUMN contract_value REAL;
+   ```
+
+2. **The placeholder becomes instantly available** for use in Word templates:
+   - Work-level placeholder: `[CONTRACT_VALUE]`
+   - Can be used immediately in any `.docx` template
+
+3. **No application restart required** - the system dynamically discovers new columns
+
+### Placeholder Naming Conventions
+
+The system uses three distinct placeholder formats:
+
+| Format | Usage | Example | Description |
+|--------|-------|---------|-------------|
+| `[PLACEHOLDER]` | Work-level data | `[WORK_NAME]`, `[SECTION]` | Square brackets, ALL CAPS |
+| `<<PLACEHOLDER>>` | Firm-specific data | `<<FIRM_NAME>>`, `<<PG_AMOUNT>>` | Double angle brackets, ALL CAPS |
+| `{{placeholder}}` | User input fields | `{{project_manager}}`, `{{report_title}}` | Double curly braces, lowercase |
+
+#### Processing Order
+
+Placeholders are processed in three passes:
+
+1. **Pass 1: Work-Level Placeholders** - `[PLACEHOLDER]` tokens replaced with work-related data
+2. **Pass 2: Firm-Level Placeholders** - `<<PLACEHOLDER>>` tokens replaced with firm-specific data  
+3. **Pass 3: User Input Placeholders** - `{{placeholder}}` tokens replaced with user-provided values
+
+### Available Work-Level Placeholders `[PLACEHOLDER]`
+
+These are automatically generated from the `works` table columns:
+
+| Placeholder | Description | Example Value |
+|-------------|-------------|---------------|
+| `[ID]` | Work unique identifier | 1 |
+| `[NAME]` | Work name/title | Highway Construction Phase 1 |
+| `[DESCRIPTION]` | Work description | Construction of 2-lane highway |
+| `[SECTION]` | Work section | Civil Engineering |
+| `[FILE_NO]` | File number | FILE-2025-001 |
+| `[ESTIMATE_NO]` | Estimate number | EST-2025-123 |
+| `[TENDER_COST]` | Tender cost amount | 15000000.00 |
+| `[LOA_NO]` | Letter of Acceptance number | LOA-2025-456 |
+| `[LOA_DATE]` | LOA issue date | 2025-01-15 |
+| `[WORK_COMMENCE_DATE]` | Work commencement date | 2025-02-01 |
+| `[CURRENT_DATE]` | Today's date (auto-generated) | 2025-01-21 |
+| `[CURRENT_TIME]` | Current time (auto-generated) | 14:30:00 |
+
+### Available Firm-Level Placeholders `<<PLACEHOLDER>>`
+
+These are automatically generated from the `firm_documents` table columns:
+
+| Placeholder | Description | Example Value |
+|-------------|-------------|---------------|
+| `<<FIRM_NAME>>` | Name of the firm | Elite Builders Ltd |
+| `<<FIRM_ADDRESS>>` | Address of the firm | 123 Construction Ave, City |
+| `<<PG_NO>>` | Performance Guarantee number | PG-2025-001 |
+| `<<PG_AMOUNT>>` | Performance Guarantee amount | ₹ 50,00,000.00 |
+| `<<BANK_NAME>>` | Bank name for PG | State Bank of India |
+| `<<BANK_ADDRESS>>` | Bank address for PG | Main Branch, Downtown |
+| `<<SUBMISSION_DATE>>` | Date of document submission | 2025-01-15 |
+| `<<PG_TYPE>>` | Type of Performance Guarantee | Bank Guarantee |
+
+### Creating Special/Computed Placeholders
+
+The system supports advanced computed placeholders for dynamic calculations:
+
+#### Cost-Based Calculations
+
+For any placeholder starting with "COST", you can create computed variations:
+
+```
+Base placeholder: {{COST}} = 1500000
+
+Computed placeholders:
+{{COST_1.1}} = ₹ 16,50,000.00 (multiplied by 1.1)
+{{COST_0}} = ₹ 15,00,000 (rounded to nearest 10)
+{{COST_00}} = ₹ 15,00,000 (rounded to nearest 100)
+{{COST_IN_WORDS}} = Fifteen Lakh Rupees Only
+{{COST_1.1_IN_WORDS}} = Sixteen Lakh Fifty Thousand Rupees Only
+```
+
+#### Syntax Rules for Computed Placeholders
+
+- **Multipliers**: Use decimal numbers (e.g., `_1.1`, `_2.5`)
+- **Rounding**: Use `_0` (nearest 10) or `_00` (nearest 100)
+- **Words**: Use `_IN_WORDS` for Indian number format in words
+- **Combinations**: `{{COST_1.1_00_IN_WORDS}}` (multiply by 1.1, round to 100, convert to words)
+
+#### Creating Custom Special Placeholders
+
+To add new special placeholders, modify `features/template_engine/special_placeholder_handler.py`:
+
+```python
+def evaluate_special_placeholder(placeholder_name, data):
+    # Add your custom logic here
+    if placeholder_name.startswith("CUSTOM"):
+        # Your custom calculation logic
+        return "Custom computed value"
+    
+    # Existing COST-based logic...
+```
+
+### Database Migration Pattern
+
+The application uses a simple migration pattern in `database/db_manager.py`:
+
+```python
+# Add new columns if they don't exist
+columns_to_add = {
+    "new_field": "TEXT",
+    "another_field": "REAL",
+}
+
+for column, col_type in columns_to_add.items():
+    try:
+        cursor.execute(f"ALTER TABLE works ADD COLUMN {column} {col_type}")
+    except sqlite3.OperationalError as e:
+        if "duplicate column name" not in str(e):
+            raise
+```
+
+### Developer Guidelines
+
+#### Adding New Database Fields
+
+1. **Add the column** to the appropriate table in `create_tables()` function
+2. **Update migration logic** in the `columns_to_add` dictionary
+3. **The placeholder becomes automatically available** - no additional code needed
+4. **Add description** (optional) in `WorkDataProvider.get_available_placeholders_static()`
+
+#### Naming Conventions for Database Columns
+
+- Use **snake_case** for column names: `contract_value`, `approval_date`
+- Placeholders will be **automatically converted** to `[CONTRACT_VALUE]`, `[APPROVAL_DATE]`
+- Avoid special characters in column names
+- Use descriptive names that make sense as placeholders
+
+#### Template Best Practices
+
+1. **Use descriptive placeholder names** in templates
+2. **Test with actual data** to ensure formatting is correct
+3. **Unknown placeholders remain untouched** - useful for debugging
+4. **Case sensitivity matters** - always use ALL CAPS for `[]` and `<<>>` placeholders
+
+#### Debugging Placeholders
+
+- Unknown placeholders remain in the final document (e.g., `[UNKNOWN_FIELD]`)
+- Check the placeholder list in Template Engine tab for available options
+- Verify column exists in database using `PRAGMA table_info(table_name)`
+- Ensure correct naming convention (`[WORK_LEVEL]` vs `<<FIRM_LEVEL>>`)
+
+### Example: Adding a New Field
+
+Let's say you want to add a "Project Manager" field:
+
+1. **Add to database migration**:
+   ```python
+   columns_to_add = {
+       # ... existing columns ...
+       "project_manager": "TEXT",
+   }
+   ```
+
+2. **Use in templates immediately**:
+   ```
+   Project Manager: [PROJECT_MANAGER]
+   ```
+
+3. **Add user-friendly description** (optional):
+   ```python
+   work_descriptions = {
+       # ... existing descriptions ...
+       'project_manager': 'Name of the project manager',
+   }
+   ```
+
+That's it! The placeholder `[PROJECT_MANAGER]` is now available in all templates.
+
 ## Usage
 To run the application after building the executable, simply navigate to the `dist` directory and execute `main.exe`.
 

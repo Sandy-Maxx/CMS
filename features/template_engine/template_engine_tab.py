@@ -6,6 +6,7 @@ from features.template_engine.template_processor import TemplateProcessor
 from features.template_engine.data_manager import TemplateDataManager
 from features.template_engine.date_picker_widget import DatePickerWidget
 from utils.helpers import load_icon
+from utils.modern_components import add_mousewheel_support
 
 class TemplateEngineTab(ttk.Frame):
     def __init__(self, parent, app):
@@ -18,6 +19,7 @@ class TemplateEngineTab(ttk.Frame):
         self.template_processor = TemplateProcessor()
         self.data_manager = TemplateDataManager() # Initialize data manager
         self.create_widgets()
+        self._create_widgets()
 
     def set_work_id(self, work_id):
         self.work_id = work_id
@@ -48,10 +50,20 @@ class TemplateEngineTab(ttk.Frame):
         self.placeholder_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.placeholder_canvas.configure(yscrollcommand=self.placeholder_scrollbar.set)
-        self.placeholder_canvas.bind('<Configure>', lambda e: self.placeholder_canvas.configure(scrollregion = self.placeholder_canvas.bbox("all")))
+        
+        # Add mouse wheel support to scroll the canvas
+        add_mousewheel_support(self.placeholder_canvas, canvas=self.placeholder_canvas)
 
-        self.placeholder_inner_frame = ttk.Frame(self.placeholder_canvas)
-        self.placeholder_canvas.create_window((0, 0), window=self.placeholder_inner_frame, anchor="nw")
+        # Create inner frame to hold all form widgets
+        self.form_frame = ttk.Frame(self.placeholder_canvas)
+        self.canvas_window = self.placeholder_canvas.create_window((0,0), window=self.form_frame, anchor="nw")
+        
+        # Bind Configure events for auto-update scrollregion
+        self.form_frame.bind('<Configure>', lambda e: self.placeholder_canvas.configure(scrollregion=self.placeholder_canvas.bbox("all")))
+        self.placeholder_canvas.bind('<Configure>', lambda e: self.placeholder_canvas.itemconfigure(self.canvas_window, width=e.width))
+        
+        # Keep placeholder_inner_frame for backward compatibility
+        self.placeholder_inner_frame = self.form_frame
 
         # Action Buttons
         button_frame = ttk.Frame(self, padding=10)
@@ -139,6 +151,12 @@ class TemplateEngineTab(ttk.Frame):
 
         # Attempt to load previously saved inputs for this template
         self.load_inputs()
+    
+    def _create_widgets(self):
+        """Create widgets in the form_frame instead of self"""
+        # This method will be used to populate self.form_frame with widgets
+        # Currently, form building is handled in load_placeholders method
+        pass
 
     def generate_document(self):
         if not self.template_path:

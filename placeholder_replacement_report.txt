@@ -1,0 +1,78 @@
+PLACEHOLDER REPLACEMENT TEST REPORT
+========================================
+
+Generated: 2025-07-30 02:14:52.884790
+Work ID: 17
+Template: test_output_comprehensive.docx
+
+DOCUMENT CONTENT:
+--------------------
+Comprehensive Template Test Document
+WORK DETAILS SECTION
+Work Name: TEST_WORK_COMPREHENSIVE
+Description: Comprehensive test work for template generation 
+Justification: Testing all placeholder types and replacements
+Section: Test Section A
+Work Type: Construction
+File Number: FILE-TEST-2024-001
+Estimate Number: EST-2024-001
+FINANCIAL DETAILS
+Tender Cost: 1500000.75
+Approved Cost: [APPROVED_COST]
+Contract Amount: [CONTRACT_AMOUNT]
+EMD Amount: [EMD_AMOUNT]
+Retention Percentage: [RETENTION_PERCENTAGE]%
+Performance Guarantee: [PERFORMANCE_GUARANTEE]%
+SCHEDULE DETAILS
+Work Order Number: [WORK_ORDER_NO]
+Work Order Date: [WORK_ORDER_DATE]
+Completion Period: [COMPLETION_PERIOD] months
+Extended Date: [EXTENDED_DATE]
+Actual Completion Date: [ACTUAL_COMPLETION_DATE]
+Defect Liability Period: [DEFECT_LIABILITY_PERIOD] months
+CONTRACTOR DETAILS
+Contractor Name: [CONTRACTOR_NAME]
+Contractor Address: [CONTRACTOR_ADDRESS]
+Contractor Phone: [CONTRACTOR_PHONE]
+Contractor Email: [CONTRACTOR_EMAIL]
+PROJECT TEAM
+Engineer Name: [ENGINEER_NAME]
+Project Manager: [PROJECT_MANAGER]
+FIRM DETAILS SECTION
+Primary Firm Name: <<NAME>>
+Primary Contact Person: <<CONTACT_PERSON>>
+Primary Phone: <<PHONE>>
+Primary Email: <<EMAIL>>
+Primary Address: <<ADDRESS>>
+Primary GST No: <<GST_NO>>
+Primary PAN No: <<PAN_NO>>
+Primary Bank Name: <<BANK_NAME>>
+Primary Account No: <<ACCOUNT_NO>>
+Primary IFSC Code: <<IFSC_CODE>>
+Primary Registration No: <<REGISTRATION_NO>>
+Primary Website: <<WEBSITE>>
+SPECIAL PLACEHOLDERS
+Current Date: 2025-07-30
+Current Time: 02:14:52
+Firm PG Details:
+1. TEST_FIRM_PRIMARY submitted the PG No. PG-2024-001, Dated: 2024-01-25, Amount: Rs. ₹ 1,50,000.00/-, Bank details: Test Bank Ltd., Address: Bank Street, Bank City.
+2. TEST_FIRM_SECONDARY did not submit the PG N/A, Dated: N/A, Amount: Rs. N/A, Bank details: N/A, Address: N/A.
+All Firms PG Details:
+1. TEST_FIRM_PRIMARY submitted the PG No. PG-2024-001, Dated: 2024-01-25, Amount: Rs. ₹ 1,50,000.00/-, Bank details: Test Bank Ltd., Address: Bank Street, Bank City.
+2. TEST_FIRM_SECONDARY did not submit the PG N/A, Dated: N/A, Amount: Rs. N/A, Bank details: N/A, Address: N/A.
+TEMPLATE ENGINE PLACEHOLDERS
+Base Cost: ₹ 15,00,000.75/-
+Cost with 10% increase: ₹ 16,50,000.82/-
+Cost rounded to nearest 100: ₹ 15,00,000.00/-
+Cost in words: fifteen lakh rupees and seventy-five paise only
+Manual Input Field: User entered test value
+Date Field: 2024-02-15
+REMARKS SECTION
+Additional Remarks: [REMARKS]
+Document generated on 2025-07-30 at 02:14:52
+
+UNREPLACED PLACEHOLDERS:
+-------------------------
+Work: ['APPROVED_COST', 'CONTRACT_AMOUNT', 'EMD_AMOUNT', 'RETENTION_PERCENTAGE', 'PERFORMANCE_GUARANTEE', 'WORK_ORDER_NO', 'WORK_ORDER_DATE', 'COMPLETION_PERIOD', 'EXTENDED_DATE', 'ACTUAL_COMPLETION_DATE', 'DEFECT_LIABILITY_PERIOD', 'CONTRACTOR_NAME', 'CONTRACTOR_ADDRESS', 'CONTRACTOR_PHONE', 'CONTRACTOR_EMAIL', 'ENGINEER_NAME', 'PROJECT_MANAGER', 'REMARKS']
+Firm: ['NAME', 'CONTACT_PERSON', 'PHONE', 'EMAIL', 'ADDRESS', 'GST_NO', 'PAN_NO', 'BANK_NAME', 'ACCOUNT_NO', 'IFSC_CODE', 'REGISTRATION_NO', 'WEBSITE']
+Template: []

@@ -3,6 +3,7 @@ from tkinter import ttk
 from database import db_manager
 from utils import helpers as utils_helpers
 from utils.helpers import load_icon
+from utils.modern_components import add_mousewheel_support
 from features.vitiation.QuantityVariationDialog import QuantityVariationDialog
 from features.work_management.variation_manager import VariationManager
 
@@ -51,6 +52,9 @@ class ScheduleItemsTab(ttk.Frame):
         self.schedule_tree.bind("<Double-1>", self._on_double_click)
         self.schedule_tree.bind("<Button-3>", self._show_context_menu)
         self.schedule_tree.bind("<Button-3>", self._show_header_context_menu, add='+')
+        
+        # Add mouse wheel scrolling support
+        add_mousewheel_support(self.schedule_tree)
         button_frame = ttk.Frame(self)
         button_frame.grid(row=3, column=0, columnspan=2, pady=10, sticky="ew")
         self.add_icon = load_icon("add")

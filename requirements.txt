@@ -3,3 +3,6 @@ PyMuPDF
 pandas
 python-dateutil
 tkcalendar
+requests
+python-docx
+openpyxl
