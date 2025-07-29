@@ -146,52 +146,8 @@ class AboutTab(ttk.Frame):
             self.faq_canvas.bind("<MouseWheel>", _on_mousewheel)
             self.faq_inner_frame.bind("<MouseWheel>", _on_mousewheel)
 
-            # Get dynamic placeholder data
-            try:
-                placeholders = WorkDataProvider.get_available_placeholders_static()
-                
-                # Create formatted placeholder text dynamically
-                work_placeholders = []
-                firm_placeholders = []
-                special_placeholders = []
-                
-                for key, desc in placeholders.items():
-                    if key.startswith('[') and key.endswith(']'):
-                        if key in ('[CURRENT_DATE]', '[CURRENT_TIME]', '[FIRM_PG_DETAILS]', '[ALL_FIRMS_PG_DETAILS]'):
-                            special_placeholders.append(f"*   **{key}**: {desc}")
-                        else:
-                            work_placeholders.append(f"*   **{key}**: {desc}")
-                    elif key.startswith('<<') and key.endswith('>>'):
-                        firm_placeholders.append(f"*   **{key}**: {desc}")
-                
-                work_placeholders_text = "\n".join(work_placeholders)
-                firm_placeholders_text = "\n".join(firm_placeholders) 
-                special_placeholders_text = "\n".join(special_placeholders)
-                
-                # Generate dynamic placeholder list answer
-                dynamic_placeholder_answer = f"""Here is the comprehensive list of all available placeholders for the AutoDocGen template system (auto-generated from current database schema):
-
-**WORK DETAILS (use [PLACEHOLDER] format):**
-{work_placeholders_text}
-
-**FIRM DETAILS (use <<PLACEHOLDER>> format):**
-{firm_placeholders_text}
-
-**SPECIAL PLACEHOLDERS:**
-{special_placeholders_text}
-
-**TEMPLATE ENGINE PLACEHOLDERS (use {{{{PLACEHOLDER}}}} format):**
-*   **{{{{any_placeholder_name}}}}** - For manual input fields
-*   **{{{{COST}}}}** - Base cost value with mathematical operations
-*   **{{{{COST_1.1}}}}** - Cost multiplied by 1.1
-*   **{{{{COST_IN_WORDS}}}}** - Cost converted to words
-*   **{{{{COST_00}}}}** - Cost rounded to nearest 100
-*   **{{{{DATE_field}}}}** - Any date field with date picker
-
-**💡 This list is automatically updated when new database fields are added!"""
-                
-            except Exception as e:
-                dynamic_placeholder_answer = f"Error loading dynamic placeholders: {e}. Please contact support."
+            # Get dynamic placeholder content using the dedicated method
+            dynamic_placeholder_answer = self._get_dynamic_placeholder_content()
 
             faqs = [
                 {
