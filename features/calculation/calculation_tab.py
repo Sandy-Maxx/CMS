@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 from .calculation_logic import calculate_end_date, calculate_extended_end_date
-from utils.date_picker import DatePicker
+from utils.minimal_date_picker import MinimalDatePicker
 from dateutil.relativedelta import relativedelta
 
 class CalculationTab(ttk.Frame):
@@ -17,14 +17,10 @@ class CalculationTab(ttk.Frame):
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         # Input fields
-        ttk.Label(main_frame, text="Starting Date (DD-MM-YYYY):").grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
-        self.start_date_entry = ttk.Entry(main_frame)
-        self.start_date_entry.grid(row=0, column=1, sticky=tk.EW, pady=5, padx=5)
-        self.start_date_entry.insert(0, datetime.now().strftime('%d-%m-%Y'))
-        
-        # Add a button to open the date picker
-        date_picker_button = ttk.Button(main_frame, text="Select Date", command=self._open_start_date_picker)
-        date_picker_button.grid(row=0, column=2, sticky=tk.W, pady=5, padx=5)
+        ttk.Label(main_frame, text="Starting Date:").grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
+        self.start_date_var = tk.StringVar(value=datetime.now().strftime('%d-%m-%Y'))
+        self.start_date_picker = MinimalDatePicker(main_frame, textvariable=self.start_date_var)
+        self.start_date_picker.grid(row=0, column=1, sticky=tk.EW, pady=5, padx=5)
 
         ttk.Label(main_frame, text="Duration:").grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
         duration_frame = ttk.Frame(main_frame)
@@ -59,19 +55,15 @@ class CalculationTab(ttk.Frame):
         date_diff_frame = ttk.LabelFrame(main_frame, text="Date Difference Calculation", padding="10")
         date_diff_frame.grid(row=6, column=0, columnspan=3, sticky=tk.EW, pady=10, padx=5)
 
-        ttk.Label(date_diff_frame, text="Start Date (DD-MM-YYYY):").grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
-        self.diff_start_date_entry = ttk.Entry(date_diff_frame)
-        self.diff_start_date_entry.grid(row=0, column=1, sticky=tk.EW, pady=5, padx=5)
-        self.diff_start_date_entry.insert(0, datetime.now().strftime('%d-%m-%Y'))
-        diff_start_date_picker_button = ttk.Button(date_diff_frame, text="Select Date", command=self._open_diff_start_date_picker)
-        diff_start_date_picker_button.grid(row=0, column=2, sticky=tk.W, pady=5, padx=5)
+        ttk.Label(date_diff_frame, text="Start Date:").grid(row=0, column=0, sticky=tk.W, pady=5, padx=5)
+        self.diff_start_date_var = tk.StringVar(value=datetime.now().strftime('%d-%m-%Y'))
+        self.diff_start_date_picker = MinimalDatePicker(date_diff_frame, textvariable=self.diff_start_date_var)
+        self.diff_start_date_picker.grid(row=0, column=1, sticky=tk.EW, pady=5, padx=5)
 
-        ttk.Label(date_diff_frame, text="End Date (DD-MM-YYYY):").grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
-        self.diff_end_date_entry = ttk.Entry(date_diff_frame)
-        self.diff_end_date_entry.grid(row=1, column=1, sticky=tk.EW, pady=5, padx=5)
-        self.diff_end_date_entry.insert(0, datetime.now().strftime('%d-%m-%Y'))
-        diff_end_date_picker_button = ttk.Button(date_diff_frame, text="Select Date", command=self._open_diff_end_date_picker)
-        diff_end_date_picker_button.grid(row=1, column=2, sticky=tk.W, pady=5, padx=5)
+        ttk.Label(date_diff_frame, text="End Date:").grid(row=1, column=0, sticky=tk.W, pady=5, padx=5)
+        self.diff_end_date_var = tk.StringVar(value=datetime.now().strftime('%d-%m-%Y'))
+        self.diff_end_date_picker = MinimalDatePicker(date_diff_frame, textvariable=self.diff_end_date_var)
+        self.diff_end_date_picker.grid(row=1, column=1, sticky=tk.EW, pady=5, padx=5)
 
         self.include_dates_var = tk.BooleanVar(value=True)
         include_dates_checkbox = ttk.Checkbutton(date_diff_frame, text="Include Start and End Dates", variable=self.include_dates_var)
@@ -91,26 +83,11 @@ class CalculationTab(ttk.Frame):
         main_frame.grid_columnconfigure(1, weight=1)
         date_diff_frame.grid_columnconfigure(1, weight=1)
 
-    def _open_start_date_picker(self):
-        # Get the absolute position of the entry widget
-        x = self.start_date_entry.winfo_rootx()
-        y = self.start_date_entry.winfo_rooty() + self.start_date_entry.winfo_height()
-        DatePicker(self.controller.root, self.start_date_entry, self.controller, initial_date=self.start_date_entry.get(), x=x, y=y)
-
-    def _open_diff_start_date_picker(self):
-        x = self.diff_start_date_entry.winfo_rootx()
-        y = self.diff_start_date_entry.winfo_rooty() + self.diff_start_date_entry.winfo_height()
-        DatePicker(self.controller.root, self.diff_start_date_entry, self.controller, initial_date=self.diff_start_date_entry.get(), x=x, y=y)
-
-    def _open_diff_end_date_picker(self):
-        x = self.diff_end_date_entry.winfo_rootx()
-        y = self.diff_end_date_entry.winfo_rooty() + self.diff_end_date_entry.winfo_height()
-        DatePicker(self.controller.root, self.diff_end_date_entry, self.controller, initial_date=self.diff_end_date_entry.get(), x=x, y=y)
 
     def calculate_date_difference(self):
         try:
-            start_date_str = self.diff_start_date_entry.get()
-            end_date_str = self.diff_end_date_entry.get()
+            start_date_str = self.diff_start_date_var.get()
+            end_date_str = self.diff_end_date_var.get()
             include_dates = self.include_dates_var.get()
 
             start_date = datetime.strptime(start_date_str, '%d-%m-%Y').date()
@@ -155,7 +132,7 @@ class CalculationTab(ttk.Frame):
 
     def calculate_dates(self):
         try:
-            start_date_str = self.start_date_entry.get()
+            start_date_str = self.start_date_var.get()
             start_date = datetime.strptime(start_date_str, '%d-%m-%Y').date()
 
             duration_value = int(self.duration_entry.get())

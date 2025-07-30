@@ -31,6 +31,11 @@ class AboutTab(ttk.Frame):
         ttk.Label(dev_info_frame, text="Sanjeev Singh Rajput", font=('Segoe UI', 12, 'italic')).pack(pady=(0, 10))
         ttk.Label(dev_info_frame, text="This application is a comprehensive Contract Management System designed for efficiency and ease of use.", wraplength=400, justify=tk.CENTER).pack()
 
+        # Create "Placeholders" Tab
+        placeholders_tab_frame = ttk.Frame(self.notebook)
+        self.notebook.add(placeholders_tab_frame, text="Placeholders")
+        self._create_placeholders_tab(placeholders_tab_frame)
+
         # Create "Help" Tab
         help_tab_frame = ttk.Frame(self.notebook)
         self.notebook.add(help_tab_frame, text="Help")
@@ -73,6 +78,52 @@ class AboutTab(ttk.Frame):
 
         title_label.bind("<Button-1>", lambda e: self._toggle_section(title))
         arrow_label.bind("<Button-1>", lambda e: self._toggle_section(title))
+
+    def _create_placeholders_tab(self, parent_frame):
+        """Create a dedicated tab for placeholders with simple, copyable text."""
+        # Add title
+        title_label = ttk.Label(parent_frame, text="Available Template Placeholders", 
+                               font=('Segoe UI', 14, 'bold'))
+        title_label.pack(pady=(20, 10))
+        
+        # Add description
+        desc_label = ttk.Label(parent_frame, 
+                              text="Copy and paste these placeholders into your Word document templates:",
+                              font=('Segoe UI', 10))
+        desc_label.pack(pady=(0, 10))
+        
+        # Create text widget with scrollbar
+        text_frame = ttk.Frame(parent_frame)
+        text_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        
+        placeholder_text = tk.Text(text_frame, wrap=tk.WORD, font=('Segoe UI', 9),
+                                  relief=tk.SUNKEN, borderwidth=2, padx=10, pady=10)
+        scrollbar = ttk.Scrollbar(text_frame, orient="vertical", command=placeholder_text.yview)
+        placeholder_text.configure(yscrollcommand=scrollbar.set)
+        
+        # Pack text widget and scrollbar
+        placeholder_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Get and insert placeholder content
+        content = self._get_dynamic_placeholder_content()
+        placeholder_text.insert(tk.END, content)
+        
+        # Make it read-only but still copyable
+        placeholder_text.config(state=tk.DISABLED)
+        
+        # Add refresh button
+        refresh_btn = ttk.Button(parent_frame, text="🔄 Refresh Placeholders", 
+                                command=lambda: self._refresh_placeholders(placeholder_text))
+        refresh_btn.pack(pady=10)
+        
+    def _refresh_placeholders(self, text_widget):
+        """Refresh the placeholder content in the text widget."""
+        text_widget.config(state=tk.NORMAL)
+        text_widget.delete('1.0', tk.END)
+        content = self._get_dynamic_placeholder_content()
+        text_widget.insert(tk.END, content)
+        text_widget.config(state=tk.DISABLED)
 
     def _get_dynamic_placeholder_content(self):
         """Generate dynamic placeholder content that can be refreshed."""
@@ -146,9 +197,6 @@ class AboutTab(ttk.Frame):
             self.faq_canvas.bind("<MouseWheel>", _on_mousewheel)
             self.faq_inner_frame.bind("<MouseWheel>", _on_mousewheel)
 
-            # Get dynamic placeholder content using the dedicated method
-            dynamic_placeholder_answer = self._get_dynamic_placeholder_content()
-
             faqs = [
                 {
                     "question": "How do I add a new work?",
@@ -177,65 +225,20 @@ class AboutTab(ttk.Frame):
 *   **{{PLACEHOLDER}}**: These placeholders are for dates and will automatically open a date picker for easy selection."""
                 },
                 {
-                    "question": "Complete List of Available Placeholders for AutoDocGen (Auto-Generated)",
-                    "answer": dynamic_placeholder_answer
-                },
-                {
-                    "question": "One-Click Placeholder Copy for AutoDocGen Templates",
-                    "answer": "Click the button below to copy all available placeholders to your clipboard, including the newly added ones. You can then paste them into your Word document templates as needed."
+                    "question": "Where can I find all available placeholders?",
+                    "answer": "Click on the 'Placeholders' tab in this About section to view the complete, up-to-date list of all available placeholders."
                 }
             ]
 
-            # Store as instance variable for access in toggle method
-            self.faqs = faqs
-
-            for i, faq in enumerate(self.faqs):
+            for i, faq in enumerate(faqs):
                 question_frame = ttk.Frame(self.faq_inner_frame, style='Card.TFrame')
                 question_frame.pack(fill=tk.X, pady=5, padx=5)
 
-                question_label = ttk.Label(question_frame, text=faq["question"], font=('Segoe UI', 10, 'bold'), cursor="hand2")
+                question_label = ttk.Label(question_frame, text=faq["question"], font=('Segoe UI', 10, 'bold'))
                 question_label.pack(fill=tk.X, pady=5, padx=5)
-
-                question_label.bind("<Button-1>", lambda e, idx=i: self._toggle_faq_answer(idx))
-
-                # For the two problematic FAQ items, use Text widget with proper state handling
-                if "Complete List" in faq["question"] or "One-Click Placeholder Copy" in faq["question"]:
-                    # Create text widget with proper state initialization
-                    answer_text = tk.Text(question_frame, wrap=tk.WORD, height=20, font=('Segoe UI', 9), 
-                                        relief=tk.FLAT, borderwidth=0, selectbackground="#316AC5", 
-                                        selectforeground="white", padx=10, pady=5, state=tk.DISABLED)
-                    
-                    # Enable, insert content, then disable
-                    answer_text.config(state=tk.NORMAL)
-                    answer_text.insert(tk.END, faq["answer"])
-                    answer_text.config(state=tk.DISABLED)
-                    
-                    # Add vertical scrollbar
-                    answer_scrollbar = ttk.Scrollbar(question_frame, orient="vertical", command=answer_text.yview)
-                    answer_text.configure(yscrollcommand=answer_scrollbar.set)
-                    
-                    # Create answer_frame to hold text and scrollbar
-                    answer_frame = ttk.Frame(question_frame)
-                    
-                    # Pack both inside their parent answer_frame
-                    answer_text.pack(in_=answer_frame, side=tk.LEFT, fill=tk.BOTH, expand=True)
-                    answer_scrollbar.pack(in_=answer_frame, side=tk.RIGHT, fill=tk.Y)
-                    
-                    answer_frame.pack(fill=tk.BOTH, expand=True, pady=5, padx=5)
-                    answer_frame.pack_forget()  # Hide by default
-                    
-                    # Assign answer_frame to faq["answer_widget"] for new toggle logic
-                    faq["answer_widget"] = answer_frame
-                else:
-                    # For regular FAQs, use Label as before
-                    answer_label = ttk.Label(question_frame, text=faq["answer"], wraplength=450, justify=tk.LEFT)
-                    answer_label.pack(fill=tk.X, pady=5, padx=5)
-                    answer_label.pack_forget() # Hide by default
-                    
-                    # Store direct reference to answer widget
-                    faq["answer_widget"] = answer_label
-
-                self.faq_inner_frame.grid_columnconfigure(0, weight=1)
+                
+                answer_label = ttk.Label(question_frame, text=faq["answer"], wraplength=450, justify=tk.LEFT)
+                answer_label.pack(fill=tk.X, pady=5, padx=15)
 
         self._create_collapsible_section(self.accordion_frame, "Frequently Asked Questions (FAQ)", build_faq_content)
 
@@ -305,6 +308,15 @@ class AboutTab(ttk.Frame):
     def _parse_markdown_to_text_widget(self, text_widget, markdown_content):
         text_widget.config(state=tk.NORMAL)
         text_widget.delete('1.0', tk.END)
+        
+        # Configure text tags for different formatting styles
+        text_widget.tag_configure('bold', font=('Segoe UI', 9, 'bold'))
+        text_widget.tag_configure('h1', font=('Segoe UI', 14, 'bold'))
+        text_widget.tag_configure('h2', font=('Segoe UI', 12, 'bold'))
+        text_widget.tag_configure('h3', font=('Segoe UI', 10, 'bold'))
+        text_widget.tag_configure('code', font=('Courier New', 8), background='#f0f0f0')
+        text_widget.tag_configure('table_header', font=('Segoe UI', 9, 'bold'))
+        text_widget.tag_configure('table_row', font=('Segoe UI', 9))
 
         lines = markdown_content.split('\n')
         in_code_block = False
