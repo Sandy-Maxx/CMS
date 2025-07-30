@@ -5,12 +5,35 @@ from openpyxl.styles import Alignment, Font
 from .constants import COLUMN_HEADERS, COLUMN_MAPPING, GST_RATE
 from .utils import get_cell_reference
 
-def write_header(worksheet, work_details):
+def write_work_name_row(worksheet, work_description_data, current_row):
     """
-    Writes the column headers to the worksheet, starting from A1.
+    Writes the work name row with merged cells across all columns.
     """
-    worksheet.append(COLUMN_HEADERS)
-    return 1 # Returns the row index of the header (which is now 1)
+    # Determine the last column based on the number of headers
+    last_column = len(COLUMN_HEADERS)
+    
+    # Merge cells from column 1 to the last column for the current row
+    worksheet.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=last_column)
+    
+    # Set the cell value
+    cell_value = f"Name Of Work : {work_description_data.get('description', '')}"
+    cell = worksheet.cell(row=current_row, column=1, value=cell_value)
+    
+    # Apply bold font and center alignment
+    cell.font = Font(bold=True)
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Return the next row
+    return current_row + 1
+
+def write_header(worksheet, work_details, start_row=1):
+    """
+    Writes the column headers to the worksheet, starting from specified row.
+    """
+    # Insert headers at the specified row
+    for col_idx, header in enumerate(COLUMN_HEADERS, start=1):
+        worksheet.cell(row=start_row, column=col_idx, value=header)
+    return start_row # Returns the row index of the header
 
 def write_work_description_row(worksheet, data_row, current_row):
     """

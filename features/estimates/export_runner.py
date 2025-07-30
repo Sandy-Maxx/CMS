@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 from .data_loader import load_data
 from .workbook_builder import create_workbook_and_sheet
-from .writer import write_header, write_work_description_row, write_schedule_data_rows, write_summary_section
+from .writer import write_header, write_work_description_row, write_schedule_data_rows, write_summary_section, write_work_name_row
 from .formatter import apply_all_styles_and_formats
 from .constants import COLUMN_HEADERS
 
@@ -23,8 +23,10 @@ def run_export(work_id, firm_name):
     # Write work description row (the 'A' row)
     work_description_data = data[0] # Assuming the first record is the 'A' row
 
-    # Write header
-    header_row_idx = write_header(worksheet, work_description_data)
+    # Write work name row, then header, then description row
+    work_name_row_idx = 1  # Start at row 1
+    current_row = write_work_name_row(worksheet, work_description_data, work_name_row_idx)
+    header_row_idx = write_header(worksheet, work_description_data, current_row)
     current_row = write_work_description_row(worksheet, work_description_data, header_row_idx + 1)
 
     # Write schedule data rows
@@ -36,7 +38,7 @@ def run_export(work_id, firm_name):
     summary_start_row, summary_end_row = write_summary_section(worksheet, data_start_row, data_end_row)
 
     # Apply styles and formats
-    apply_all_styles_and_formats(worksheet, header_row_idx, data_start_row, data_end_row, summary_start_row, summary_end_row, COLUMN_HEADERS, data)
+    apply_all_styles_and_formats(worksheet, header_row_idx, data_start_row, data_end_row, summary_start_row, summary_end_row, COLUMN_HEADERS, data, work_name_row_idx)
 
     # Determine output directory and filename
     if getattr(sys, 'frozen', False):
