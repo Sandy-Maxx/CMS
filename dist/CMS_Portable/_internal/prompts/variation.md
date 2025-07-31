@@ -1,0 +1,5 @@
+now new report. make sure to write modular scalable clean, readable reusable code considering maintainability, separation of concerns and easy debugging.
+now add new variation with price logic. add separate module in features for this report. this is similar to the variation report but there is price reduction logic as follows:
+1. if the quantity increases upto 125% of original qty then the total cost is calculated at the same unit rate.
+2. if qty is increased from 125% to 140% then the cost of qty above 125% will be  @ 98% of the unit rate.
+3. for qty from 140 to 150% total cost calculated @96% of unit rate. now the columns quantity (horizontally merged to 4 cells) under it subheads viz. before variation, after variation, quantity upto 125%, upto 140%, upto 150% rest of the column will adjust accordingly and at bottom after summery rows there will be percentage variation in overall cost.
