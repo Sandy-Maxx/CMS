@@ -58,7 +58,7 @@ class WorkDataProvider:
         
         # 4. Generate special placeholders
         special_placeholders = {
-            '[CURRENT_DATE]': datetime.now().strftime("%Y-%m-%d"),
+            '[CURRENT_DATE]': datetime.now().strftime("%d-%m-%Y"),
             '[CURRENT_TIME]': datetime.now().strftime("%H:%M:%S"),
             '[FIRM_PG_DETAILS]': self._generate_firm_pg_details(),
             '[ALL_FIRMS_PG_DETAILS]': self._generate_all_firms_pg_details()
@@ -318,7 +318,7 @@ class WorkDataProvider:
         
         # Handle special cases
         if key == 'CURRENT_DATE':
-            return datetime.now().strftime("%Y-%m-%d")
+            return datetime.now().strftime("%d-%m-%Y")
         elif key == 'CURRENT_TIME':
             return datetime.now().strftime("%H:%M:%S")
         elif key == 'FIRM_PG_DETAILS':

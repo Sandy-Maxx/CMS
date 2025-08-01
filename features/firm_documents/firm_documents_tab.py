@@ -67,6 +67,12 @@ class FirmDocumentsTab(ttk.Frame):
         self.pg_amount_entry = ttk.Entry(input_frame, validate="key", validatecommand=(self.vcmd_numeric, '%P'))
         self.pg_amount_entry.grid(row=3, column=1, padx=5, pady=5, sticky=tk.EW)
 
+        # PG Valid Upto Date
+        ttk.Label(input_frame, text="PG Valid Upto:").grid(row=4, column=2, padx=5, pady=5, sticky=tk.W)
+        self.pg_valid_upto_var = tk.StringVar()
+        self.pg_valid_upto_picker = MinimalDatePicker(input_frame, textvariable=self.pg_valid_upto_var)
+        self.pg_valid_upto_picker.grid(row=4, column=3, padx=5, pady=5, sticky=tk.EW)
+
         # PG Vetted On
         ttk.Label(input_frame, text="PG Vetted On:").grid(row=3, column=2, padx=5, pady=5, sticky=tk.W)
         self.pg_vetted_on_var = tk.StringVar()
@@ -74,49 +80,49 @@ class FirmDocumentsTab(ttk.Frame):
         self.pg_vetted_on_picker.grid(row=3, column=3, padx=5, pady=5, sticky=tk.EW)
 
         # Bank Name
-        ttk.Label(input_frame, text="Bank Name:").grid(row=4, column=0, padx=5, pady=5, sticky=tk.W)
+        ttk.Label(input_frame, text="Bank Name:").grid(row=5, column=0, padx=5, pady=5, sticky=tk.W)
         self.bank_name_entry = ttk.Entry(input_frame)
-        self.bank_name_entry.grid(row=4, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.bank_name_entry.grid(row=5, column=1, padx=5, pady=5, sticky=tk.EW)
 
         # Bank Address
-        ttk.Label(input_frame, text="Bank Address:").grid(row=5, column=0, padx=5, pady=5, sticky=tk.W)
+        ttk.Label(input_frame, text="Bank Address:").grid(row=6, column=0, padx=5, pady=5, sticky=tk.W)
         self.bank_address_entry = ttk.Entry(input_frame)
-        self.bank_address_entry.grid(row=5, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.bank_address_entry.grid(row=6, column=1, padx=5, pady=5, sticky=tk.EW)
         self._toggle_pg_fields()
 
         # Indemnity Bond Submitted Checkbox
         self.indemnity_bond_submitted_var = tk.BooleanVar(value=False)
         self.indemnity_bond_submitted_checkbutton = ttk.Checkbutton(input_frame, text="Indemnity Bond Submitted", variable=self.indemnity_bond_submitted_var, command=self._toggle_indemnity_bond_fields)
-        self.indemnity_bond_submitted_checkbutton.grid(row=6, column=0, padx=5, pady=5, sticky=tk.W)
+        self.indemnity_bond_submitted_checkbutton.grid(row=7, column=0, padx=5, pady=5, sticky=tk.W)
 
         # Indemnity Bond Details
-        ttk.Label(input_frame, text="Indemnity Bond Details:").grid(row=7, column=0, padx=5, pady=5, sticky=tk.W)
+        ttk.Label(input_frame, text="Indemnity Bond Details:").grid(row=8, column=0, padx=5, pady=5, sticky=tk.W)
         self.indemnity_bond_details_entry = ttk.Entry(input_frame)
-        self.indemnity_bond_details_entry.grid(row=7, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.indemnity_bond_details_entry.grid(row=8, column=1, padx=5, pady=5, sticky=tk.EW)
 
         # IB Vetted On
-        ttk.Label(input_frame, text="IB Vetted On:").grid(row=7, column=2, padx=5, pady=5, sticky=tk.W)
+        ttk.Label(input_frame, text="IB Vetted On:").grid(row=8, column=2, padx=5, pady=5, sticky=tk.W)
         self.ib_vetted_on_var = tk.StringVar()
         self.ib_vetted_on_picker = MinimalDatePicker(input_frame, textvariable=self.ib_vetted_on_var)
-        self.ib_vetted_on_picker.grid(row=7, column=3, padx=5, pady=5, sticky=tk.EW)
+        self.ib_vetted_on_picker.grid(row=8, column=3, padx=5, pady=5, sticky=tk.EW)
         self._toggle_indemnity_bond_fields()
 
         
 
         # Other Docs Details
-        ttk.Label(input_frame, text="Other Docs Details:").grid(row=9, column=0, padx=5, pady=5, sticky=tk.W)
+        ttk.Label(input_frame, text="Other Docs Details:").grid(row=10, column=0, padx=5, pady=5, sticky=tk.W)
         self.other_docs_details_entry = ttk.Entry(input_frame)
-        self.other_docs_details_entry.grid(row=9, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.other_docs_details_entry.grid(row=10, column=1, padx=5, pady=5, sticky=tk.EW)
 
         # Submission Date
-        ttk.Label(input_frame, text="Submission Date:").grid(row=10, column=0, padx=5, pady=5, sticky=tk.W)
+        ttk.Label(input_frame, text="Submission Date:").grid(row=11, column=0, padx=5, pady=5, sticky=tk.W)
         self.submission_date_var = tk.StringVar()
         self.submission_date_var.set(datetime.now().strftime("%d-%m-%Y"))
         self.submission_date_picker = MinimalDatePicker(input_frame, textvariable=self.submission_date_var)
-        self.submission_date_picker.grid(row=10, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.submission_date_picker.grid(row=11, column=1, padx=5, pady=5, sticky=tk.EW)
 
         button_frame = ttk.Frame(input_frame)
-        button_frame.grid(row=11, column=0, columnspan=2, pady=10)
+        button_frame.grid(row=12, column=0, columnspan=2, pady=10)
         self.add_button = ttk.Button(button_frame, text="Add Document", command=self._add_document)
         self.add_button.pack(side=tk.LEFT, padx=5)
         self.update_button = ttk.Button(button_frame, text="Update Document", command=self._update_document, state=tk.DISABLED)
@@ -230,6 +236,9 @@ class FirmDocumentsTab(ttk.Frame):
                 self.other_docs_details_entry.delete(0, tk.END)
                 self.other_docs_details_entry.insert(0, doc['other_docs_details'] if doc['other_docs_details'] else "")
                 self.submission_date_var.set(doc['submission_date'] if doc['submission_date'] else "")
+                self.pg_valid_upto_var.set(doc['pg_valid_upto'] if doc['pg_valid_upto'] else "")
+                self.pg_vetted_on_var.set(doc['pg_vetted_on'] if doc['pg_vetted_on'] else "")
+                self.ib_vetted_on_var.set(doc['ib_vetted_on'] if doc['ib_vetted_on'] else "")
 
                 self._toggle_pg_fields()
                 self._toggle_indemnity_bond_fields()
@@ -271,6 +280,7 @@ class FirmDocumentsTab(ttk.Frame):
         other_docs_details = self.other_docs_details_entry.get()
         submission_date = self.submission_date_var.get()
         pg_type = self.pg_type_var.get()
+        pg_valid_upto = self.pg_valid_upto_var.get()
         pg_vetted_on = self.pg_vetted_on_var.get()
         ib_vetted_on = self.ib_vetted_on_var.get()
 
@@ -286,7 +296,7 @@ class FirmDocumentsTab(ttk.Frame):
             add_firm_document(
                 int(work_id), firm_name, pg_no, pg_amount, bank_name, bank_address,
                 indemnity_bond_details, other_docs_details, submission_date,
-                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on
+                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on, pg_valid_upto
             )
             show_toast(self, "Document added successfully.", "success")
             self._clear_form()
@@ -309,6 +319,7 @@ class FirmDocumentsTab(ttk.Frame):
         other_docs_details = self.other_docs_details_entry.get()
         submission_date = self.submission_date_var.get()
         pg_type = self.pg_type_var.get()
+        pg_valid_upto = self.pg_valid_upto_var.get()
         pg_vetted_on = self.pg_vetted_on_var.get()
         ib_vetted_on = self.ib_vetted_on_var.get()
 
@@ -324,7 +335,7 @@ class FirmDocumentsTab(ttk.Frame):
             update_firm_document(
                 doc_id, firm_name, pg_no, pg_amount, bank_name, bank_address,
                 indemnity_bond_details, other_docs_details, submission_date,
-                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on
+                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on, pg_valid_upto
             )
             show_toast(self, "Document updated successfully.", "success")
             self._clear_form()
@@ -394,6 +405,7 @@ class FirmDocumentsTab(ttk.Frame):
         self.pg_amount_entry.delete(0, tk.END)
         self.bank_name_entry.delete(0, tk.END)
         self.bank_address_entry.delete(0, tk.END)
+        self.pg_valid_upto_var.set("")
         self.pg_vetted_on_var.set("")
         self.indemnity_bond_submitted_var.set(False)
         self.indemnity_bond_details_entry.delete(0, tk.END)

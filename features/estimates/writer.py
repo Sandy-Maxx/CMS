@@ -1,5 +1,6 @@
 # features/estimates/writer.py
 
+from datetime import datetime
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font
 from .constants import COLUMN_HEADERS, COLUMN_MAPPING, GST_RATE
@@ -175,7 +176,9 @@ def write_summary_section(
     # Header Rows (Top-left aligned)
     worksheet.cell(row=current_row, column=1, value="PLACE : KALYAN")
     current_row += 1
-    worksheet.cell(row=current_row, column=1, value="DATE : 05-07-2025")
+    # Generate current date in dd-mm-yyyy format
+    current_date = datetime.now().strftime("%d-%m-%Y")
+    worksheet.cell(row=current_row, column=1, value=f"DATE : {current_date}")
     current_row += 1
 
     # Static allocation code - dynamic allocation was removed for simplification

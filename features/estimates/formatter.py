@@ -43,10 +43,21 @@ def apply_data_row_style(worksheet, row_index, start_col, end_col):
                          top=Side(style='thin'),
                          bottom=Side(style='thin'))
 
+    from .constants import COLUMN_HEADERS
+    
     for col_idx in range(start_col, end_col + 1):
         cell = worksheet.cell(row=row_index, column=col_idx)
         cell.border = thin_border
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+        
+        # Check if this is the Description column for left alignment
+        if col_idx <= len(COLUMN_HEADERS):
+            column_name = COLUMN_HEADERS[col_idx - 1]  # Convert to 0-based index
+            if column_name == "Description":
+                cell.alignment = Alignment(horizontal='left', vertical='center')
+            else:
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+        else:
+            cell.alignment = Alignment(horizontal='center', vertical='center')
 
 
 def apply_summary_style(worksheet, start_row, end_row, start_col, end_col):
