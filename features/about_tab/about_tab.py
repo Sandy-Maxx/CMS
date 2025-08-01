@@ -137,7 +137,7 @@ class AboutTab(ttk.Frame):
             
             for key, desc in placeholders.items():
                 if key.startswith('[') and key.endswith(']'):
-                    if key in ('[CURRENT_DATE]', '[CURRENT_TIME]', '[FIRM_PG_DETAILS]', '[ALL_FIRMS_PG_DETAILS]'):
+                    if key in ('[CURRENT_DATE]', '[CURRENT_TIME]', '[FIRM_PG_DETAILS]', '[ALL_FIRMS_PG_DETAILS]', '[ENQUIRY_TABLE]'):
                         special_placeholders.append(f"*   **{key}**: {desc}")
                     else:
                         work_placeholders.append(f"*   **{key}**: {desc}")

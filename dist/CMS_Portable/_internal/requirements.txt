@@ -1,9 +1,0 @@
-PyPDF2==3.0.1
-PyMuPDF
-pandas
-python-dateutil
-tkcalendar
-requests
-python-docx
-openpyxl
-xlsxwriter

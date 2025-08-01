@@ -82,6 +82,7 @@ class FirmDocumentsTab(ttk.Frame):
         ttk.Label(input_frame, text="Bank Address:").grid(row=5, column=0, padx=5, pady=5, sticky=tk.W)
         self.bank_address_entry = ttk.Entry(input_frame)
         self.bank_address_entry.grid(row=5, column=1, padx=5, pady=5, sticky=tk.EW)
+        self._toggle_pg_fields()
 
         # Indemnity Bond Submitted Checkbox
         self.indemnity_bond_submitted_var = tk.BooleanVar(value=False)
@@ -98,11 +99,9 @@ class FirmDocumentsTab(ttk.Frame):
         self.ib_vetted_on_var = tk.StringVar()
         self.ib_vetted_on_picker = MinimalDatePicker(input_frame, textvariable=self.ib_vetted_on_var)
         self.ib_vetted_on_picker.grid(row=7, column=3, padx=5, pady=5, sticky=tk.EW)
+        self._toggle_indemnity_bond_fields()
 
-        # Firm Address
-        ttk.Label(input_frame, text="Firm Address:").grid(row=8, column=0, padx=5, pady=5, sticky=tk.W)
-        self.firm_address_entry = ttk.Entry(input_frame)
-        self.firm_address_entry.grid(row=8, column=1, padx=5, pady=5, sticky=tk.EW)
+        
 
         # Other Docs Details
         ttk.Label(input_frame, text="Other Docs Details:").grid(row=9, column=0, padx=5, pady=5, sticky=tk.W)
@@ -134,7 +133,7 @@ class FirmDocumentsTab(ttk.Frame):
 
         self.documents_tree = ttk.Treeview(documents_frame, columns=(
             "firm_name", "pg_submitted", "pg_type", "pg_no", "pg_amount", "bank_name", "bank_address", "pg_vetted_on",
-            "indemnity_bond_submitted", "indemnity_bond_details", "ib_vetted_on", "firm_address", "other_docs_details", "submission_date"
+            "indemnity_bond_submitted", "indemnity_bond_details", "ib_vetted_on", "other_docs_details", "submission_date"
         ), show="headings")
         self.documents_tree.pack(fill=tk.BOTH, expand=True)
 
@@ -149,7 +148,7 @@ class FirmDocumentsTab(ttk.Frame):
         self.documents_tree.heading("indemnity_bond_submitted", text="IB Submitted")
         self.documents_tree.heading("indemnity_bond_details", text="Indemnity Bond Details")
         self.documents_tree.heading("ib_vetted_on", text="IB Vetted On")
-        self.documents_tree.heading("firm_address", text="Firm Address")
+        
         self.documents_tree.heading("other_docs_details", text="Other Docs Details")
         self.documents_tree.heading("submission_date", text="Submission Date")
 
@@ -164,7 +163,7 @@ class FirmDocumentsTab(ttk.Frame):
         self.documents_tree.column("indemnity_bond_submitted", width=80)
         self.documents_tree.column("indemnity_bond_details", width=150)
         self.documents_tree.column("ib_vetted_on", width=100)
-        self.documents_tree.column("firm_address", width=120)
+        
         self.documents_tree.column("other_docs_details", width=150)
         self.documents_tree.column("submission_date", width=100)
 
@@ -174,10 +173,6 @@ class FirmDocumentsTab(ttk.Frame):
         vsb = ttk.Scrollbar(documents_frame, orient="vertical", command=self.documents_tree.yview)
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
         self.documents_tree.configure(yscrollcommand=vsb.set)
-
-        # Initial state of fields
-        self._toggle_pg_fields()
-        self._toggle_indemnity_bond_fields()
 
     def _on_work_id_change(self, *args):
         self.refresh_data()
@@ -232,8 +227,6 @@ class FirmDocumentsTab(ttk.Frame):
                 self.indemnity_bond_submitted_var.set(bool(doc['indemnity_bond_submitted']))
                 self.indemnity_bond_details_entry.delete(0, tk.END)
                 self.indemnity_bond_details_entry.insert(0, doc['indemnity_bond_details'] if doc['indemnity_bond_details'] else "")
-                self.firm_address_entry.delete(0, tk.END)
-                self.firm_address_entry.insert(0, doc['firm_address'] if doc['firm_address'] else "")
                 self.other_docs_details_entry.delete(0, tk.END)
                 self.other_docs_details_entry.insert(0, doc['other_docs_details'] if doc['other_docs_details'] else "")
                 self.submission_date_var.set(doc['submission_date'] if doc['submission_date'] else "")
@@ -260,7 +253,7 @@ class FirmDocumentsTab(ttk.Frame):
         for doc in documents:
             if not selected_firm or doc[2] == selected_firm: # doc[2] is firm_name
                 self.documents_tree.insert("", tk.END, iid=doc[0], values=(
-                    doc[2], bool(doc[11]), doc[13], doc[3], doc[4], doc[5], doc[6], doc[14], bool(doc[12]), doc[7], doc[15], doc[8], doc[9], doc[10]
+                    doc[2], bool(doc[10]), doc[12], doc[3], doc[4], doc[5], doc[6], doc[13], bool(doc[11]), doc[7], doc[14], doc[8], doc[9]
                 ))
 
     def _add_document(self):
@@ -274,7 +267,6 @@ class FirmDocumentsTab(ttk.Frame):
         pg_amount_str = self.pg_amount_entry.get()
         bank_name = self.bank_name_entry.get()
         bank_address = self.bank_address_entry.get()
-        firm_address = self.firm_address_entry.get()
         indemnity_bond_details = self.indemnity_bond_details_entry.get()
         other_docs_details = self.other_docs_details_entry.get()
         submission_date = self.submission_date_var.get()
@@ -293,7 +285,7 @@ class FirmDocumentsTab(ttk.Frame):
 
             add_firm_document(
                 int(work_id), firm_name, pg_no, pg_amount, bank_name, bank_address,
-                firm_address, indemnity_bond_details, other_docs_details, submission_date,
+                indemnity_bond_details, other_docs_details, submission_date,
                 pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on
             )
             show_toast(self, "Document added successfully.", "success")
@@ -313,7 +305,6 @@ class FirmDocumentsTab(ttk.Frame):
         pg_amount_str = self.pg_amount_entry.get()
         bank_name = self.bank_name_entry.get()
         bank_address = self.bank_address_entry.get()
-        firm_address = self.firm_address_entry.get()
         indemnity_bond_details = self.indemnity_bond_details_entry.get()
         other_docs_details = self.other_docs_details_entry.get()
         submission_date = self.submission_date_var.get()
@@ -332,7 +323,7 @@ class FirmDocumentsTab(ttk.Frame):
 
             update_firm_document(
                 doc_id, firm_name, pg_no, pg_amount, bank_name, bank_address,
-                firm_address, indemnity_bond_details, other_docs_details, submission_date,
+                indemnity_bond_details, other_docs_details, submission_date,
                 pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on
             )
             show_toast(self, "Document updated successfully.", "success")
@@ -382,11 +373,9 @@ class FirmDocumentsTab(ttk.Frame):
             self.indemnity_bond_details_entry.delete(0, tk.END)
             self.indemnity_bond_details_entry.insert(0, values[9])
             self.ib_vetted_on_var.set(values[10])
-            self.firm_address_entry.delete(0, tk.END)
-            self.firm_address_entry.insert(0, values[11])
             self.other_docs_details_entry.delete(0, tk.END)
-            self.other_docs_details_entry.insert(0, values[12])
-            self.submission_date_var.set(values[13])
+            self.other_docs_details_entry.insert(0, values[11])
+            self.submission_date_var.set(values[12])
 
             self._toggle_pg_fields()
             self._toggle_indemnity_bond_fields()
@@ -409,7 +398,6 @@ class FirmDocumentsTab(ttk.Frame):
         self.indemnity_bond_submitted_var.set(False)
         self.indemnity_bond_details_entry.delete(0, tk.END)
         self.ib_vetted_on_var.set("")
-        self.firm_address_entry.delete(0, tk.END)
         self.other_docs_details_entry.delete(0, tk.END)
         self.submission_date_var.set(datetime.now().strftime("%d-%m-%Y"))
         self.add_button.config(state=tk.NORMAL)

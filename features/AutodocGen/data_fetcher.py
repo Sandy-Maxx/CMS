@@ -1,6 +1,7 @@
 import sqlite3
 from config import DATABASE_PATH
 from database import db_manager
+from database.managers import firm_manager
 
 class DataFetcher:
     def __init__(self, db_path):
@@ -15,10 +16,10 @@ class DataFetcher:
         return firms
 
     def fetch_firm_data(self, firm_name, work_id):
-        # This is a simplified example. You might need to fetch more specific firm data
-        # from the 'firms' table or 'firm_documents' table based on your needs.
-        # For now, let's assume we can get firm document data if available.
         firm_doc_data = db_manager.get_firm_document_by_work_and_firm_name(work_id, firm_name)
+        firm_data = firm_manager.get_firm_by_name(firm_name)
+        if firm_doc_data and firm_data:
+            firm_doc_data['firm_address'] = firm_data['address']
         return firm_doc_data
 
     def fetch_all_firms_pg_details(self, work_id):

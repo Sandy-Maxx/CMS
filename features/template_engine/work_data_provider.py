@@ -1,4 +1,5 @@
 from database import db_manager
+from database.managers import firm_manager
 from utils.helpers import format_currency_inr
 from datetime import datetime
 from database.managers.database_utils import get_work_columns, get_firm_documents_columns
@@ -9,6 +10,25 @@ class WorkDataProvider:
         # Fetch ALL columns using SELECT * for both tables
         self.work_details = db_manager.get_work_by_id_all_columns(work_id)
         self.firm_documents = db_manager.get_firm_documents_all_columns(work_id)
+        # Fetch firm registration data (includes address)
+        self.firms_data = self._get_firms_data()
+
+    def _get_firms_data(self):
+        """Get firm registration data for firms involved in this work."""
+        if not self.firm_documents:
+            return []
+        
+        # Get unique firm names from firm_documents
+        firm_names = list(set(doc.get('firm_name') for doc in self.firm_documents if doc.get('firm_name')))
+        
+        # Fetch firm registration data for these firms
+        firms_data = []
+        for firm_name in firm_names:
+            firm_data = firm_manager.get_firm_by_name(firm_name)
+            if firm_data:
+                firms_data.append(firm_data)
+        
+        return firms_data
 
     def generate_placeholders(self):
         """Generate a consolidated dictionary of all placeholders dynamically."""
@@ -30,6 +50,11 @@ class WorkDataProvider:
                 # For multiple firms, we use the last firm's data for each placeholder
                 # (This follows the original behavior but could be modified as needed)
                 firm_placeholders[f'<<{column.upper()}>>'] = firm_doc.get(column)
+        
+        # 3.1. Add firm address placeholders from the firms table
+        for firm_data in self.firms_data:
+            firm_placeholders[f'<<FIRM_ADDRESS>>'] = firm_data.get('address')
+            firm_placeholders[f'<<FIRM_REPRESENTATIVE>>'] = firm_data.get('representative')
         
         # 4. Generate special placeholders
         special_placeholders = {
@@ -159,16 +184,21 @@ class WorkDataProvider:
         
         # Add firm placeholders
         for column in firm_columns:
-            placeholder_key = f'<<{column.upper()}>>'  
+            placeholder_key = f'<<{column.upper()}>>'
             description = firm_descriptions.get(column.lower(), f'Firm {column.replace("_", " ").title()}')
             placeholders[placeholder_key] = description
+        
+        # Add firm address and representative placeholders from firms table
+        placeholders['<<FIRM_ADDRESS>>'] = 'Address of the firm (from firm registration)'
+        placeholders['<<FIRM_REPRESENTATIVE>>'] = 'Representative of the firm (from firm registration)'
         
         # Add special placeholders
         special_placeholders = {
             '[CURRENT_DATE]': 'Today\'s date (auto-generated)',
             '[CURRENT_TIME]': 'Current time (auto-generated)',
             '[FIRM_PG_DETAILS]': 'Formatted list of all firms\' PG details',
-            '[ALL_FIRMS_PG_DETAILS]': 'Complete PG details for all firms'
+            '[ALL_FIRMS_PG_DETAILS]': 'Complete PG details for all firms',
+            '[ENQUIRY_TABLE]': 'Creates a formatted enquiry table with schedule items, quantities, unit rates, and totals'
         }
         
         placeholders.update(special_placeholders)
@@ -246,12 +276,17 @@ class WorkDataProvider:
             description = firm_descriptions.get(column.lower(), f'Firm {column.replace("_", " ").title()}')
             placeholders[placeholder_key] = description
         
+        # Add firm address and representative placeholders from firms table
+        placeholders['<<FIRM_ADDRESS>>'] = 'Address of the firm (from firm registration)'
+        placeholders['<<FIRM_REPRESENTATIVE>>'] = 'Representative of the firm (from firm registration)'
+        
         # Add special placeholders
         special_placeholders = {
             '[CURRENT_DATE]': 'Today\'s date (auto-generated)',
             '[CURRENT_TIME]': 'Current time (auto-generated)',
             '[FIRM_PG_DETAILS]': 'Formatted list of all firms\' PG details',
-            '[ALL_FIRMS_PG_DETAILS]': 'Complete PG details for all firms'
+            '[ALL_FIRMS_PG_DETAILS]': 'Complete PG details for all firms',
+            '[ENQUIRY_TABLE]': 'Creates a formatted enquiry table with schedule items, quantities, unit rates, and totals'
         }
         
         placeholders.update(special_placeholders)

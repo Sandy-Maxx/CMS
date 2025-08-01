@@ -335,7 +335,7 @@ class TemplateProcessor:
         full_text = self._replace_firm_level_placeholders(full_text, placeholder_data)
         
         # Pass 3: Replace user input {{placeholder}} tokens (existing functionality)
-        full_text = self._replace_user_input_placeholders(full_text, user_data)
+        full_text = self._replace_user_input_placeholders(full_text, user_data, placeholder_data)
         
         # Update paragraph with the processed text
         self._update_paragraph_text(paragraph, full_text)
@@ -411,9 +411,9 @@ class TemplateProcessor:
             
         return result
     
-    def _replace_user_input_placeholders(self, text, user_data):
+    def _replace_user_input_placeholders(self, text, user_data, placeholder_data=None):
         """
-        Pass 3: Replace user input {{placeholder}} tokens (existing functionality)
+        Pass 3: Replace user input {{placeholder}} tokens with enhanced database field matching
         """
         # Find all user input placeholders: {{placeholder}}
         matches = list(re.finditer(r'\{\{([a-zA-Z0-9_.]+)\}\}', text))
@@ -427,8 +427,33 @@ class TemplateProcessor:
             placeholder_full = match.group(0)  # {{placeholder}}
             placeholder_key = match.group(1)   # placeholder
             
-            # Use existing special placeholder handler
-            replacement_value = evaluate_special_placeholder(placeholder_key, user_data)
+            # Try multiple replacement strategies in order of priority
+            replacement_value = None
+            
+            # Strategy 1: Check user_data first (highest priority)
+            if placeholder_key in user_data:
+                replacement_value = user_data[placeholder_key]
+            elif placeholder_key.lower() in user_data:
+                replacement_value = user_data[placeholder_key.lower()]
+            elif placeholder_key.upper() in user_data:
+                replacement_value = user_data[placeholder_key.upper()]
+            
+            # Strategy 2: Check for database field matches if placeholder_data is available
+            if replacement_value is None and placeholder_data:
+                # Try as work-level placeholder format
+                work_key = f'[{placeholder_key.upper()}]'
+                if work_key in placeholder_data:
+                    replacement_value = placeholder_data[work_key]
+                
+                # Try as firm-level placeholder format
+                if replacement_value is None:
+                    firm_key = f'<<{placeholder_key.upper()}>>'  
+                    if firm_key in placeholder_data:
+                        replacement_value = placeholder_data[firm_key]
+            
+            # Strategy 3: Use existing special placeholder handler (COST calculations, etc.)
+            if replacement_value is None:
+                replacement_value = evaluate_special_placeholder(placeholder_key, user_data)
             
             # Replace if value found and not empty, otherwise leave unchanged for debugging
             if replacement_value is not None and str(replacement_value).strip() != "":

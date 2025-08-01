@@ -14,12 +14,12 @@ def evaluate_special_placeholder(placeholder_name, data):
         # Get the base cost value
         base_value = data.get(base_cost_key)
         if base_value is None or base_value == "":
-            return f"{{{{{placeholder_name}}}}}"  # Return original if base not found or empty
+            return f"[{placeholder_name}]"  # Return original if base not found or empty
 
         try:
             result = Decimal(str(base_value))
         except Exception:
-            return f"{{{{{placeholder_name}}}}}"  # Return original if base is not numeric
+            return f"[{placeholder_name}]"  # Return original if base is not numeric
 
         format_as_words = False
         round_to_nearest = None
@@ -43,4 +43,5 @@ def evaluate_special_placeholder(placeholder_name, data):
             return format_currency_inr(result)
 
     # If not a COST-based placeholder, return from data or leave unchanged
-    return data.get(placeholder_name, f"{{{{{placeholder_name}}}}}")
+    result = data.get(placeholder_name, f"[{placeholder_name}]")
+    return result
