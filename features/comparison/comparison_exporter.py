@@ -2,6 +2,9 @@ import pandas as pd
 from .comparison_data_manager import ComparisonDataManager
 from .comparison_excel_structure import ComparisonExcelStructure
 from utils.helpers import format_currency_inr
+from ..AutodocGen.data_fetcher import DataFetcher
+from ..AutodocGen.pg_details_formatter import PGDetailsFormatter
+from config import DATABASE_PATH
 
 class ComparisonExporter:
     def __init__(self, work_id):
@@ -100,6 +103,9 @@ class ComparisonExporter:
 
         # Add summary rows with formulas
         firm_total_cost_col_indices = self._add_summary_rows_with_formulas(worksheet, data_start_row + len(prepared_rows), firm_names, self.excel_structure.get_dataframe_columns(), header_format, currency_format, percentage_format)
+
+# Add PG details section
+        self._add_pg_details_section(worksheet, header_format, data_format)
 
         # Apply formatting
         self._apply_formatting(workbook, worksheet, self.last_data_row, firm_names, firm_total_cost_col_indices, data_format, currency_format, percentage_format)
@@ -281,3 +287,38 @@ class ComparisonExporter:
 
         # The individual cell writes in _add_summary_rows_with_formulas already apply the header_format
         # The data_format is applied to the main data rows in export_to_excel
+
+    def _add_pg_details_section(self, worksheet, header_format, data_format):
+        """
+        Add PG Details section at the bottom of the comparison table.
+        """
+        # Add spacing before PG details
+        pg_start_row = self.last_data_row + 3
+        
+        # Write PG Details header
+        worksheet.write(pg_start_row, 0, "Performance Guarantee Details:", header_format)
+        
+        # Fetch and format PG details
+        data_fetcher = DataFetcher(DATABASE_PATH)
+        pg_details_formatter = PGDetailsFormatter()
+        pg_details = data_fetcher.fetch_all_firms_pg_details(self.work_id)
+        formatted_pg_details = pg_details_formatter.format_pg_details(pg_details, self.work_id)
+        
+        # Split the formatted details into individual lines for better formatting
+        if formatted_pg_details:
+            pg_lines = formatted_pg_details.split('\n')
+            current_row = pg_start_row + 1
+            
+            for line in pg_lines:
+                if line.strip():  # Only write non-empty lines
+                    worksheet.write(current_row, 0, line, data_format)
+                    # Merge cells across multiple columns for better readability
+                    worksheet.merge_range(current_row, 0, current_row, 5, line, data_format)
+                    current_row += 1
+            
+            # Set row height for better visibility
+            for row_idx in range(pg_start_row + 1, current_row):
+                worksheet.set_row(row_idx, 25)  # Set row height to 25
+        else:
+            worksheet.write(pg_start_row + 1, 0, "No PG details available.", data_format)
+            worksheet.merge_range(pg_start_row + 1, 0, pg_start_row + 1, 5, "No PG details available.", data_format)

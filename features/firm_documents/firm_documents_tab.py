@@ -105,6 +105,13 @@ class FirmDocumentsTab(ttk.Frame):
         self.ib_vetted_on_var = tk.StringVar()
         self.ib_vetted_on_picker = MinimalDatePicker(input_frame, textvariable=self.ib_vetted_on_var)
         self.ib_vetted_on_picker.grid(row=8, column=3, padx=5, pady=5, sticky=tk.EW)
+        
+        # IB Notarized Date
+        ttk.Label(input_frame, text="IB Notarized Date:").grid(row=9, column=0, padx=5, pady=5, sticky=tk.W)
+        self.ib_notarized_date_var = tk.StringVar()
+        self.ib_notarized_date_picker = MinimalDatePicker(input_frame, textvariable=self.ib_notarized_date_var)
+        self.ib_notarized_date_picker.grid(row=9, column=1, padx=5, pady=5, sticky=tk.EW)
+        
         self._toggle_indemnity_bond_fields()
 
         
@@ -139,7 +146,7 @@ class FirmDocumentsTab(ttk.Frame):
 
         self.documents_tree = ttk.Treeview(documents_frame, columns=(
             "firm_name", "pg_submitted", "pg_type", "pg_no", "pg_amount", "bank_name", "bank_address", "pg_vetted_on",
-            "indemnity_bond_submitted", "indemnity_bond_details", "ib_vetted_on", "other_docs_details", "submission_date"
+            "indemnity_bond_submitted", "indemnity_bond_details", "ib_vetted_on", "ib_notarized_date", "other_docs_details", "submission_date"
         ), show="headings")
         self.documents_tree.pack(fill=tk.BOTH, expand=True)
 
@@ -154,7 +161,7 @@ class FirmDocumentsTab(ttk.Frame):
         self.documents_tree.heading("indemnity_bond_submitted", text="IB Submitted")
         self.documents_tree.heading("indemnity_bond_details", text="Indemnity Bond Details")
         self.documents_tree.heading("ib_vetted_on", text="IB Vetted On")
-        
+        self.documents_tree.heading("ib_notarized_date", text="IB Notarized Date")
         self.documents_tree.heading("other_docs_details", text="Other Docs Details")
         self.documents_tree.heading("submission_date", text="Submission Date")
 
@@ -169,7 +176,7 @@ class FirmDocumentsTab(ttk.Frame):
         self.documents_tree.column("indemnity_bond_submitted", width=80)
         self.documents_tree.column("indemnity_bond_details", width=150)
         self.documents_tree.column("ib_vetted_on", width=100)
-        
+        self.documents_tree.column("ib_notarized_date", width=120)
         self.documents_tree.column("other_docs_details", width=150)
         self.documents_tree.column("submission_date", width=100)
 
@@ -239,6 +246,7 @@ class FirmDocumentsTab(ttk.Frame):
                 self.pg_valid_upto_var.set(doc['pg_valid_upto'] if doc['pg_valid_upto'] else "")
                 self.pg_vetted_on_var.set(doc['pg_vetted_on'] if doc['pg_vetted_on'] else "")
                 self.ib_vetted_on_var.set(doc['ib_vetted_on'] if doc['ib_vetted_on'] else "")
+                self.ib_notarized_date_var.set(doc['ib_notarized_date'] if doc['ib_notarized_date'] else "")
 
                 self._toggle_pg_fields()
                 self._toggle_indemnity_bond_fields()
@@ -262,7 +270,7 @@ class FirmDocumentsTab(ttk.Frame):
         for doc in documents:
             if not selected_firm or doc[2] == selected_firm: # doc[2] is firm_name
                 self.documents_tree.insert("", tk.END, iid=doc[0], values=(
-                    doc[2], bool(doc[10]), doc[12], doc[3], doc[4], doc[5], doc[6], doc[13], bool(doc[11]), doc[7], doc[14], doc[8], doc[9]
+                    doc[2], bool(doc[10]), doc[12], doc[3], doc[4], doc[5], doc[6], doc[13], bool(doc[11]), doc[7], doc[14], doc[16] if len(doc) > 16 else "", doc[8], doc[9]
                 ))
 
     def _add_document(self):
@@ -283,6 +291,7 @@ class FirmDocumentsTab(ttk.Frame):
         pg_valid_upto = self.pg_valid_upto_var.get()
         pg_vetted_on = self.pg_vetted_on_var.get()
         ib_vetted_on = self.ib_vetted_on_var.get()
+        ib_notarized_date = self.ib_notarized_date_var.get()
 
         if not all([firm_name, submission_date]):
             show_toast(self, "Firm Name and Submission Date are required.", "warning")
@@ -296,7 +305,7 @@ class FirmDocumentsTab(ttk.Frame):
             add_firm_document(
                 int(work_id), firm_name, pg_no, pg_amount, bank_name, bank_address,
                 indemnity_bond_details, other_docs_details, submission_date,
-                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on, pg_valid_upto
+                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on, pg_valid_upto, ib_notarized_date
             )
             show_toast(self, "Document added successfully.", "success")
             self._clear_form()
@@ -322,6 +331,7 @@ class FirmDocumentsTab(ttk.Frame):
         pg_valid_upto = self.pg_valid_upto_var.get()
         pg_vetted_on = self.pg_vetted_on_var.get()
         ib_vetted_on = self.ib_vetted_on_var.get()
+        ib_notarized_date = self.ib_notarized_date_var.get()
 
         if not all([firm_name, submission_date]):
             show_toast(self, "Firm Name and Submission Date are required.", "warning")
@@ -335,7 +345,7 @@ class FirmDocumentsTab(ttk.Frame):
             update_firm_document(
                 doc_id, firm_name, pg_no, pg_amount, bank_name, bank_address,
                 indemnity_bond_details, other_docs_details, submission_date,
-                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on, pg_valid_upto
+                pg_submitted, indemnity_bond_submitted, pg_type, pg_vetted_on, ib_vetted_on, pg_valid_upto, ib_notarized_date
             )
             show_toast(self, "Document updated successfully.", "success")
             self._clear_form()
@@ -410,6 +420,7 @@ class FirmDocumentsTab(ttk.Frame):
         self.indemnity_bond_submitted_var.set(False)
         self.indemnity_bond_details_entry.delete(0, tk.END)
         self.ib_vetted_on_var.set("")
+        self.ib_notarized_date_var.set("")
         self.other_docs_details_entry.delete(0, tk.END)
         self.submission_date_var.set(datetime.now().strftime("%d-%m-%Y"))
         self.add_button.config(state=tk.NORMAL)
@@ -447,5 +458,7 @@ class FirmDocumentsTab(ttk.Frame):
         # For minimal date picker, we just clear/reset the value based on state
         if state == tk.DISABLED:
             self.ib_vetted_on_var.set("")
+            self.ib_notarized_date_var.set("")
         else:
             self.ib_vetted_on_var.set("DD-MM-YYYY")
+            self.ib_notarized_date_var.set("DD-MM-YYYY")

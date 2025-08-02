@@ -168,6 +168,9 @@ class AboutTab(ttk.Frame):
 *   **{{{{COST_00}}}}** - Cost rounded to nearest 100
 *   **{{{{DATE_field}}}}** - Any date field with date picker
 
+**INSTRUCTIONS (Special Control Identifiers):**
+*   **MULTI_FIRM_IDENTIFIER** - Add this text anywhere in your template (typically at the bottom) to enable multi-firm document generation. When this identifier is present, the system will automatically generate a single combined document containing letters for all firms associated with the selected work. The identifier will be removed from the final document and won't appear in the output.
+
 **💡 This list is automatically updated when new database fields are added!
 
 (Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"""

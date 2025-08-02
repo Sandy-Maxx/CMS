@@ -182,7 +182,20 @@ class DocumentGenerator:
                 # Clear the marker from the paragraph
                 paragraph.text = paragraph.text.replace("<<TABLE_INSERT_MARKER>>", "")
                 
-                # Insert the table after this paragraph
-                self.enquiry_table_formatter.create_enquiry_table(
-                    document, work_id, reference_firm
-                )
+                # Find the paragraph index in the document
+                paragraph_index = None
+                for i, doc_paragraph in enumerate(document.paragraphs):
+                    if doc_paragraph._element is paragraph._element:
+                        paragraph_index = i
+                        break
+                
+                if paragraph_index is not None:
+                    # Insert the table at the specific location
+                    self.enquiry_table_formatter.create_enquiry_table_at_location(
+                        document, work_id, reference_firm, paragraph_index
+                    )
+                else:
+                    # Fallback to adding at the end if paragraph not found
+                    self.enquiry_table_formatter.create_enquiry_table(
+                        document, work_id, reference_firm
+                    )

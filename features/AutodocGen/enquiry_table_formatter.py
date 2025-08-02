@@ -43,6 +43,102 @@ class EnquiryTableFormatter:
         table.columns[6].width = Inches(1.0)  # Firm Unit Rate
         table.columns[7].width = Inches(1.2)  # Firm Total Cost
         
+        # Populate the table using common method
+        self._populate_enquiry_table(table, schedule_items, reference_firm_name)
+        
+        return table
+    
+    def create_enquiry_table_at_location(self, document, work_id, reference_firm_name=None, paragraph_index=0):
+        """
+        Creates an enquiry table in the document at a specific paragraph location
+        """
+        # Get schedule items for the work
+        schedule_items = get_schedule_items(work_id)
+        
+        if not schedule_items:
+            # If no schedule items, add a simple message at the specified location
+            # Insert a new paragraph at the specified index
+            from docx.oxml import OxmlElement
+            from docx.oxml.ns import qn
+            
+            # Get the paragraph element at the insertion point
+            if paragraph_index < len(document.paragraphs):
+                insertion_point = document.paragraphs[paragraph_index]._element
+            else:
+                # If index is out of range, append at the end
+                p = document.add_paragraph("No schedule items found for this work.")
+                return
+            
+            # Create new paragraph element
+            new_p = OxmlElement('w:p')
+            new_r = OxmlElement('w:r')
+            new_t = OxmlElement('w:t')
+            new_t.text = "No schedule items found for this work."
+            new_r.append(new_t)
+            new_p.append(new_r)
+            
+            # Insert after the current paragraph
+            insertion_point.addnext(new_p)
+            return
+        
+        # Create table with 8 columns for proper structure (added Unit column)
+        # Header rows (2) + data rows + summary rows (2)
+        num_rows = 2 + len(schedule_items) + 2
+        
+        # Create table element directly
+        from docx.oxml.table import CT_Tbl
+        from docx.table import Table
+        from docx.oxml import parse_xml
+        
+        # Get the insertion point
+        if paragraph_index < len(document.paragraphs):
+            insertion_point = document.paragraphs[paragraph_index]._element
+        else:
+            # Fallback to the regular method if index is out of range
+            self.create_enquiry_table(document, work_id, reference_firm_name)
+            return
+        
+        # Create table XML
+        table_xml = f'''
+        <w:tbl xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+            <w:tblPr>
+                <w:tblStyle w:val="TableGrid"/>
+                <w:tblW w:w="0" w:type="auto"/>
+                <w:jc w:val="center"/>
+            </w:tblPr>
+            <w:tblGrid>
+                <w:gridCol w:w="720"/>   <!-- SN -->
+                <w:gridCol w:w="3600"/>  <!-- Schedule Items -->
+                <w:gridCol w:w="1008"/>  <!-- Qty -->
+                <w:gridCol w:w="864"/>   <!-- Unit -->
+                <w:gridCol w:w="1440"/>  <!-- ELS Unit Rate -->
+                <w:gridCol w:w="1728"/>  <!-- ELS Total Cost -->
+                <w:gridCol w:w="1440"/>  <!-- Firm Unit Rate -->
+                <w:gridCol w:w="1728"/>  <!-- Firm Total Cost -->
+            </w:tblGrid>
+        </w:tbl>
+        '''
+        
+        # Parse and insert the table
+        table_element = parse_xml(table_xml)
+        insertion_point.addnext(table_element)
+        
+        # Create Table object from the element
+        table = Table(table_element, document)
+        
+        # Add rows to the table
+        for _ in range(num_rows):
+            table.add_row()
+        
+        # Now populate the table with the same logic as the original method
+        self._populate_enquiry_table(table, schedule_items, reference_firm_name)
+        
+        return table
+    
+    def _populate_enquiry_table(self, table, schedule_items, reference_firm_name=None):
+        """
+        Populate the enquiry table with data (extracted common logic)
+        """
         # Header Row 1 - Main headers
         header_row1 = table.rows[0]
         header_row1.cells[0].text = "SN"
@@ -159,5 +255,3 @@ class EnquiryTableFormatter:
         for cell in [gst_row.cells[4], gst_row.cells[5], total_row.cells[4], total_row.cells[5]]:
             for run in cell.paragraphs[0].runs:
                 run.bold = True
-        
-        return table

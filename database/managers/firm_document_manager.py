@@ -33,7 +33,8 @@ def create_firm_documents_table(cursor):
         "pg_submitted_on": "TEXT",
         "pg_vetted_on": "TEXT",
         "indemnity_submitted_on": "TEXT",
-        "indemnity_vetted_on": "TEXT"
+        "indemnity_vetted_on": "TEXT",
+        "ib_notarized_date": "TEXT"
     }
 
     for column, col_type in firm_documents_columns_to_add.items():
@@ -58,6 +59,7 @@ def upsert_firm_document(data):
                 pg_type = ?, pg_no = ?, pg_amount = ?, pg_submitted_on = ?, pg_vetted_on = ?,
                 bank_name = ?, bank_address = ?, firm_address = ?, indemnity_bond_details = ?,
                 indemnity_submitted_on = ?, indemnity_vetted_on = ?, other_docs_details = ?,
+                ib_notarized_date = ?,
                 submission_date = ?, pg_submitted = ?, indemnity_bond_submitted = ?
             WHERE id = ?
         """
@@ -65,6 +67,7 @@ def upsert_firm_document(data):
             data.get('pg_type'), data.get('pg_no'), data.get('pg_amount'), data.get('pg_submitted_on'), data.get('pg_vetted_on'),
             data.get('bank_name'), data.get('bank_address'), data.get('firm_address'), data.get('indemnity_bond_details'),
             data.get('indemnity_submitted_on'), data.get('indemnity_vetted_on'), data.get('other_docs_details'),
+            data.get('ib_notarized_date'),
             data.get('submission_date'), data.get('pg_submitted'), data.get('indemnity_bond_submitted'),
             existing_id[0]
         )
@@ -75,13 +78,15 @@ def upsert_firm_document(data):
                 work_id, firm_name, pg_type, pg_no, pg_amount, pg_submitted_on, pg_vetted_on,
                 bank_name, bank_address, firm_address, indemnity_bond_details,
                 indemnity_submitted_on, indemnity_vetted_on, other_docs_details,
+                ib_notarized_date,
                 submission_date, pg_submitted, indemnity_bond_submitted
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         params = (
             data.get('work_id'), data.get('firm_name'), data.get('pg_type'), data.get('pg_no'), data.get('pg_amount'), data.get('pg_submitted_on'), data.get('pg_vetted_on'),
             data.get('bank_name'), data.get('bank_address'), data.get('firm_address'), data.get('indemnity_bond_details'),
             data.get('indemnity_submitted_on'), data.get('indemnity_vetted_on'), data.get('other_docs_details'),
+            data.get('ib_notarized_date'),
             data.get('submission_date'), data.get('pg_submitted'), data.get('indemnity_bond_submitted')
         )
     
@@ -96,7 +101,7 @@ def get_firm_documents(work_id):
         SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, 
                firm_address, indemnity_bond_details, other_docs_details, submission_date, 
                pg_submitted, indemnity_bond_submitted, pg_type, pg_submitted_on, 
-               pg_vetted_on, indemnity_submitted_on, indemnity_vetted_on 
+               pg_vetted_on, indemnity_submitted_on, indemnity_vetted_on, ib_notarized_date 
         FROM firm_documents WHERE work_id = ?
     """, (work_id,))
     documents = cursor.fetchall()
@@ -110,7 +115,7 @@ def get_firm_document_by_work_and_firm_name(work_id, firm_name):
         SELECT id, work_id, firm_name, pg_no, pg_amount, bank_name, bank_address, 
                firm_address, indemnity_bond_details, other_docs_details, submission_date, 
                pg_submitted, indemnity_bond_submitted, pg_type, pg_submitted_on, 
-               pg_vetted_on, indemnity_submitted_on, indemnity_vetted_on 
+               pg_vetted_on, indemnity_submitted_on, indemnity_vetted_on, ib_notarized_date 
         FROM firm_documents WHERE work_id = ? AND firm_name = ?
     """, (work_id, firm_name))
     document = cursor.fetchone()
@@ -134,7 +139,8 @@ def get_firm_document_by_work_and_firm_name(work_id, firm_name):
             'pg_submitted_on': document[14],
             'pg_vetted_on': document[15],
             'indemnity_submitted_on': document[16],
-            'indemnity_vetted_on': document[17]
+            'indemnity_vetted_on': document[17],
+            'ib_notarized_date': document[18]
         }
     return None
 
